@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ProductCard from "./ProductCard";
-import { Product } from "@/context/ShopContext";
+import { Product } from "@/types/shop";
 
 interface ProductCarouselProps {
   products: Product[];
@@ -61,7 +61,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
     if (current > 0) {
       setCurrent(current - 1);
     } else {
-      setCurrent(products.length - itemsPerView); // Go to end
+      setCurrent(Math.max(0, products.length - itemsPerView)); // Go to end
     }
   };
 

@@ -22,10 +22,12 @@ const ShopContext = createContext<ShopContextType>({
   updateCartItemQuantity: () => {},
   clearCart: () => {},
   getCartTotal: () => 0,
+  tryAdminLogin: () => false,
 });
 
 // Hook for using the shop context
 export const useShopContext = () => useContext(ShopContext);
+export const useShop = useShopContext; // Alias for useShopContext
 
 // Provider component
 export const ShopProvider = ({ children }) => {
@@ -130,7 +132,7 @@ export const ShopProvider = ({ children }) => {
         );
       } else {
         // Add new item to cart
-        return [...prev, { ...product, quantity }];
+        return [...prev, { id: product.id, product, quantity }];
       }
     });
   }, []);
@@ -154,8 +156,18 @@ export const ShopProvider = ({ children }) => {
   }, []);
   
   const getCartTotal = useCallback(() => {
-    return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+    return cart.reduce((total, item) => total + (item.product.price * item.quantity), 0);
   }, [cart]);
+  
+  // Admin functions
+  const tryAdminLogin = useCallback((username: string, password: string) => {
+    // Simple mock authentication for demo purposes
+    if (username === "admin" && password === "password123") {
+      localStorage.setItem("adminLoggedIn", "true");
+      return true;
+    }
+    return false;
+  }, []);
   
   // Context value
   const value = {
@@ -176,6 +188,7 @@ export const ShopProvider = ({ children }) => {
     updateCartItemQuantity,
     clearCart,
     getCartTotal,
+    tryAdminLogin,
   };
   
   return (

@@ -21,9 +21,12 @@ export interface Product {
     date: string;
   }[];
   quantity?: number;
+  inventory?: number;
 }
 
-export interface CartItem extends Product {
+export interface CartItem {
+  id: string;
+  product: Product;
   quantity: number;
 }
 
@@ -45,4 +48,5 @@ export interface ShopContextType {
   updateCartItemQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
   getCartTotal: () => number;
+  tryAdminLogin: (username: string, password: string) => boolean;
 }

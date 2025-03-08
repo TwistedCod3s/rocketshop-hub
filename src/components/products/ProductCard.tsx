@@ -4,7 +4,8 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingCart, Heart } from "lucide-react";
-import { Product, useShop } from "@/context/ShopContext";
+import { Product } from "@/types/shop";
+import { useShopContext } from "@/context/ShopContext";
 import { toast } from "sonner";
 
 interface ProductCardProps {
@@ -12,12 +13,15 @@ interface ProductCardProps {
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-  const { addToCart } = useShop();
+  const { addToCart } = useShopContext();
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     addToCart(product, 1);
+    toast.success(`Added to cart`, {
+      description: `${product.name} has been added to your cart.`
+    });
   };
   
   const handleWishlist = (e: React.MouseEvent) => {
@@ -74,11 +78,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           <div className="mt-3 flex justify-between items-center">
             <span className="font-semibold">${product.price.toFixed(2)}</span>
             <span className="text-sm text-muted-foreground">
-              {product.inventory > 10 
-                ? "In stock" 
-                : product.inventory > 0 
-                  ? `Only ${product.inventory} left` 
-                  : "Out of stock"}
+              {product.inStock ? "In stock" : "Out of stock"}
             </span>
           </div>
         </div>

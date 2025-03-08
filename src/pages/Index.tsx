@@ -24,7 +24,11 @@ const Index = () => {
         <h2 className="text-display-small font-bold text-rocketry-navy mb-8 text-center">
           Featured Products
         </h2>
-        <ProductCarousel products={featuredProducts} />
+        <ProductCarousel 
+          products={featuredProducts} 
+          title="Featured Products"
+          description="Discover our most popular educational rocketry products"
+        />
       </section>
       
       <CategorySection />

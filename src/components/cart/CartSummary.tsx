@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { ArrowRight } from "lucide-react";
+import { CartItem } from "@/types/shop";
 
 interface CartSummaryProps {
   subtotal: number;

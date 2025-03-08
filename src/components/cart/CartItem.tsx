@@ -3,7 +3,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Trash2 } from "lucide-react";
-import { CartItem as CartItemType } from "@/context/ShopContext";
+import { CartItem as CartItemType } from "@/types/shop";
 
 interface CartItemProps {
   item: CartItemType;
@@ -15,7 +15,7 @@ const CartItem: React.FC<CartItemProps> = ({ item, onRemove, onUpdateQuantity })
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newQuantity = parseInt(e.target.value);
     if (!isNaN(newQuantity) && newQuantity > 0) {
-      onUpdateQuantity(item.product.id, newQuantity);
+      onUpdateQuantity(item.id, newQuantity);
     }
   };
 
@@ -54,7 +54,7 @@ const CartItem: React.FC<CartItemProps> = ({ item, onRemove, onUpdateQuantity })
         <Button 
           variant="ghost" 
           size="icon" 
-          onClick={() => onRemove(item.product.id)}
+          onClick={() => onRemove(item.id)}
           className="text-muted-foreground hover:text-destructive"
         >
           <Trash2 className="h-5 w-5" />

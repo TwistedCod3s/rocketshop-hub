@@ -3,21 +3,22 @@ import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { useShop } from "@/context/ShopContext";
+import { useShopContext } from "@/context/ShopContext";
 import { useNavigate } from "react-router-dom";
 
-const AdminLogin: React.FC = () => {
+interface AdminLoginProps {
+  onLogin: (success: boolean) => void;
+}
+
+const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const { tryAdminLogin } = useShop();
-  const navigate = useNavigate();
+  const { tryAdminLogin } = useShopContext();
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const success = tryAdminLogin(username, password);
-    if (success) {
-      navigate("/admin/dashboard");
-    }
+    onLogin(success);
   };
   
   return (

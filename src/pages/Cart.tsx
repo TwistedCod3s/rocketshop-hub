@@ -11,7 +11,7 @@ import { ShoppingCart, PackageCheck, ArrowRight } from "lucide-react";
 
 const Cart = () => {
   const navigate = useNavigate();
-  const { cart, updateCartItemQuantity, removeFromCart, clearCart } = useShopContext();
+  const { cart, updateCartItemQuantity, removeFromCart, clearCart, getCartTotal } = useShopContext();
   const [couponCode, setCouponCode] = useState("");
   
   if (cart.length === 0) {
@@ -36,6 +36,9 @@ const Cart = () => {
     );
   }
   
+  const subtotal = getCartTotal();
+  const itemCount = cart.length;
+  
   return (
     <MainLayout>
       <div className="container py-12">
@@ -57,8 +60,8 @@ const Cart = () => {
                   <CartItem 
                     key={item.id}
                     item={item}
-                    updateQuantity={updateCartItemQuantity}
-                    removeItem={removeFromCart}
+                    onUpdateQuantity={updateCartItemQuantity}
+                    onRemove={removeFromCart}
                   />
                 ))}
               </div>
@@ -77,36 +80,16 @@ const Cart = () => {
           {/* Cart Summary */}
           <div>
             <div className="bg-white rounded-lg shadow-sm p-6 sticky top-24">
-              <h2 className="text-lg font-bold mb-4">Order Summary</h2>
-              
-              <CartSummary cart={cart} />
-              
-              {/* Coupon Code */}
-              <div className="mt-4 mb-6">
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Coupon code"
-                    value={couponCode}
-                    onChange={(e) => setCouponCode(e.target.value)}
-                  />
-                  <Button variant="outline">Apply</Button>
-                </div>
-              </div>
-              
-              <Button 
-                className="w-full mb-4" 
-                size="lg"
-                onClick={() => navigate("/checkout")}
-              >
-                Proceed to Checkout
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+              <CartSummary 
+                subtotal={subtotal}
+                itemCount={itemCount}
+              />
               
               {/* Trust Badges */}
               <div className="mt-6 space-y-3">
                 <div className="flex items-center text-sm text-gray-600">
                   <PackageCheck className="h-4 w-4 mr-2 text-rocketry-blue" />
-                  Free shipping on orders over $100
+                  Free shipping on orders over $150
                 </div>
                 <div className="flex items-center text-sm text-gray-600">
                   <ShoppingCart className="h-4 w-4 mr-2 text-rocketry-blue" />
