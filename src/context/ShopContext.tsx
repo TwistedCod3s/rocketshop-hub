@@ -1,314 +1,186 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { toast } from "sonner";
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { Product, CartItem, ShopContextType } from "@/types/shop";
+import { initialProducts } from "@/data/initialProducts";
 
-// Define types
-export type ProductCategory = 
-  | 'rockets'
-  | 'kits' 
-  | 'components' 
-  | 'tools' 
-  | 'curriculum' 
-  | 'books';
+// Create context with default values
+const ShopContext = createContext<ShopContextType>({
+  products: [],
+  featuredProducts: [],
+  cart: [],
+  addProduct: () => {},
+  updateProduct: () => {},
+  removeProduct: () => {},
+  getProduct: () => undefined,
+  fetchAllProducts: () => {},
+  fetchProductsByCategory: () => {},
+  fetchFeaturedProducts: () => {},
+  getRelatedProducts: () => [],
+  updateFeaturedProducts: () => {},
+  addToCart: () => {},
+  removeFromCart: () => {},
+  updateCartItemQuantity: () => {},
+  clearCart: () => {},
+  getCartTotal: () => 0,
+});
 
-export interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  images: string[];
-  category: ProductCategory;
-  featured: boolean;
-  inventory: number;
-  specifications?: Record<string, string>;
-  relatedProducts?: string[];
-}
-
-export interface CartItem {
-  product: Product;
-  quantity: number;
-}
-
-// Mock products data
-const INITIAL_PRODUCTS: Product[] = [
-  {
-    id: "rocket-starter-kit",
-    name: "Rocket Starter Kit",
-    description: "Everything your school needs to start a rocketry program. Includes 10 rocket kits, launch pad, and curriculum materials.",
-    price: 299.99,
-    images: ["/public/placeholder.svg"],
-    category: "kits",
-    featured: true,
-    inventory: 15,
-    specifications: {
-      "Skill Level": "Beginner",
-      "Age Range": "12-18",
-      "Students": "Up to 30",
-      "Duration": "1 Semester"
-    }
-  },
-  {
-    id: "model-rocket-engine-pack",
-    name: "Model Rocket Engine Pack",
-    description: "A pack of 24 A8-3 rocket engines, perfect for classroom demonstrations and student projects.",
-    price: 49.99,
-    images: ["/public/placeholder.svg"],
-    category: "components",
-    featured: true,
-    inventory: 50
-  },
-  {
-    id: "advanced-rocketry-curriculum",
-    name: "Advanced Rocketry Curriculum",
-    description: "Complete curriculum for a year-long advanced rocketry course, aligned with STEM standards.",
-    price: 129.99,
-    images: ["/public/placeholder.svg"],
-    category: "curriculum",
-    featured: true,
-    inventory: 20
-  },
-  {
-    id: "altitude-tracking-system",
-    name: "Altitude Tracking System",
-    description: "Track the height of your rockets with this easy-to-use altitude tracking system.",
-    price: 79.99,
-    images: ["/public/placeholder.svg"],
-    category: "tools",
-    featured: true,
-    inventory: 12
-  },
-  {
-    id: "introduction-to-rocketry",
-    name: "Introduction to Rocketry",
-    description: "A comprehensive textbook introducing the principles of rocketry for middle and high school students.",
-    price: 34.99,
-    images: ["/public/placeholder.svg"],
-    category: "books",
-    featured: false,
-    inventory: 35
-  },
-  {
-    id: "launch-pad-deluxe",
-    name: "Launch Pad Deluxe",
-    description: "Heavy-duty launch pad suitable for group launches and capable of supporting larger model rockets.",
-    price: 149.99,
-    images: ["/public/placeholder.svg"],
-    category: "tools",
-    featured: false,
-    inventory: 8
-  }
-];
-
-// Admin user credentials
-const ADMIN_CREDENTIALS = {
-  username: "admin",
-  password: "password123"
-};
-
-// Interface for our context
-interface ShopContextType {
-  products: Product[];
-  featuredProducts: Product[];
-  cartItems: CartItem[];
-  isAdmin: boolean;
-  tryAdminLogin: (username: string, password: string) => boolean;
-  adminLogout: () => void;
-  addToCart: (product: Product, quantity?: number) => void;
-  removeFromCart: (productId: string) => void;
-  updateCartQuantity: (productId: string, quantity: number) => void;
-  clearCart: () => void;
-  getCartTotal: () => number;
-  getCartCount: () => number;
-  getProductById: (id: string) => Product | undefined;
-  getProductsByCategory: (category: ProductCategory) => Product[];
-  toggleProductFeatured: (productId: string) => void;
-  addProduct: (product: Product) => void;
-  updateProduct: (product: Product) => void;
-  deleteProduct: (productId: string) => void;
-}
-
-// Create context
-const ShopContext = createContext<ShopContextType | undefined>(undefined);
+// Hook for using the shop context
+export const useShopContext = () => useContext(ShopContext);
 
 // Provider component
-export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  // Get featured products
-  const featuredProducts = products.filter(product => product.featured);
-
-  // Load cart from localStorage
+export const ShopProvider = ({ children }) => {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [cart, setCart] = useState<CartItem[]>([]);
+  
+  // Load initial data
   useEffect(() => {
-    const savedCart = localStorage.getItem('cart');
+    // Try to load products from localStorage
+    const savedProducts = localStorage.getItem("products");
+    if (savedProducts) {
+      setProducts(JSON.parse(savedProducts));
+    } else {
+      // Use initial products data if nothing in localStorage
+      setProducts(initialProducts);
+      localStorage.setItem("products", JSON.stringify(initialProducts));
+    }
+    
+    // Load cart from localStorage
+    const savedCart = localStorage.getItem("cart");
     if (savedCart) {
-      try {
-        setCartItems(JSON.parse(savedCart));
-      } catch (e) {
-        console.error('Failed to parse cart from localStorage');
-      }
+      setCart(JSON.parse(savedCart));
     }
   }, []);
-
-  // Save cart to localStorage when it changes
+  
+  // Update localStorage when cart changes
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cartItems));
-  }, [cartItems]);
-
-  // Admin login function
-  const tryAdminLogin = (username: string, password: string): boolean => {
-    if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
-      setIsAdmin(true);
-      toast.success("Successfully logged in as admin");
-      return true;
+    localStorage.setItem("cart", JSON.stringify(cart));
+  }, [cart]);
+  
+  // Update localStorage when products change
+  useEffect(() => {
+    if (products.length > 0) {
+      localStorage.setItem("products", JSON.stringify(products));
     }
-    toast.error("Invalid credentials");
-    return false;
-  };
-
-  // Admin logout function
-  const adminLogout = () => {
-    setIsAdmin(false);
-    toast.info("Logged out successfully");
-  };
-
-  // Add to cart function
-  const addToCart = (product: Product, quantity = 1) => {
-    setCartItems(prev => {
-      const existingItem = prev.find(item => item.product.id === product.id);
+  }, [products]);
+  
+  // Product Management Functions
+  const addProduct = useCallback((product: Product) => {
+    setProducts(prev => [...prev, product]);
+  }, []);
+  
+  const updateProduct = useCallback((product: Product) => {
+    setProducts(prev => 
+      prev.map(p => p.id === product.id ? product : p)
+    );
+  }, []);
+  
+  const removeProduct = useCallback((productId: string) => {
+    setProducts(prev => prev.filter(p => p.id !== productId));
+    // Also remove from cart if present
+    setCart(prev => prev.filter(item => item.id !== productId));
+  }, []);
+  
+  const getProduct = useCallback((productId: string) => {
+    return products.find(p => p.id === productId);
+  }, [products]);
+  
+  const fetchAllProducts = useCallback(() => {
+    // In a real app, this would be an API call
+    // For now, we just use the state
+    return products;
+  }, [products]);
+  
+  const fetchProductsByCategory = useCallback((category: string) => {
+    // In a real app, this would be an API call
+    return products.filter(p => p.category === category);
+  }, [products]);
+  
+  const fetchFeaturedProducts = useCallback(() => {
+    const featured = products.filter(p => p.featured);
+    setFeaturedProducts(featured);
+    return featured;
+  }, [products]);
+  
+  const getRelatedProducts = useCallback((category: string, excludeProductId: string) => {
+    return products
+      .filter(p => p.category === category && p.id !== excludeProductId)
+      .slice(0, 4); // Limit to 4 related products
+  }, [products]);
+  
+  const updateFeaturedProducts = useCallback((productId: string, isFeatured: boolean) => {
+    setProducts(prev => 
+      prev.map(p => p.id === productId ? { ...p, featured: isFeatured } : p)
+    );
+    // Update featured products list
+    fetchFeaturedProducts();
+  }, [fetchFeaturedProducts]);
+  
+  // Cart Management Functions
+  const addToCart = useCallback((product: Product, quantity: number) => {
+    setCart(prev => {
+      const existingItem = prev.find(item => item.id === product.id);
       
       if (existingItem) {
+        // Update quantity if product already in cart
         return prev.map(item => 
-          item.product.id === product.id 
+          item.id === product.id 
             ? { ...item, quantity: item.quantity + quantity } 
             : item
         );
+      } else {
+        // Add new item to cart
+        return [...prev, { ...product, quantity }];
       }
-      
-      return [...prev, { product, quantity }];
     });
-    
-    toast.success(`Added ${product.name} to cart`);
-  };
-
-  // Remove from cart function
-  const removeFromCart = (productId: string) => {
-    setCartItems(prev => prev.filter(item => item.product.id !== productId));
-    toast.info("Item removed from cart");
-  };
-
-  // Update cart quantity function
-  const updateCartQuantity = (productId: string, quantity: number) => {
-    if (quantity <= 0) {
-      removeFromCart(productId);
-      return;
-    }
-    
-    setCartItems(prev => 
+  }, []);
+  
+  const removeFromCart = useCallback((productId: string) => {
+    setCart(prev => prev.filter(item => item.id !== productId));
+  }, []);
+  
+  const updateCartItemQuantity = useCallback((productId: string, quantity: number) => {
+    setCart(prev => 
       prev.map(item => 
-        item.product.id === productId 
+        item.id === productId 
           ? { ...item, quantity } 
           : item
       )
     );
-  };
-
-  // Clear cart function
-  const clearCart = () => {
-    setCartItems([]);
-    toast.info("Cart cleared");
-  };
-
-  // Get cart total
-  const getCartTotal = () => {
-    return cartItems.reduce((total, item) => total + (item.product.price * item.quantity), 0);
-  };
-
-  // Get cart count
-  const getCartCount = () => {
-    return cartItems.reduce((count, item) => count + item.quantity, 0);
-  };
-
-  // Get product by ID
-  const getProductById = (id: string) => {
-    return products.find(product => product.id === id);
-  };
-
-  // Get products by category
-  const getProductsByCategory = (category: ProductCategory) => {
-    return products.filter(product => product.category === category);
-  };
-
-  // Toggle product featured status
-  const toggleProductFeatured = (productId: string) => {
-    setProducts(prev => 
-      prev.map(product => 
-        product.id === productId 
-          ? { ...product, featured: !product.featured } 
-          : product
-      )
-    );
-    toast.success("Product featured status updated");
-  };
-
-  // Add a new product
-  const addProduct = (product: Product) => {
-    setProducts(prev => [...prev, product]);
-    toast.success("Product added successfully");
-  };
-
-  // Update an existing product
-  const updateProduct = (updatedProduct: Product) => {
-    setProducts(prev => 
-      prev.map(product => 
-        product.id === updatedProduct.id 
-          ? updatedProduct 
-          : product
-      )
-    );
-    toast.success("Product updated successfully");
-  };
-
-  // Delete a product
-  const deleteProduct = (productId: string) => {
-    setProducts(prev => prev.filter(product => product.id !== productId));
-    toast.success("Product deleted successfully");
-  };
-
-  const contextValue: ShopContextType = {
+  }, []);
+  
+  const clearCart = useCallback(() => {
+    setCart([]);
+  }, []);
+  
+  const getCartTotal = useCallback(() => {
+    return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+  }, [cart]);
+  
+  // Context value
+  const value = {
     products,
     featuredProducts,
-    cartItems,
-    isAdmin,
-    tryAdminLogin,
-    adminLogout,
-    addToCart,
-    removeFromCart,
-    updateCartQuantity,
-    clearCart,
-    getCartTotal,
-    getCartCount,
-    getProductById,
-    getProductsByCategory,
-    toggleProductFeatured,
+    cart,
     addProduct,
     updateProduct,
-    deleteProduct
+    removeProduct,
+    getProduct,
+    fetchAllProducts,
+    fetchProductsByCategory,
+    fetchFeaturedProducts,
+    getRelatedProducts,
+    updateFeaturedProducts,
+    addToCart,
+    removeFromCart,
+    updateCartItemQuantity,
+    clearCart,
+    getCartTotal,
   };
-
+  
   return (
-    <ShopContext.Provider value={contextValue}>
+    <ShopContext.Provider value={value}>
       {children}
     </ShopContext.Provider>
   );
-};
-
-// Hook for using the shop context
-export const useShop = () => {
-  const context = useContext(ShopContext);
-  if (context === undefined) {
-    throw new Error('useShop must be used within a ShopProvider');
-  }
-  return context;
 };
