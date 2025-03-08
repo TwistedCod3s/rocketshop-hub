@@ -22,6 +22,7 @@ const ShopContext = createContext<ShopContextType>({
   updateCartItemQuantity: () => {},
   clearCart: () => {},
   getCartTotal: () => 0,
+  getCartCount: () => 0,
   tryAdminLogin: () => false,
 });
 
@@ -34,6 +35,7 @@ export const ShopProvider = ({ children }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
   
   // Load initial data
   useEffect(() => {
@@ -51,6 +53,12 @@ export const ShopProvider = ({ children }) => {
     const savedCart = localStorage.getItem("cart");
     if (savedCart) {
       setCart(JSON.parse(savedCart));
+    }
+    
+    // Check if admin is logged in
+    const adminLoggedIn = localStorage.getItem("adminLoggedIn");
+    if (adminLoggedIn === "true") {
+      setIsAdmin(true);
     }
   }, []);
   
@@ -159,11 +167,16 @@ export const ShopProvider = ({ children }) => {
     return cart.reduce((total, item) => total + (item.product.price * item.quantity), 0);
   }, [cart]);
   
+  const getCartCount = useCallback(() => {
+    return cart.reduce((count, item) => count + item.quantity, 0);
+  }, [cart]);
+  
   // Admin functions
   const tryAdminLogin = useCallback((username: string, password: string) => {
     // Simple mock authentication for demo purposes
     if (username === "admin" && password === "password123") {
       localStorage.setItem("adminLoggedIn", "true");
+      setIsAdmin(true);
       return true;
     }
     return false;
@@ -188,6 +201,8 @@ export const ShopProvider = ({ children }) => {
     updateCartItemQuantity,
     clearCart,
     getCartTotal,
+    getCartCount,
+    isAdmin,
     tryAdminLogin,
   };
   

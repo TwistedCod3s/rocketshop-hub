@@ -13,6 +13,7 @@ import {
 import { Heart, Star, Truck, ShieldCheck, ArrowLeft } from "lucide-react";
 import ProductCarousel from "@/components/products/ProductCarousel";
 import { useToast } from "@/hooks/use-toast";
+import { Product } from "@/types/shop";
 
 const ProductDetail = () => {
   const { productId } = useParams();
@@ -25,10 +26,10 @@ const ProductDetail = () => {
     getRelatedProducts 
   } = useShopContext();
   
-  const [product, setProduct] = useState(null);
+  const [product, setProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
-  const [relatedProducts, setRelatedProducts] = useState([]);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   
   useEffect(() => {
     if (productId) {
@@ -44,7 +45,7 @@ const ProductDetail = () => {
         navigate("/404");
       }
     }
-  }, [productId, getProduct, navigate]);
+  }, [productId, getProduct, navigate, getRelatedProducts]);
   
   if (!product) {
     return (
@@ -254,7 +255,7 @@ const ProductDetail = () => {
         {relatedProducts.length > 0 && (
           <div className="mt-16">
             <h2 className="text-2xl font-bold text-rocketry-navy mb-8">Related Products</h2>
-            <ProductCarousel products={relatedProducts} />
+            <ProductCarousel products={relatedProducts} title="Related Products" />
           </div>
         )}
       </div>

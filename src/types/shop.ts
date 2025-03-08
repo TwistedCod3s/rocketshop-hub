@@ -48,5 +48,11 @@ export interface ShopContextType {
   updateCartItemQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
   getCartTotal: () => number;
+  getCartCount: () => number;
+  isAdmin?: boolean;
   tryAdminLogin: (username: string, password: string) => boolean;
+}
+
+export interface CartSummaryProps {
+  cart: CartItem[];
 }

@@ -7,7 +7,7 @@ import { Product } from "@/types/shop";
 
 interface ProductCarouselProps {
   products: Product[];
-  title: string;
+  title?: string;
   description?: string;
 }
 
@@ -79,14 +79,16 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
 
   return (
     <div className="mt-12 mb-16">
-      <div className="text-center mb-10">
-        <h2 className="text-3xl font-semibold text-foreground">{title}</h2>
-        {description && (
-          <p className="mt-3 text-muted-foreground max-w-2xl mx-auto">
-            {description}
-          </p>
-        )}
-      </div>
+      {title && (
+        <div className="text-center mb-10">
+          <h2 className="text-3xl font-semibold text-foreground">{title}</h2>
+          {description && (
+            <p className="mt-3 text-muted-foreground max-w-2xl mx-auto">
+              {description}
+            </p>
+          )}
+        </div>
+      )}
       
       <div className="relative" ref={containerRef}>
         {/* Carousel Navigation */}

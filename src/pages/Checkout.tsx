@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MainLayout from "@/components/layout/MainLayout";
@@ -11,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { LockIcon } from "lucide-react";
 import CartSummary from "@/components/cart/CartSummary";
+import { CartSummaryProps } from "@/types/shop";
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -475,9 +475,9 @@ const Checkout = () => {
                     <div key={item.id} className="flex justify-between">
                       <div className="flex">
                         <span className="mr-2">{item.quantity}x</span>
-                        <span className="font-medium">{item.name}</span>
+                        <span className="font-medium">{item.product.name}</span>
                       </div>
-                      <span>${(item.price * item.quantity).toFixed(2)}</span>
+                      <span>${(item.product.price * item.quantity).toFixed(2)}</span>
                     </div>
                   ))}
                 </div>
