@@ -5,28 +5,28 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { ArrowRight } from "lucide-react";
-import { CartItem } from "@/types/shop";
+import { CartItem, CartSummaryProps } from "@/types/shop";
+import { useShopContext } from "@/context/ShopContext";
 
-interface CartSummaryProps {
-  subtotal: number;
-  itemCount: number;
-}
-
-const CartSummary: React.FC<CartSummaryProps> = ({ subtotal, itemCount }) => {
+const CartSummary: React.FC<CartSummaryProps> = ({ cart, subtotal: propSubtotal, itemCount: propItemCount }) => {
   const [couponCode, setCouponCode] = useState("");
   const [discount, setDiscount] = useState(0);
+  
+  // Calculate subtotal and item count if not provided as props
+  const calculatedSubtotal = propSubtotal || cart.reduce((total, item) => total + (item.product.price * item.quantity), 0);
+  const calculatedItemCount = propItemCount || cart.reduce((count, item) => count + item.quantity, 0);
   
   const handleApplyCoupon = (e: React.FormEvent) => {
     e.preventDefault();
     
     // Mock coupon codes
     if (couponCode.toUpperCase() === "SCHOOL10") {
-      setDiscount(subtotal * 0.1);
+      setDiscount(calculatedSubtotal * 0.1);
       toast.success("Coupon applied successfully!", {
         description: "10% discount applied to your order."
       });
     } else if (couponCode.toUpperCase() === "EDUCATION20") {
-      setDiscount(subtotal * 0.2);
+      setDiscount(calculatedSubtotal * 0.2);
       toast.success("Coupon applied successfully!", {
         description: "20% discount applied to your order."
       });
@@ -38,9 +38,9 @@ const CartSummary: React.FC<CartSummaryProps> = ({ subtotal, itemCount }) => {
   };
   
   // Calculate totals
-  const shipping = subtotal > 150 ? 0 : 12.99;
-  const tax = (subtotal - discount) * 0.07; // Assuming 7% tax
-  const total = subtotal - discount + shipping + tax;
+  const shipping = calculatedSubtotal > 150 ? 0 : 12.99;
+  const tax = (calculatedSubtotal - discount) * 0.07; // Assuming 7% tax
+  const total = calculatedSubtotal - discount + shipping + tax;
   
   return (
     <div className="bg-gray-50 rounded-lg p-6 border">
@@ -48,8 +48,8 @@ const CartSummary: React.FC<CartSummaryProps> = ({ subtotal, itemCount }) => {
       
       <div className="space-y-3 mb-6">
         <div className="flex justify-between">
-          <span className="text-muted-foreground">Subtotal ({itemCount} items)</span>
-          <span>${subtotal.toFixed(2)}</span>
+          <span className="text-muted-foreground">Subtotal ({calculatedItemCount} items)</span>
+          <span>${calculatedSubtotal.toFixed(2)}</span>
         </div>
         
         {discount > 0 && (

@@ -30,6 +30,12 @@ export interface CartItem {
   quantity: number;
 }
 
+export interface CartSummaryProps {
+  cart: CartItem[];
+  subtotal?: number;
+  itemCount?: number;
+}
+
 export interface ShopContextType {
   products: Product[];
   featuredProducts: Product[];
@@ -51,8 +57,4 @@ export interface ShopContextType {
   getCartCount: () => number;
   isAdmin?: boolean;
   tryAdminLogin: (username: string, password: string) => boolean;
-}
-
-export interface CartSummaryProps {
-  cart: CartItem[];
 }
