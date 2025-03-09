@@ -20,7 +20,7 @@ import { Product } from "@/types/shop";
 const ProductList = () => {
   const { category } = useParams();
   const [searchParams] = useSearchParams();
-  const { fetchProductsByCategory, fetchAllProducts } = useShopContext();
+  const { products, fetchProductsByCategory, fetchAllProducts } = useShopContext();
   const [displayProducts, setDisplayProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [filterOpen, setFilterOpen] = useState(false);
@@ -28,17 +28,26 @@ const ProductList = () => {
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
   const [sortBy, setSortBy] = useState("featured");
   
+  // Debug logs
   useEffect(() => {
-    let products: Product[] = [];
+    console.log("Category param:", category);
+    console.log("All products from context:", products);
+  }, [category, products]);
+  
+  useEffect(() => {
+    // Initial products load
     if (category) {
       // If there's a category parameter, fetch products for that category
-      products = fetchProductsByCategory(category);
+      const categoryProducts = fetchProductsByCategory(category);
+      console.log(`Products for category ${category}:`, categoryProducts);
+      setDisplayProducts(categoryProducts);
     } else {
       // Otherwise, fetch all products
-      products = fetchAllProducts();
+      const allProducts = fetchAllProducts();
+      console.log("All products:", allProducts);
+      setDisplayProducts(allProducts);
     }
-    setDisplayProducts(products);
-  }, [category, fetchProductsByCategory, fetchAllProducts]);
+  }, [category, fetchProductsByCategory, fetchAllProducts, products]);
   
   useEffect(() => {
     const search = searchParams.get("search");
@@ -73,6 +82,7 @@ const ProductList = () => {
     }
     
     setFilteredProducts(result);
+    console.log("Filtered products:", result);
   }, [displayProducts, searchTerm, priceRange, sortBy]);
   
   return (
@@ -148,7 +158,7 @@ const ProductList = () => {
           <div className="flex-1">
             <div className="flex justify-between items-center mb-6">
               <h1 className="text-2xl font-bold text-rocketry-navy">
-                {category ? `${category} Products` : 'All Products'}
+                {category ? `${category.charAt(0).toUpperCase() + category.slice(1)} Products` : 'All Products'}
               </h1>
               <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger className="w-[160px]">
