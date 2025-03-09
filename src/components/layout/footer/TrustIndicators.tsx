@@ -12,8 +12,8 @@ const TrustIndicators: React.FC = () => {
     },
     {
       icon: ShieldCheck,
-      title: "Satisfaction Guaranteed",
-      description: "30-day money back"
+      title: "Buy with confidence",
+      description: "Products are rigorously tested with 24/7 support"
     },
     {
       icon: CreditCard,
