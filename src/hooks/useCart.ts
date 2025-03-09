@@ -2,13 +2,13 @@
 import { useState, useCallback, useEffect } from "react";
 import { CartItem, Product } from "@/types/shop";
 
-// Use a consistent storage key
-const CART_STORAGE_KEY = "ROCKETRY_SHOP_CART";
+// Use a consistent storage key with version suffix
+const CART_STORAGE_KEY = "ROCKETRY_SHOP_CART_V2";
 
 export function useCart() {
   const [cart, setCart] = useState<CartItem[]>([]);
   
-  // Load cart from sessionStorage (per user)
+  // Load cart from sessionStorage (per user, per browser)
   useEffect(() => {
     const savedCart = sessionStorage.getItem(CART_STORAGE_KEY);
     if (savedCart) {

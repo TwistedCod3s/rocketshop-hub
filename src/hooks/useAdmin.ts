@@ -4,11 +4,11 @@ import { SUBCATEGORIES as initialSubcategories } from "@/constants/categories";
 import { CouponCode } from "@/types/shop";
 import { v4 as uuidv4 } from "uuid";
 
-// Define consistent storage keys
-const ADMIN_STORAGE_KEY = "ROCKETRY_SHOP_ADMIN";
-const CATEGORY_IMAGES_KEY = "ROCKETRY_SHOP_CATEGORY_IMAGES";
-const SUBCATEGORIES_KEY = "ROCKETRY_SHOP_SUBCATEGORIES";
-const COUPONS_KEY = "ROCKETRY_SHOP_COUPONS";
+// Define consistent storage keys with version suffix to ensure fresh start
+const ADMIN_STORAGE_KEY = "ROCKETRY_SHOP_ADMIN_V2";
+const CATEGORY_IMAGES_KEY = "ROCKETRY_SHOP_CATEGORY_IMAGES_V2";
+const SUBCATEGORIES_KEY = "ROCKETRY_SHOP_SUBCATEGORIES_V2";
+const COUPONS_KEY = "ROCKETRY_SHOP_COUPONS_V2";
 
 // Initialize default coupons
 const defaultCoupons = [
@@ -28,7 +28,7 @@ const defaultCoupons = [
   }
 ];
 
-// Initialize global state from localStorage
+// Helper function to load from storage with defaults
 const loadFromStorage = <T>(key: string, defaultValue: T): T => {
   try {
     if (typeof window !== 'undefined') {
@@ -37,6 +37,9 @@ const loadFromStorage = <T>(key: string, defaultValue: T): T => {
         console.log(`Loaded ${key} from localStorage`);
         return JSON.parse(stored);
       }
+      // Initialize storage if not found
+      localStorage.setItem(key, JSON.stringify(defaultValue));
+      console.log(`Initialized ${key} in localStorage with defaults`);
     }
   } catch (error) {
     console.error(`Error loading ${key} from localStorage:`, error);
@@ -51,7 +54,7 @@ let globalAdminState = {
   coupons: loadFromStorage<CouponCode[]>(COUPONS_KEY, defaultCoupons)
 };
 
-// Helper function to save state to localStorage
+// Helper function to save state to localStorage and update global state
 const saveToStorage = <T>(key: string, value: T): void => {
   try {
     localStorage.setItem(key, JSON.stringify(value));
@@ -61,30 +64,19 @@ const saveToStorage = <T>(key: string, value: T): void => {
   }
 };
 
-// Save initial state to localStorage if not already there
-saveToStorage(CATEGORY_IMAGES_KEY, globalAdminState.categoryImages);
-saveToStorage(SUBCATEGORIES_KEY, globalAdminState.subcategories);
-saveToStorage(COUPONS_KEY, globalAdminState.coupons);
-
 export function useAdmin() {
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [categoryImages, setCategoryImages] = useState<Record<string, string>>(globalAdminState.categoryImages);
   const [subcategories, setSubcategories] = useState<Record<string, string[]>>(globalAdminState.subcategories);
   const [coupons, setCoupons] = useState<CouponCode[]>(globalAdminState.coupons);
   
-  // Check if admin is logged in and load data from global state
+  // Check if admin is logged in from session storage (per user)
   useEffect(() => {
     const adminLoggedIn = sessionStorage.getItem(ADMIN_STORAGE_KEY);
     if (adminLoggedIn === "true") {
       setIsAdmin(true);
       console.log("Admin logged in from sessionStorage");
     }
-    
-    // Always use the global state as the source of truth
-    setCategoryImages(globalAdminState.categoryImages);
-    setSubcategories(globalAdminState.subcategories);
-    setCoupons(globalAdminState.coupons);
-    console.log("Loaded admin data from global state");
   }, []);
   
   // Admin login function
@@ -115,28 +107,24 @@ export function useAdmin() {
   
   // Function to update category image
   const updateCategoryImage = useCallback((categorySlug: string, imageUrl: string) => {
-    setCategoryImages(prev => {
-      const updated = { ...prev, [categorySlug]: imageUrl };
-      // Update the global state
-      globalAdminState.categoryImages = updated;
-      // Save to localStorage
-      saveToStorage(CATEGORY_IMAGES_KEY, updated);
-      console.log("Updated category image for:", categorySlug);
-      return updated;
-    });
+    // Update global state
+    globalAdminState.categoryImages = { ...globalAdminState.categoryImages, [categorySlug]: imageUrl };
+    setCategoryImages({ ...globalAdminState.categoryImages });
+    
+    // Save to localStorage
+    saveToStorage(CATEGORY_IMAGES_KEY, globalAdminState.categoryImages);
+    console.log("Updated category image for:", categorySlug);
   }, []);
   
   // Function to update subcategories for a category
   const updateSubcategories = useCallback((category: string, newSubcategories: string[]) => {
-    setSubcategories(prev => {
-      const updated = { ...prev, [category]: newSubcategories };
-      // Update the global state
-      globalAdminState.subcategories = updated;
-      // Save to localStorage
-      saveToStorage(SUBCATEGORIES_KEY, updated);
-      console.log("Updated subcategories for:", category);
-      return updated;
-    });
+    // Update global state
+    globalAdminState.subcategories = { ...globalAdminState.subcategories, [category]: newSubcategories };
+    setSubcategories({ ...globalAdminState.subcategories });
+    
+    // Save to localStorage
+    saveToStorage(SUBCATEGORIES_KEY, globalAdminState.subcategories);
+    console.log("Updated subcategories for:", category);
   }, []);
 
   // Coupon management functions
@@ -146,39 +134,33 @@ export function useAdmin() {
       id: uuidv4()
     };
     
-    setCoupons(prev => {
-      const updated = [...prev, newCoupon];
-      // Update the global state
-      globalAdminState.coupons = updated;
-      // Save to localStorage
-      saveToStorage(COUPONS_KEY, updated);
-      console.log("Added new coupon:", newCoupon.code);
-      return updated;
-    });
+    // Update global state
+    globalAdminState.coupons = [...globalAdminState.coupons, newCoupon];
+    setCoupons([...globalAdminState.coupons]);
+    
+    // Save to localStorage
+    saveToStorage(COUPONS_KEY, globalAdminState.coupons);
+    console.log("Added new coupon:", newCoupon.code);
   }, []);
 
   const updateCoupon = useCallback((coupon: CouponCode) => {
-    setCoupons(prev => {
-      const updated = prev.map(c => c.id === coupon.id ? coupon : c);
-      // Update the global state
-      globalAdminState.coupons = updated;
-      // Save to localStorage
-      saveToStorage(COUPONS_KEY, updated);
-      console.log("Updated coupon:", coupon.code);
-      return updated;
-    });
+    // Update global state
+    globalAdminState.coupons = globalAdminState.coupons.map(c => c.id === coupon.id ? coupon : c);
+    setCoupons([...globalAdminState.coupons]);
+    
+    // Save to localStorage
+    saveToStorage(COUPONS_KEY, globalAdminState.coupons);
+    console.log("Updated coupon:", coupon.code);
   }, []);
 
   const deleteCoupon = useCallback((couponId: string) => {
-    setCoupons(prev => {
-      const updated = prev.filter(c => c.id !== couponId);
-      // Update the global state
-      globalAdminState.coupons = updated;
-      // Save to localStorage
-      saveToStorage(COUPONS_KEY, updated);
-      console.log("Deleted coupon with ID:", couponId);
-      return updated;
-    });
+    // Update global state
+    globalAdminState.coupons = globalAdminState.coupons.filter(c => c.id !== couponId);
+    setCoupons([...globalAdminState.coupons]);
+    
+    // Save to localStorage
+    saveToStorage(COUPONS_KEY, globalAdminState.coupons);
+    console.log("Deleted coupon with ID:", couponId);
   }, []);
 
   const validateCoupon = useCallback((code: string) => {
