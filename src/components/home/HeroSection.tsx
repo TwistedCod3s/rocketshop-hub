@@ -19,24 +19,25 @@ const HeroSection: React.FC = () => {
               </div>
             </div>
             
-            <h1 className="text-display-large font-bold tracking-tight text-rocketry-navy">
-              Launch Your School's <br />
-              <span className="text-rocketry-blue">Rocketry Program</span>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-rocketry-navy">
+              <span className="bg-gradient-to-r from-rocketry-navy to-rocketry-blue bg-clip-text text-transparent">
+                Rocketry for Schools
+              </span>
             </h1>
             
             <p className="text-lg text-muted-foreground max-w-md">High-quality rocketry kits, components, and curriculum materials designed specifically for educational institutions, beginners and enthusiasts.</p>
             
             <div className="flex flex-wrap gap-4 pt-1">
-              <Link to="/shop">
+              <Link to="/products">
                 <Button size="lg" className="bg-rocketry-navy hover:bg-rocketry-navy/90 text-white rounded-md">
                   Shop Products
-                  <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
               
-              <Link to="/about">
-                <Button size="lg" variant="outline" className="border-rocketry-navy text-rocketry-navy hover:bg-rocketry-navy/10">
-                  Learn More
+              <Link to="/products/category/Kits">
+                <Button size="lg" variant="outline" className="border-rocketry-navy text-rocketry-navy hover:bg-rocketry-navy/10 rounded-md">
+                  Explore Kits
+                  <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
             </div>
@@ -81,4 +82,5 @@ const HeroSection: React.FC = () => {
       </div>
     </div>;
 };
+
 export default HeroSection;
