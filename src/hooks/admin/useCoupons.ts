@@ -27,20 +27,22 @@ const defaultCoupons = [
 ];
 
 // Initialize global coupons state from localStorage or default values
-let globalCoupons = loadFromStorage<CouponCode[]>(COUPONS_KEY, defaultCoupons);
+const initialGlobalCoupons = loadFromStorage<CouponCode[]>(COUPONS_KEY, defaultCoupons);
 
 export function useCoupons() {
-  const [coupons, setCoupons] = useState<CouponCode[]>(globalCoupons);
+  const [coupons, setCoupons] = useState<CouponCode[]>(initialGlobalCoupons);
   
   // Listen for storage and custom events to keep state in sync
   useEffect(() => {
+    console.log("Setting up coupons event listeners");
+    
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === COUPONS_KEY) {
+      if (e.key === COUPONS_KEY && e.newValue) {
         try {
-          const updatedCoupons = JSON.parse(e.newValue || '[]');
-          globalCoupons = updatedCoupons;
+          console.log("Storage event detected for coupons");
+          const updatedCoupons = JSON.parse(e.newValue);
           setCoupons(updatedCoupons);
-          console.log("Coupons updated from another tab/window");
+          console.log("Coupons updated from storage event:", updatedCoupons);
         } catch (error) {
           console.error("Error parsing coupons from storage event:", error);
         }
@@ -48,9 +50,10 @@ export function useCoupons() {
     };
     
     // Custom event handlers
-    const handleCouponsEvent = (e: CustomEvent) => {
-      globalCoupons = e.detail;
+    const handleCouponsEvent = (e: CustomEvent<CouponCode[]>) => {
+      console.log("Custom event detected for coupons");
       setCoupons(e.detail);
+      console.log("Coupons updated from custom event:", e.detail);
     };
     
     // Add event listeners
@@ -70,36 +73,42 @@ export function useCoupons() {
       id: uuidv4()
     };
     
-    // Update global state
-    const updatedCoupons = [...globalCoupons, newCoupon];
-    globalCoupons = updatedCoupons;
-    setCoupons(updatedCoupons);
-    
-    // Save to localStorage and broadcast
-    saveAndBroadcast(COUPONS_KEY, COUPONS_EVENT, updatedCoupons);
-    console.log("Added new coupon:", newCoupon.code);
+    // Update local state
+    setCoupons(prevCoupons => {
+      const updatedCoupons = [...prevCoupons, newCoupon];
+      
+      // Save to localStorage and broadcast
+      saveAndBroadcast(COUPONS_KEY, COUPONS_EVENT, updatedCoupons);
+      console.log("Added new coupon:", newCoupon.code);
+      
+      return updatedCoupons;
+    });
   }, []);
 
   const updateCoupon = useCallback((coupon: CouponCode) => {
-    // Update global state
-    const updatedCoupons = globalCoupons.map(c => c.id === coupon.id ? coupon : c);
-    globalCoupons = updatedCoupons;
-    setCoupons(updatedCoupons);
-    
-    // Save to localStorage and broadcast
-    saveAndBroadcast(COUPONS_KEY, COUPONS_EVENT, updatedCoupons);
-    console.log("Updated coupon:", coupon.code);
+    // Update local state
+    setCoupons(prevCoupons => {
+      const updatedCoupons = prevCoupons.map(c => c.id === coupon.id ? coupon : c);
+      
+      // Save to localStorage and broadcast
+      saveAndBroadcast(COUPONS_KEY, COUPONS_EVENT, updatedCoupons);
+      console.log("Updated coupon:", coupon.code);
+      
+      return updatedCoupons;
+    });
   }, []);
 
   const deleteCoupon = useCallback((couponId: string) => {
-    // Update global state
-    const updatedCoupons = globalCoupons.filter(c => c.id !== couponId);
-    globalCoupons = updatedCoupons;
-    setCoupons(updatedCoupons);
-    
-    // Save to localStorage and broadcast
-    saveAndBroadcast(COUPONS_KEY, COUPONS_EVENT, updatedCoupons);
-    console.log("Deleted coupon with ID:", couponId);
+    // Update local state
+    setCoupons(prevCoupons => {
+      const updatedCoupons = prevCoupons.filter(c => c.id !== couponId);
+      
+      // Save to localStorage and broadcast
+      saveAndBroadcast(COUPONS_KEY, COUPONS_EVENT, updatedCoupons);
+      console.log("Deleted coupon with ID:", couponId);
+      
+      return updatedCoupons;
+    });
   }, []);
 
   const validateCoupon = useCallback((code: string) => {

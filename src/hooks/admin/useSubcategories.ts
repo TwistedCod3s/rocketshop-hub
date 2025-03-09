@@ -8,20 +8,22 @@ import {
 import { SUBCATEGORIES as initialSubcategories } from "@/constants/categories";
 
 // Initialize global subcategories state from localStorage or default values
-let globalSubcategories = loadFromStorage<Record<string, string[]>>(SUBCATEGORIES_KEY, initialSubcategories);
+const initialGlobalSubcategories = loadFromStorage<Record<string, string[]>>(SUBCATEGORIES_KEY, initialSubcategories);
 
 export function useSubcategories() {
-  const [subcategories, setSubcategories] = useState<Record<string, string[]>>(globalSubcategories);
+  const [subcategories, setSubcategories] = useState<Record<string, string[]>>(initialGlobalSubcategories);
   
   // Listen for storage and custom events to keep state in sync
   useEffect(() => {
+    console.log("Setting up subcategories event listeners");
+    
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === SUBCATEGORIES_KEY) {
+      if (e.key === SUBCATEGORIES_KEY && e.newValue) {
         try {
-          const updatedSubcategories = JSON.parse(e.newValue || '{}');
-          globalSubcategories = updatedSubcategories;
+          console.log("Storage event detected for subcategories");
+          const updatedSubcategories = JSON.parse(e.newValue);
           setSubcategories(updatedSubcategories);
-          console.log("Subcategories updated from another tab/window");
+          console.log("Subcategories updated from storage event:", updatedSubcategories);
         } catch (error) {
           console.error("Error parsing subcategories from storage event:", error);
         }
@@ -29,9 +31,10 @@ export function useSubcategories() {
     };
     
     // Custom event handlers
-    const handleSubcategoriesEvent = (e: CustomEvent) => {
-      globalSubcategories = e.detail;
+    const handleSubcategoriesEvent = (e: CustomEvent<Record<string, string[]>>) => {
+      console.log("Custom event detected for subcategories");
       setSubcategories(e.detail);
+      console.log("Subcategories updated from custom event:", e.detail);
     };
     
     // Add event listeners
@@ -46,14 +49,16 @@ export function useSubcategories() {
   
   // Function to update subcategories for a category
   const updateSubcategories = useCallback((category: string, newSubcategories: string[]) => {
-    // Update global state
-    const updatedSubcategories = { ...globalSubcategories, [category]: newSubcategories };
-    globalSubcategories = updatedSubcategories;
-    setSubcategories(updatedSubcategories);
-    
-    // Save to localStorage and broadcast
-    saveAndBroadcast(SUBCATEGORIES_KEY, SUBCATEGORIES_EVENT, updatedSubcategories);
-    console.log("Updated subcategories for:", category);
+    // Update local state
+    setSubcategories(prevSubcategories => {
+      const updatedSubcategories = { ...prevSubcategories, [category]: newSubcategories };
+      
+      // Save to localStorage and broadcast
+      saveAndBroadcast(SUBCATEGORIES_KEY, SUBCATEGORIES_EVENT, updatedSubcategories);
+      console.log("Updated subcategories for:", category);
+      
+      return updatedSubcategories;
+    });
   }, []);
 
   return {

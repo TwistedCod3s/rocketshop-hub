@@ -3,12 +3,22 @@ import { useAdminAuth } from "./admin/useAdminAuth";
 import { useCategoryImages } from "./admin/useCategoryImages";
 import { useSubcategories } from "./admin/useSubcategories";
 import { useCoupons } from "./admin/useCoupons";
+import { useEffect } from "react";
 
 export function useAdmin() {
   const auth = useAdminAuth();
   const categoryImagesHook = useCategoryImages();
   const subcategoriesHook = useSubcategories();
   const couponsHook = useCoupons();
+  
+  // Debug logging
+  useEffect(() => {
+    console.log("useAdmin hook initialized or re-rendered");
+    
+    return () => {
+      console.log("useAdmin hook unmounted");
+    };
+  }, []);
   
   return {
     // Admin authentication
