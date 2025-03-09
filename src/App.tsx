@@ -30,7 +30,10 @@ const App = () => (
             <Route path="/products" element={<ProductList />} />
             <Route path="/shop" element={<Navigate to="/products" replace />} />
             
-            {/* Category routes - each category has its own route */}
+            {/* Category routes */}
+            <Route path="/category/:categoryName" element={<CategoryPage />} />
+            
+            {/* Individual category routes for direct access */}
             <Route path="/category/rocket-kits" element={<CategoryPage categoryName="Rocket Kits" />} />
             <Route path="/category/engines" element={<CategoryPage categoryName="Engines" />} />
             <Route path="/category/tools" element={<CategoryPage categoryName="Tools" />} />
@@ -38,16 +41,12 @@ const App = () => (
             <Route path="/category/ukroc" element={<CategoryPage categoryName="UKROC" />} />
             <Route path="/category/accessories" element={<CategoryPage categoryName="Accessories" />} />
             
-            {/* Redirect old routes to new format */}
-            <Route path="/products/category/:category" element={<Navigate to="/category/:category" replace />} />
-            
             <Route path="/product/:productId" element={<ProductDetail />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/order-confirmation" element={<OrderConfirmation />} />
             <Route path="/account" element={<Account />} />
             <Route path="/admin" element={<Admin />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

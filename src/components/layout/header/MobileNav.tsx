@@ -72,7 +72,7 @@ const MobileNav: React.FC<MobileNavProps> = ({
                 {categories.map((category) => (
                   <Link
                     key={category.path}
-                    to={category.path}
+                    to={`/category/${category.path}`}
                     className="py-1.5 px-2 hover:bg-accent rounded-md transition-colors"
                   >
                     {category.name}
