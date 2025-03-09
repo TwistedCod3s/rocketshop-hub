@@ -50,9 +50,15 @@ export function useProducts() {
   }, [products]);
   
   const fetchProductsByCategory = useCallback((category: string): Product[] => {
+    console.log(`Filtering products by category: ${category}`);
+    console.log("Available products:", products);
+    
+    // Case-insensitive comparison for more reliable filtering
     const filteredProducts = products.filter(p => 
       p.category.toLowerCase() === category.toLowerCase()
     );
+    
+    console.log("Filtered products result:", filteredProducts);
     return filteredProducts;
   }, [products]);
   

@@ -50,11 +50,14 @@ const ProductList = () => {
     // Initial products load
     if (category) {
       // If there's a category parameter, fetch products for that category
-      const categoryProducts = fetchProductsByCategory(category);
-      console.log(`Products for category ${category}:`, categoryProducts);
+      // Need to decode the category parameter as it might be URL-encoded
+      const decodedCategory = decodeURIComponent(category);
+      console.log(`Looking for products in category: ${decodedCategory}`);
+      const categoryProducts = fetchProductsByCategory(decodedCategory);
+      console.log(`Products for category ${decodedCategory}:`, categoryProducts);
       setDisplayProducts(categoryProducts);
       // Pre-select current category in filters
-      setSelectedCategories([category]);
+      setSelectedCategories([decodedCategory]);
     } else {
       // Otherwise, fetch all products
       const allProducts = fetchAllProducts();
