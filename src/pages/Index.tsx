@@ -20,7 +20,7 @@ const Index = () => {
     <MainLayout>
       <HeroSection />
       
-      <section className="container py-16">
+      <section className="container py-0">
         <h2 className="text-display-small font-bold text-rocketry-navy mb-8 text-center">
           Featured Products
         </h2>
