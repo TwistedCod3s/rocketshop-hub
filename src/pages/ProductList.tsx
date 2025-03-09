@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import ProductCard from "@/components/products/ProductCard";
@@ -17,6 +18,16 @@ import {
 import { Search, SlidersHorizontal, X } from "lucide-react";
 import { Product } from "@/types/shop";
 
+// Updated categories constant to match our new structure
+const CATEGORIES = [
+  "Rocket Kits",
+  "Engines",
+  "Tools",
+  "Materials",
+  "UKROC",
+  "Accessories"
+];
+
 const ProductList = () => {
   const { category } = useParams();
   const [searchParams] = useSearchParams();
@@ -27,6 +38,7 @@ const ProductList = () => {
   const [priceRange, setPriceRange] = useState([0, 500]);
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
   const [sortBy, setSortBy] = useState("featured");
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   
   // Debug logs
   useEffect(() => {
@@ -41,6 +53,8 @@ const ProductList = () => {
       const categoryProducts = fetchProductsByCategory(category);
       console.log(`Products for category ${category}:`, categoryProducts);
       setDisplayProducts(categoryProducts);
+      // Pre-select current category in filters
+      setSelectedCategories([category]);
     } else {
       // Otherwise, fetch all products
       const allProducts = fetchAllProducts();
@@ -72,6 +86,13 @@ const ProductList = () => {
       product.price >= priceRange[0] && product.price <= priceRange[1]
     );
     
+    // Apply category filters if any are selected and we're not already on a category page
+    if (selectedCategories.length > 0 && !category) {
+      result = result.filter(product => 
+        selectedCategories.includes(product.category)
+      );
+    }
+    
     // Apply sorting
     if (sortBy === "price-asc") {
       result.sort((a, b) => a.price - b.price);
@@ -83,7 +104,17 @@ const ProductList = () => {
     
     setFilteredProducts(result);
     console.log("Filtered products:", result);
-  }, [displayProducts, searchTerm, priceRange, sortBy]);
+  }, [displayProducts, searchTerm, priceRange, sortBy, selectedCategories, category]);
+  
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategories(prev => {
+      if (prev.includes(category)) {
+        return prev.filter(c => c !== category);
+      } else {
+        return [...prev, category];
+      }
+    });
+  };
   
   return (
     <MainLayout>
@@ -142,10 +173,19 @@ const ProductList = () => {
                 <div>
                   <h4 className="font-medium mb-2">Categories</h4>
                   <div className="space-y-2">
-                    {["Rockets", "Kits", "Components", "Tools", "Books"].map((cat) => (
+                    {CATEGORIES.map((cat) => (
                       <div key={cat} className="flex items-center space-x-2">
-                        <Checkbox id={`category-${cat}`} />
-                        <label htmlFor={`category-${cat}`} className="text-sm">{cat}</label>
+                        <Checkbox 
+                          id={`category-${cat}`} 
+                          checked={selectedCategories.includes(cat)}
+                          onCheckedChange={() => handleCategoryChange(cat)}
+                        />
+                        <label 
+                          htmlFor={`category-${cat}`} 
+                          className="text-sm cursor-pointer"
+                        >
+                          {cat}
+                        </label>
                       </div>
                     ))}
                   </div>
