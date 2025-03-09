@@ -22,12 +22,7 @@ const About = () => {
             <p>We believe in learning through doing. Our rocket kits and educational materials are designed to provide hands-on experiences that make complex scientific concepts tangible and engaging. Our competition-ready resources help teachers integrate rocketry into their extracurricular program easily with the same capabilities as schools with experience at UKROC </p>
             
             <h2 className="text-2xl font-semibold mb-4 mt-8">Our Approach</h2>
-            <p>
-              We believe in learning through doing. Our rocket kits and educational materials are
-              designed to provide hands-on experiences that make complex scientific concepts
-              tangible and engaging. Our curriculum-aligned resources help teachers integrate
-              rocketry into their teaching of physics, mathematics, and design technology.
-            </p>
+            <p>Safety is our top priority. All our products and services emphasize proper safety procedures. Teachers and students need to be aware of all safety rules to ensure all rocket activities are conducted safely. Rocketry for schools is not liable for any injuries or damages caused by negligence to acknowledge proper safety rules.</p>
             
             <h2 className="text-2xl font-semibold mb-4 mt-8">Safety First</h2>
             <p>
