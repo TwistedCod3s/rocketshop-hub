@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminLogin from "@/components/admin/AdminLogin";
 import { useShopContext } from "@/context/ShopContext";
@@ -15,11 +15,26 @@ import CouponManagement from "@/components/admin/CouponManagement";
 const Admin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { products, addProduct, updateProduct, removeProduct, updateFeaturedProducts } = useShopContext();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { 
+    products, 
+    addProduct, 
+    updateProduct, 
+    removeProduct, 
+    updateFeaturedProducts,
+    isAdmin,
+    tryAdminLogin
+  } = useShopContext();
+  
+  // Use the shared admin state
+  const [isAuthenticated, setIsAuthenticated] = useState(isAdmin);
   const [showProductForm, setShowProductForm] = useState(false);
   const [productToEdit, setProductToEdit] = useState(null);
   const [activeSection, setActiveSection] = useState("products");
+  
+  // Sync with global admin state
+  useEffect(() => {
+    setIsAuthenticated(isAdmin);
+  }, [isAdmin]);
   
   const handleLogin = (success) => {
     if (success) {

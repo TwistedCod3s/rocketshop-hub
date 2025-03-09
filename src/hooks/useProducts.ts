@@ -1,58 +1,57 @@
-
 import { useState, useCallback, useEffect } from "react";
 import { Product } from "@/types/shop";
 import { initialProducts } from "@/data/initialProducts";
 
-// Use a consistent storage key that won't change between deployments
-const PRODUCTS_STORAGE_KEY = "rocketry-shop-products";
+// Define a global variable to store products in memory for all users
+// This will persist during the lifecycle of the application
+let globalProducts: Product[] = [];
 
 export function useProducts() {
   const [products, setProducts] = useState<Product[]>([]);
   
   // Load initial data
   useEffect(() => {
-    // Try to load products from localStorage
-    const savedProducts = localStorage.getItem(PRODUCTS_STORAGE_KEY);
-    if (savedProducts) {
-      try {
-        const parsedProducts = JSON.parse(savedProducts);
-        setProducts(parsedProducts);
-        console.log("Loaded products from localStorage:", parsedProducts.length);
-      } catch (error) {
-        console.error("Error parsing saved products:", error);
-        // Fall back to initial products if there's a parsing error
-        setProducts(initialProducts);
-        localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(initialProducts));
-      }
+    // If we already have products in the global store, use those
+    if (globalProducts.length > 0) {
+      console.log("Using products from global store:", globalProducts.length);
+      setProducts(globalProducts);
     } else {
-      // Use initial products data if nothing in localStorage
-      console.log("No saved products found, using initial data");
+      // Otherwise, initialize with default products
+      console.log("Initializing products with default data");
       setProducts(initialProducts);
-      localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(initialProducts));
+      globalProducts = [...initialProducts];
     }
   }, []);
   
-  // Update localStorage when products change
-  useEffect(() => {
-    if (products.length > 0) {
-      localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(products));
-      console.log("Saved products to localStorage:", products.length);
-    }
-  }, [products]);
-
   // Product Management Functions
   const addProduct = useCallback((product: Product) => {
-    setProducts(prev => [...prev, product]);
+    setProducts(prev => {
+      const updated = [...prev, product];
+      // Update the global store
+      globalProducts = [...updated];
+      console.log("Added product to global store:", product.name);
+      return updated;
+    });
   }, []);
   
   const updateProduct = useCallback((product: Product) => {
-    setProducts(prev => 
-      prev.map(p => p.id === product.id ? product : p)
-    );
+    setProducts(prev => {
+      const updated = prev.map(p => p.id === product.id ? product : p);
+      // Update the global store
+      globalProducts = [...updated];
+      console.log("Updated product in global store:", product.name);
+      return updated;
+    });
   }, []);
   
   const removeProduct = useCallback((productId: string) => {
-    setProducts(prev => prev.filter(p => p.id !== productId));
+    setProducts(prev => {
+      const updated = prev.filter(p => p.id !== productId);
+      // Update the global store
+      globalProducts = [...updated];
+      console.log("Removed product from global store:", productId);
+      return updated;
+    });
   }, []);
   
   const getProduct = useCallback((productId: string) => {
@@ -65,7 +64,6 @@ export function useProducts() {
   
   const fetchProductsByCategory = useCallback((category: string): Product[] => {
     console.log(`Filtering products by category: ${category}`);
-    console.log("Available products:", products);
     
     // Return all products if no category is provided
     if (!category) {
@@ -78,7 +76,7 @@ export function useProducts() {
       p.category && p.category.toLowerCase() === category.toLowerCase()
     );
     
-    console.log("Filtered products result:", filteredProducts);
+    console.log("Filtered products result:", filteredProducts.length);
     return filteredProducts;
   }, [products]);
   
@@ -89,9 +87,13 @@ export function useProducts() {
   }, [products]);
   
   const updateFeaturedProducts = useCallback((productId: string, isFeatured: boolean) => {
-    setProducts(prev => 
-      prev.map(p => p.id === productId ? { ...p, featured: isFeatured } : p)
-    );
+    setProducts(prev => {
+      const updated = prev.map(p => p.id === productId ? { ...p, featured: isFeatured } : p);
+      // Update the global store
+      globalProducts = [...updated];
+      console.log(`${isFeatured ? "Added" : "Removed"} product ${productId} ${isFeatured ? "to" : "from"} featured`);
+      return updated;
+    });
   }, []);
 
   return {
