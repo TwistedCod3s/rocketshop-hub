@@ -3,7 +3,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Heart } from "lucide-react";
+import { ShoppingCart } from "lucide-react";
 import { Product } from "@/types/shop";
 import { useShopContext } from "@/context/ShopContext";
 import { toast } from "sonner";
@@ -23,42 +23,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       description: `${product.name} has been added to your cart.`
     });
   };
-  
-  const handleWishlist = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    // Get current wishlist from localStorage
-    const savedWishlist = localStorage.getItem("wishlist");
-    let wishlist: Product[] = savedWishlist ? JSON.parse(savedWishlist) : [];
-    
-    // Check if product is already in wishlist
-    const isInWishlist = wishlist.some(item => item.id === product.id);
-    
-    if (isInWishlist) {
-      // Remove from wishlist
-      wishlist = wishlist.filter(item => item.id !== product.id);
-      localStorage.setItem("wishlist", JSON.stringify(wishlist));
-      toast.info(`Removed from wishlist`, {
-        description: `${product.name} has been removed from your wishlist.`,
-      });
-    } else {
-      // Add to wishlist
-      wishlist.push(product);
-      localStorage.setItem("wishlist", JSON.stringify(wishlist));
-      toast("Added to wishlist", {
-        description: `${product.name} has been added to your wishlist.`,
-      });
-    }
-  };
-
-  // Check if product is in wishlist to show filled or outline heart
-  const isInWishlist = () => {
-    const savedWishlist = localStorage.getItem("wishlist");
-    if (!savedWishlist) return false;
-    const wishlist: Product[] = JSON.parse(savedWishlist);
-    return wishlist.some(item => item.id === product.id);
-  };
 
   return (
     <Link to={`/product/${product.id}`}>
@@ -74,20 +38,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           <div className="absolute bottom-0 left-0 right-0 p-4 flex justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <Button
               size="sm"
-              className="bg-white text-rocketry-navy hover:bg-rocketry-navy hover:text-white transition-colors"
+              className="bg-white text-rocketry-navy hover:bg-rocketry-navy hover:text-white transition-colors w-full"
               onClick={handleAddToCart}
             >
               <ShoppingCart className="mr-1 h-4 w-4" />
               Add to Cart
-            </Button>
-            
-            <Button
-              size="icon"
-              variant="outline"
-              className={`h-8 w-8 bg-white border-white ${isInWishlist() ? 'text-red-500' : 'text-rocketry-navy'} hover:bg-white/90 hover:text-rocketry-navy/90`}
-              onClick={handleWishlist}
-            >
-              <Heart className={`h-4 w-4 ${isInWishlist() ? 'fill-current' : ''}`} />
             </Button>
           </div>
           
