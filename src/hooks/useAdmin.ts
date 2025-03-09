@@ -23,8 +23,23 @@ export function useAdmin() {
     return false;
   }, []);
 
+  // Function to handle file uploads and convert to base64
+  const handleFileUpload = useCallback((file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        resolve(reader.result as string);
+      };
+      reader.onerror = () => {
+        reject(new Error('Failed to read file'));
+      };
+      reader.readAsDataURL(file);
+    });
+  }, []);
+
   return {
     isAdmin,
-    tryAdminLogin
+    tryAdminLogin,
+    handleFileUpload
   };
 }
