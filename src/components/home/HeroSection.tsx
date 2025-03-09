@@ -3,15 +3,16 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
+
 const HeroSection: React.FC = () => {
-  return <div className="relative min-h-[80vh] flex items-center overflow-hidden">
+  return <div className="relative min-h-[65vh] flex items-center overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 hero-pattern"></div>
       
       {/* Content Container */}
-      <div className="container mx-auto px-4 md:px-6 py-6 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div className="space-y-4 animate-fade-up">
+      <div className="container mx-auto px-4 md:px-6 py-2 relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+          <div className="space-y-3 animate-fade-up">
             <div className="inline-block">
               <div className="bg-rocketry-blue/10 text-rocketry-navy border border-rocketry-blue/20 rounded-full px-4 py-1 text-sm">
                 Empowering education through rocketry
@@ -25,7 +26,7 @@ const HeroSection: React.FC = () => {
             
             <p className="text-lg text-muted-foreground max-w-md">High-quality rocketry kits, components, and curriculum materials designed specifically for educational institutions, beginners and enthusiasts.</p>
             
-            <div className="flex flex-wrap gap-4 pt-2">
+            <div className="flex flex-wrap gap-4 pt-1">
               <Link to="/shop">
                 <Button size="lg" className="bg-rocketry-navy hover:bg-rocketry-navy/90 text-white rounded-md">
                   Shop Products
@@ -40,7 +41,7 @@ const HeroSection: React.FC = () => {
               </Link>
             </div>
             
-            <div className="flex items-center pt-4 space-x-8">
+            <div className="flex items-center pt-2 space-x-8">
               <div className="flex items-center">
                 <div className="h-12 w-12 rounded-full bg-rocketry-gray flex items-center justify-center">
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-rocketry-navy">
@@ -72,7 +73,7 @@ const HeroSection: React.FC = () => {
           
           <div className="flex justify-center lg:justify-end items-center">
             <div className="relative">
-              <img src="/lovable-uploads/464bb92b-3c96-4abd-9987-49654404f1b3.png" alt="Rocketry for Schools" className="object-contain max-h-[500px] animate-rocket-move" />
+              <img src="/lovable-uploads/464bb92b-3c96-4abd-9987-49654404f1b3.png" alt="Rocketry for Schools" className="object-contain max-h-[450px] animate-rocket-move" />
               <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent rounded-full blur-3xl -z-10"></div>
             </div>
           </div>
