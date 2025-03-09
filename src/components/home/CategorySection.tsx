@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { CATEGORY_MAP } from "@/constants/categories";
 
 // Define image paths for each category
-const CATEGORY_IMAGES = {
+export const CATEGORY_IMAGES = {
   "rocket-kits": "/lovable-uploads/5e9df28c-dfeb-451d-aa2d-e34a30a769c6.png",
   "engines": "/lovable-uploads/464bb92b-3c96-4abd-9987-49654404f1b3.png",
   "tools": "/lovable-uploads/6deeac36-da1c-460a-8457-ffb92c527e95.png",
