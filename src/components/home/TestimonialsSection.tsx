@@ -5,21 +5,21 @@ import { Card, CardContent } from "@/components/ui/card";
 const testimonials = [
   {
     quote: "Implementing the Rocketry For Schools program transformed our STEM curriculum. Students are more engaged and excited about science than ever before.",
-    author: "Sarah Johnson",
-    role: "Science Department Chair",
-    school: "Lincoln High School",
+    author: "Dr. J. Thompson",
+    role: "Science Department Head",
+    school: "International Academy of Science",
   },
   {
     quote: "The quality of materials and the accompanying curriculum made it incredibly easy to integrate rocketry into our after-school program. Customer support has been exceptional.",
-    author: "Michael Torres",
-    role: "STEM Coordinator",
-    school: "Washington Middle School",
+    author: "Prof. R. Martinez",
+    role: "STEM Education Specialist",
+    school: "Regional Education Institute",
   },
   {
     quote: "We've seen a dramatic increase in students pursuing engineering pathways after introducing the rocketry program from Rocketry For Schools. The hands-on experience makes all the difference.",
-    author: "Dr. Patricia Lee",
-    role: "Principal",
-    school: "Oakridge Academy",
+    author: "C. Wilson, PhD",
+    role: "Education Director",
+    school: "National STEM Alliance",
   },
 ];
 
