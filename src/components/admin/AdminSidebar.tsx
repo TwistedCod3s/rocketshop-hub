@@ -1,7 +1,44 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { PackageOpen, LayoutGrid, Users, Settings, LogOut } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { 
+  ShoppingBag, 
+  LayoutGrid, 
+  Users, 
+  Settings, 
+  LogOut,
+  Home,
+  TagIcon
+} from "lucide-react";
+
+const sidebarItems = [
+  {
+    icon: ShoppingBag,
+    label: "Products",
+    value: "products",
+  },
+  {
+    icon: LayoutGrid,
+    label: "Categories",
+    value: "categories",
+  },
+  {
+    icon: Users,
+    label: "Customers",
+    value: "customers",
+  },
+  {
+    icon: TagIcon,
+    label: "Coupons",
+    value: "coupons",
+  },
+  {
+    icon: Settings,
+    label: "Settings",
+    value: "settings",
+  },
+];
 
 interface AdminSidebarProps {
   activeSection: string;
@@ -10,72 +47,56 @@ interface AdminSidebarProps {
   navigate: (path: string) => void;
 }
 
-const AdminSidebar: React.FC<AdminSidebarProps> = ({ 
-  activeSection, 
-  setActiveSection, 
-  handleLogout, 
-  navigate 
+const AdminSidebar: React.FC<AdminSidebarProps> = ({
+  activeSection,
+  setActiveSection,
+  handleLogout,
+  navigate,
 }) => {
   return (
-    <div className="w-64 bg-rocketry-navy text-white p-6 flex flex-col">
-      <div className="mb-10">
-        <h1 className="text-xl font-bold">Admin Dashboard</h1>
+    <div className="w-64 bg-white border-r min-h-screen flex flex-col">
+      <div className="p-4 border-b">
+        <h1 className="text-xl font-bold text-rocketry-navy">Rocketry Admin</h1>
       </div>
       
-      <nav className="space-y-1 flex-1">
-        <button 
-          className={`flex items-center w-full p-3 rounded-md text-left ${
-            activeSection === "products" ? "bg-white/10" : "hover:bg-white/5"
-          }`}
-          onClick={() => setActiveSection("products")}
-        >
-          <PackageOpen className="h-5 w-5 mr-3" />
-          Products
-        </button>
-        <button 
-          className={`flex items-center w-full p-3 rounded-md text-left ${
-            activeSection === "categories" ? "bg-white/10" : "hover:bg-white/5"
-          }`}
-          onClick={() => setActiveSection("categories")}
-        >
-          <LayoutGrid className="h-5 w-5 mr-3" />
-          Categories
-        </button>
-        <button 
-          className={`flex items-center w-full p-3 rounded-md text-left ${
-            activeSection === "customers" ? "bg-white/10" : "hover:bg-white/5"
-          }`}
-          onClick={() => setActiveSection("customers")}
-        >
-          <Users className="h-5 w-5 mr-3" />
-          Customers
-        </button>
-        <button 
-          className={`flex items-center w-full p-3 rounded-md text-left ${
-            activeSection === "settings" ? "bg-white/10" : "hover:bg-white/5"
-          }`}
-          onClick={() => setActiveSection("settings")}
-        >
-          <Settings className="h-5 w-5 mr-3" />
-          Settings
-        </button>
+      <nav className="flex-1 p-4">
+        <ul className="space-y-2">
+          {sidebarItems.map((item) => (
+            <li key={item.value}>
+              <button
+                onClick={() => setActiveSection(item.value)}
+                className={cn(
+                  "w-full flex items-center space-x-3 px-3 py-2 rounded-md text-sm transition-colors",
+                  activeSection === item.value
+                    ? "bg-rocketry-navy text-white"
+                    : "text-gray-600 hover:bg-gray-100"
+                )}
+              >
+                <item.icon className="h-5 w-5" />
+                <span>{item.label}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
       </nav>
       
-      <div className="pt-6 mt-auto border-t border-white/10">
-        <Button 
-          variant="ghost" 
-          className="w-full justify-start text-white hover:bg-white/10 hover:text-white"
-          onClick={handleLogout}
+      <div className="p-4 border-t space-y-3">
+        <Button
+          onClick={() => navigate('/')}
+          variant="outline"
+          className="w-full flex items-center justify-center"
         >
-          <LogOut className="h-5 w-5 mr-3" />
-          Logout
+          <Home className="h-4 w-4 mr-2" />
+          View Store
         </Button>
-        <Button 
-          variant="outline" 
-          className="w-full justify-start mt-4 border-white text-white hover:bg-white/10 hover:text-white"
-          onClick={() => navigate("/")}
+        
+        <Button
+          onClick={handleLogout}
+          variant="outline"
+          className="w-full flex items-center justify-center"
         >
-          Return to Site
+          <LogOut className="h-4 w-4 mr-2" />
+          Logout
         </Button>
       </div>
     </div>

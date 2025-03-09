@@ -31,6 +31,14 @@ export interface CartItem {
   quantity: number;
 }
 
+export interface CouponCode {
+  id: string;
+  code: string;
+  discountPercentage: number;
+  active: boolean;
+  description?: string;
+}
+
 export interface CartSummaryProps {
   cart: CartItem[];
   subtotal?: number;
@@ -60,6 +68,11 @@ export interface ShopContextType {
   tryAdminLogin: (username: string, password: string) => boolean;
   subcategories: Record<string, string[]>;
   updateSubcategories: (category: string, subcategories: string[]) => void;
+  coupons: CouponCode[];
+  addCoupon: (coupon: Omit<CouponCode, 'id'>) => void;
+  updateCoupon: (coupon: CouponCode) => void;
+  deleteCoupon: (couponId: string) => void;
+  validateCoupon: (code: string) => CouponCode | undefined;
 }
 
 export interface Category {

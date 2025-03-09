@@ -29,6 +29,11 @@ const ShopContext = createContext<ShopContextType>({
   tryAdminLogin: () => false,
   subcategories: {},
   updateSubcategories: () => {},
+  coupons: [],
+  addCoupon: () => {},
+  updateCoupon: () => {},
+  deleteCoupon: () => {},
+  validateCoupon: () => undefined,
 });
 
 // Hook for using the shop context
@@ -56,6 +61,11 @@ export const ShopProvider = ({ children }) => {
     isAdmin: adminHook.isAdmin,
     subcategories: adminHook.subcategories,
     updateSubcategories: adminHook.updateSubcategories,
+    coupons: adminHook.coupons,
+    addCoupon: adminHook.addCoupon,
+    updateCoupon: adminHook.updateCoupon,
+    deleteCoupon: adminHook.deleteCoupon,
+    validateCoupon: adminHook.validateCoupon,
   };
   
   return (

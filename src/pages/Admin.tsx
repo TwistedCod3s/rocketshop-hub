@@ -10,6 +10,7 @@ import AdminCategories from "@/components/admin/AdminCategories";
 import AdminCustomers from "@/components/admin/AdminCustomers";
 import AdminSettings from "@/components/admin/AdminSettings";
 import ProductForm from "@/components/admin/ProductForm";
+import CouponManagement from "@/components/admin/CouponManagement";
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -117,6 +118,7 @@ const Admin = () => {
               {activeSection === "categories" && "Categories"}
               {activeSection === "customers" && "Customers"}
               {activeSection === "settings" && "Settings"}
+              {activeSection === "coupons" && "Coupon Management"}
             </h2>
             
             {activeSection === "products" && (
@@ -164,6 +166,10 @@ const Admin = () => {
           
           {activeSection === "settings" && (
             <AdminSettings />
+          )}
+          
+          {activeSection === "coupons" && (
+            <CouponManagement />
           )}
         </div>
       </div>
