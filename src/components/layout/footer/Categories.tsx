@@ -8,18 +8,13 @@ const Categories: React.FC = () => {
       <h3 className="font-semibold mb-6">Categories</h3>
       <ul className="space-y-3">
         <li>
-          <Link to="/category/rockets" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
-            Rockets
+          <Link to="/category/rocket-kits" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
+            Rocket Kits
           </Link>
         </li>
         <li>
-          <Link to="/category/kits" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
-            Kits
-          </Link>
-        </li>
-        <li>
-          <Link to="/category/components" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
-            Components
+          <Link to="/category/engines" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
+            Engines
           </Link>
         </li>
         <li>
@@ -28,13 +23,18 @@ const Categories: React.FC = () => {
           </Link>
         </li>
         <li>
-          <Link to="/category/curriculum" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
-            Curriculum
+          <Link to="/category/materials" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
+            Materials
           </Link>
         </li>
         <li>
-          <Link to="/category/books" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
-            Books
+          <Link to="/category/ukroc" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
+            UKROC
+          </Link>
+        </li>
+        <li>
+          <Link to="/category/accessories" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
+            Accessories
           </Link>
         </li>
       </ul>

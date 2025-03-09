@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -27,14 +26,14 @@ const Header: React.FC = () => {
     setSearchQuery("");
   }, [location.pathname]);
 
-  // Navigation categories
+  // Updated navigation categories
   const categories = [
-    { name: "Rockets", path: "/category/rockets" },
-    { name: "Kits", path: "/category/kits" },
-    { name: "Components", path: "/category/components" },
+    { name: "Rocket Kits", path: "/category/rocket-kits" },
+    { name: "Engines", path: "/category/engines" },
     { name: "Tools", path: "/category/tools" },
-    { name: "Curriculum", path: "/category/curriculum" },
-    { name: "Books", path: "/category/books" },
+    { name: "Materials", path: "/category/materials" },
+    { name: "UKROC", path: "/category/ukroc" },
+    { name: "Accessories", path: "/category/accessories" },
   ];
 
   return (

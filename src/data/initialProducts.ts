@@ -1,7 +1,7 @@
 
 import { Product } from "@/types/shop";
 
-// Initial sample products
+// Updated initial sample products with new categories
 export const initialProducts: Product[] = [
   {
     id: "1",
@@ -9,7 +9,7 @@ export const initialProducts: Product[] = [
     description: "Perfect beginner kit for students to learn the basics of rocket science",
     fullDescription: "The Junior Rocket Kit is specifically designed for young rocketeers and classrooms. This comprehensive kit includes everything needed to build and launch a small model rocket, making it perfect for students to learn the fundamentals of rocket science, physics, and engineering. The kit comes with detailed instructions that are easy to follow, making it ideal for educational settings or home use under adult supervision.",
     price: 24.99,
-    category: "Kits",
+    category: "Rocket Kits",
     images: [
       "/lovable-uploads/464bb92b-3c96-4abd-9987-49654404f1b3.png",
       "/placeholder.svg"
@@ -46,7 +46,7 @@ export const initialProducts: Product[] = [
     description: "High-performance rocket for advanced students with data collection capabilities",
     fullDescription: "The Advanced Explorer Rocket is designed for high school and advanced middle school students. This sophisticated model rocket allows students to conduct experiments and collect data during flight. It comes with an altimeter and temperature sensor, providing real-world data for analysis. The kit includes comprehensive assembly instructions, quality components, and educational materials about rocket science principles and data analysis.",
     price: 89.99,
-    category: "Rockets",
+    category: "Rocket Kits",
     images: [
       "/lovable-uploads/5e9df28c-dfeb-451d-aa2d-e34a30a769c6.png",
       "/placeholder.svg"
@@ -77,7 +77,7 @@ export const initialProducts: Product[] = [
     description: "Bulk pack of rocket engines suitable for classroom projects",
     fullDescription: "Our Classroom Rocket Engine Pack provides teachers and schools with high-quality, reliable rocket motors at a discounted bulk rate. This pack includes 24 A8-3 engines, perfect for most beginner to intermediate level model rockets. Each engine comes with igniters and recovery wadding. These engines are thoroughly tested for safety and consistent performance, making them ideal for educational settings where multiple launches may take place.",
     price: 65.99,
-    category: "Components",
+    category: "Engines",
     images: [
       "/lovable-uploads/6deeac36-da1c-460a-8457-ffb92c527e95.png",
       "/placeholder.svg"
@@ -109,11 +109,11 @@ export const initialProducts: Product[] = [
   },
   {
     id: "4",
-    name: "Rocket Science Curriculum Bundle",
-    description: "Complete teaching materials for a 6-week rocket science unit",
-    fullDescription: "The Rocket Science Curriculum Bundle is a comprehensive educational package designed for teachers who want to incorporate rocket science into their STEM curriculum. This bundle includes detailed lesson plans for a 6-week unit, worksheets, assessment tools, presentation slides, and hands-on activities. The materials align with Next Generation Science Standards and include cross-disciplinary connections to mathematics, engineering, and physics. Perfect for middle and high school science classes.",
+    name: "UKROC Competition Kit",
+    description: "Complete kit for the UK Rocketry Challenge",
+    fullDescription: "The UKROC Competition Kit provides everything teams need to participate in the UK Rocketry Challenge. This comprehensive package includes approved components, detailed guidelines, and reference materials to help teams design, build, and test their competition rockets. Designed to meet all UKROC specifications and safety requirements, this kit gives teams a strong foundation while still allowing for the creativity and problem-solving that the competition demands.",
     price: 129.99,
-    category: "Books",
+    category: "UKROC",
     images: [
       "/placeholder.svg"
     ],
@@ -122,16 +122,16 @@ export const initialProducts: Product[] = [
     rating: 4.9,
     specifications: [
       { name: "Grade Level", value: "6-12" },
-      { name: "Duration", value: "6-week unit" },
-      { name: "Format", value: "Digital download + printed materials" },
-      { name: "Includes", value: "Lesson plans, worksheets, assessments, slides" },
-      { name: "Standards", value: "NGSS aligned" }
+      { name: "Competition", value: "UKROC approved" },
+      { name: "Format", value: "Physical components + digital resources" },
+      { name: "Includes", value: "Body tubes, nose cones, recovery systems" },
+      { name: "Standards", value: "Safety certified" }
     ],
     reviews: [
       {
-        user: "ScienceDepartmentHead",
+        user: "RocketryTeam",
         rating: 5,
-        comment: "Excellent curriculum resource. Well-structured and engaging for students. Highly recommend for any science teacher.",
+        comment: "Excellent kit for our UKROC team. Well-structured and all components were high quality.",
         date: "2023-09-18"
       }
     ]

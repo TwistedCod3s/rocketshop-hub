@@ -3,13 +3,13 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Product } from "@/types/shop";
 
-// Sample categories for the admin panel
+// Updated categories list
 const CATEGORIES = [
-  "Rockets",
-  "Kits",
-  "Components",
+  "Rocket Kits",
+  "Engines",
   "Tools",
-  "Books",
+  "Materials",
+  "UKROC",
   "Accessories"
 ];
 

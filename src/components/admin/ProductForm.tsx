@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,13 +14,13 @@ import { Switch } from "@/components/ui/switch";
 import { X, ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 
-// Sample categories for the form
+// Updated categories list for the form
 const CATEGORIES = [
-  "Rockets",
-  "Kits",
-  "Components",
+  "Rocket Kits",
+  "Engines",
   "Tools",
-  "Books",
+  "Materials",
+  "UKROC",
   "Accessories"
 ];
 
