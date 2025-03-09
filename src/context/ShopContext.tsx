@@ -103,7 +103,11 @@ export const ShopProvider = ({ children }) => {
   
   const fetchProductsByCategory = useCallback((category: string) => {
     // In a real app, this would be an API call
-    return products.filter(p => p.category === category);
+    // Fixed: Actually filter the products by category and return the filtered array
+    const filteredProducts = products.filter(p => 
+      p.category.toLowerCase() === category.toLowerCase()
+    );
+    return filteredProducts;
   }, [products]);
   
   const fetchFeaturedProducts = useCallback(() => {

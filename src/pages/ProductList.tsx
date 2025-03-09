@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import ProductCard from "@/components/products/ProductCard";
@@ -21,7 +20,8 @@ const ProductList = () => {
   const { category } = useParams();
   const [searchParams] = useSearchParams();
   const { products, fetchProductsByCategory, fetchAllProducts } = useShopContext();
-  const [filteredProducts, setFilteredProducts] = useState(products);
+  const [displayProducts, setDisplayProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
   const [filterOpen, setFilterOpen] = useState(false);
   const [priceRange, setPriceRange] = useState([0, 500]);
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
@@ -29,9 +29,13 @@ const ProductList = () => {
   
   useEffect(() => {
     if (category) {
-      fetchProductsByCategory(category);
+      // If there's a category parameter, fetch products for that category
+      const categoryProducts = fetchProductsByCategory(category);
+      setDisplayProducts(categoryProducts);
     } else {
-      fetchAllProducts();
+      // Otherwise, fetch all products
+      const allProducts = fetchAllProducts();
+      setDisplayProducts(allProducts);
     }
   }, [category, fetchProductsByCategory, fetchAllProducts]);
   
@@ -43,7 +47,7 @@ const ProductList = () => {
   }, [searchParams]);
   
   useEffect(() => {
-    let result = [...products];
+    let result = [...displayProducts];
     
     // Apply search filter
     if (searchTerm) {
@@ -68,7 +72,7 @@ const ProductList = () => {
     }
     
     setFilteredProducts(result);
-  }, [products, searchTerm, priceRange, sortBy]);
+  }, [displayProducts, searchTerm, priceRange, sortBy]);
   
   return (
     <MainLayout>
