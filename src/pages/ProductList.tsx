@@ -15,21 +15,31 @@ const ProductList = () => {
   
   // Load products and refresh when products change
   useEffect(() => {
-    const allProducts = fetchAllProducts();
-    console.log("All products:", allProducts.length);
-    setDisplayProducts(allProducts);
+    const loadProducts = () => {
+      const allProducts = fetchAllProducts();
+      console.log("All products:", allProducts.length);
+      setDisplayProducts(allProducts);
+    };
     
-    // Set up a custom event listener for product updates
+    // Initial load
+    loadProducts();
+    
+    // Set up event listeners for product updates
     const handleProductUpdate = () => {
-      const updatedProducts = fetchAllProducts();
-      console.log("Products updated, refreshing list:", updatedProducts.length);
-      setDisplayProducts(updatedProducts);
+      console.log("Products updated, refreshing list");
+      loadProducts();
     };
     
     window.addEventListener('rocketry-product-update', handleProductUpdate);
+    window.addEventListener('storage', (e) => {
+      if (e.key === "ROCKETRY_SHOP_PRODUCTS_V3") {
+        handleProductUpdate();
+      }
+    });
     
     return () => {
       window.removeEventListener('rocketry-product-update', handleProductUpdate);
+      window.removeEventListener('storage', handleProductUpdate);
     };
   }, [fetchAllProducts]);
   

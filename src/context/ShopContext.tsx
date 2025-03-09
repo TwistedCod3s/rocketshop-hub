@@ -1,5 +1,5 @@
 
-import { createContext, useContext } from "react";
+import { createContext, useContext, useEffect } from "react";
 import { ShopContextType } from "@/types/shop";
 import { useProducts } from "@/hooks/useProducts";
 import { useCart } from "@/hooks/useCart";
@@ -47,6 +47,19 @@ export const ShopProvider = ({ children }) => {
   const cartHook = useCart();
   const featuredHook = useFeaturedProducts(productsHook.products);
   const adminHook = useAdmin();
+  
+  // Force re-render when localStorage changes in other tabs
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key && e.key.startsWith("ROCKETRY_SHOP_")) {
+        console.log(`External storage change detected for ${e.key}`);
+        // The individual hooks will handle their own updates
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
   
   // Combine all hooks into a single context value
   const value: ShopContextType = {

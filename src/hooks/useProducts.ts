@@ -35,10 +35,10 @@ export function useProducts() {
   
   // Listen for storage events from other tabs/windows
   useEffect(() => {
-    const handleStorageChange = (e) => {
+    const handleStorageChange = (e: StorageEvent) => {
       if (e.key === PRODUCTS_STORAGE_KEY) {
         try {
-          const updatedProducts = JSON.parse(e.newValue);
+          const updatedProducts = JSON.parse(e.newValue || '[]');
           globalProducts = updatedProducts;
           setProducts([...globalProducts]);
           console.log("Products updated from another tab/window");

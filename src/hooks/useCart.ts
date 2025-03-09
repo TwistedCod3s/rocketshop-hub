@@ -1,6 +1,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { CartItem, Product } from "@/types/shop";
+import { toast } from "@/hooks/use-toast";
 
 // Use a consistent storage key with version suffix
 const CART_STORAGE_KEY = "ROCKETRY_SHOP_CART_V3";
@@ -41,13 +42,26 @@ export function useCart() {
       
       if (existingItem) {
         // Update quantity if product already in cart
-        return prev.map(item => 
+        const updated = prev.map(item => 
           item.id === product.id 
             ? { ...item, quantity: item.quantity + quantity } 
             : item
         );
+        
+        // Show toast notification
+        toast({
+          title: "Cart updated",
+          description: `Updated quantity of ${product.name} in your cart.`,
+        });
+        
+        return updated;
       } else {
         // Add new item to cart
+        toast({
+          title: "Added to cart",
+          description: `${product.name} has been added to your cart.`,
+        });
+        
         return [...prev, { id: product.id, product, quantity }];
       }
     });
