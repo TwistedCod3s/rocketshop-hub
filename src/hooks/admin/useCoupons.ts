@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from "react";
 import { 
   loadFromStorage, 
@@ -73,7 +74,7 @@ export function useCoupons() {
       id: uuidv4()
     };
     
-    // Update local state
+    // Update local state using functional form to ensure we're working with the latest state
     setCoupons(prevCoupons => {
       const updatedCoupons = [...prevCoupons, newCoupon];
       
@@ -86,7 +87,7 @@ export function useCoupons() {
   }, []);
 
   const updateCoupon = useCallback((coupon: CouponCode) => {
-    // Update local state
+    // Update local state using functional form to ensure we're working with the latest state
     setCoupons(prevCoupons => {
       const updatedCoupons = prevCoupons.map(c => c.id === coupon.id ? coupon : c);
       
@@ -99,7 +100,7 @@ export function useCoupons() {
   }, []);
 
   const deleteCoupon = useCallback((couponId: string) => {
-    // Update local state
+    // Update local state using functional form to ensure we're working with the latest state
     setCoupons(prevCoupons => {
       const updatedCoupons = prevCoupons.filter(c => c.id !== couponId);
       

@@ -30,13 +30,14 @@ export const saveAndBroadcast = <T>(key: string, eventName: string, value: T): v
     console.log(`Broadcast ${eventName} custom event`);
     
     // Then dispatch storage event manually for cross-window communication
-    // This is needed because modifying localStorage in the same window doesn't trigger storage events
+    // We have to manually trigger this because changes in the same window don't trigger storage events
     try {
-      window.dispatchEvent(new StorageEvent('storage', {
+      const storageEvent = new StorageEvent('storage', {
         key: key,
         newValue: JSON.stringify(value),
         storageArea: localStorage
-      }));
+      });
+      window.dispatchEvent(storageEvent);
       console.log(`Manually triggered storage event for ${key}`);
     } catch (e) {
       console.error("Failed to manually trigger storage event:", e);

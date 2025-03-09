@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from "react";
 import { 
   loadFromStorage, 
@@ -49,7 +50,7 @@ export function useSubcategories() {
   
   // Function to update subcategories for a category
   const updateSubcategories = useCallback((category: string, newSubcategories: string[]) => {
-    // Update local state
+    // Update local state using functional form to ensure we're working with the latest state
     setSubcategories(prevSubcategories => {
       const updatedSubcategories = { ...prevSubcategories, [category]: newSubcategories };
       

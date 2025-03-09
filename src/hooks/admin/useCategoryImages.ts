@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from "react";
 import { 
   loadFromStorage, 
@@ -62,7 +63,7 @@ export function useCategoryImages() {
   
   // Function to update category image
   const updateCategoryImage = useCallback((categorySlug: string, imageUrl: string) => {
-    // Update local state
+    // Update local state using functional form to ensure we're working with the latest state
     setCategoryImages(prevImages => {
       const updatedImages = { ...prevImages, [categorySlug]: imageUrl };
       
