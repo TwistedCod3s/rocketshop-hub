@@ -1,9 +1,7 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
-
 const HeroSection: React.FC = () => {
   return <div className="relative min-h-[65vh] flex items-center overflow-hidden">
       {/* Background Pattern */}
@@ -25,7 +23,8 @@ const HeroSection: React.FC = () => {
               </span>
             </h1>
             
-            <p className="text-lg text-muted-foreground max-w-md">High-quality rocketry kits, components, and curriculum materials designed specifically for educational institutions, beginners and enthusiasts.</p>
+            <p className="text-lg text-muted-foreground max-w-md">High-quality rocketry kits, components, and 
+materials designed specifically for educational institutions, beginners and enthusiasts.</p>
             
             <div className="flex flex-wrap gap-4 pt-1">
               <Link to="/products">
@@ -82,5 +81,4 @@ const HeroSection: React.FC = () => {
       </div>
     </div>;
 };
-
 export default HeroSection;
