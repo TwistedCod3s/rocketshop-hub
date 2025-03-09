@@ -18,7 +18,7 @@ const QuickLinks: React.FC = () => {
           </Link>
         </li>
         <li>
-          <Link to="/shop" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
+          <Link to="/products" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
             Shop
           </Link>
         </li>
