@@ -198,7 +198,7 @@ const ProductList = () => {
           <div className="flex-1">
             <div className="flex justify-between items-center mb-6">
               <h1 className="text-2xl font-bold text-rocketry-navy">
-                {category ? `${category.charAt(0).toUpperCase() + category.slice(1)} Products` : 'All Products'}
+                Products
               </h1>
               <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger className="w-[160px]">
