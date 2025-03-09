@@ -49,29 +49,29 @@ const CartSummary: React.FC<CartSummaryProps> = ({ cart, subtotal: propSubtotal,
       <div className="space-y-3 mb-6">
         <div className="flex justify-between">
           <span className="text-muted-foreground">Subtotal ({calculatedItemCount} items)</span>
-          <span>${calculatedSubtotal.toFixed(2)}</span>
+          <span>£{calculatedSubtotal.toFixed(2)}</span>
         </div>
         
         {discount > 0 && (
           <div className="flex justify-between text-green-600">
             <span>Discount</span>
-            <span>-${discount.toFixed(2)}</span>
+            <span>-£{discount.toFixed(2)}</span>
           </div>
         )}
         
         <div className="flex justify-between">
           <span className="text-muted-foreground">Shipping</span>
-          <span>{shipping === 0 ? "Free" : `$${shipping.toFixed(2)}`}</span>
+          <span>{shipping === 0 ? "Free" : `£${shipping.toFixed(2)}`}</span>
         </div>
         
         <div className="flex justify-between">
           <span className="text-muted-foreground">Estimated Tax</span>
-          <span>${tax.toFixed(2)}</span>
+          <span>£{tax.toFixed(2)}</span>
         </div>
         
         <div className="border-t pt-3 mt-3 flex justify-between font-semibold">
           <span>Total</span>
-          <span>${total.toFixed(2)}</span>
+          <span>£{total.toFixed(2)}</span>
         </div>
       </div>
       
@@ -99,7 +99,7 @@ const CartSummary: React.FC<CartSummaryProps> = ({ cart, subtotal: propSubtotal,
       </Link>
       
       <p className="text-xs text-center text-muted-foreground">
-        Free shipping on orders over $150. <br/>
+        Free shipping on orders over £150. <br/>
         Educational institutions may qualify for additional discounts.
       </p>
     </div>

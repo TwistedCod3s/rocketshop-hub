@@ -75,6 +75,7 @@ const Checkout = () => {
     e.preventDefault();
     
     // Simulate checkout completion
+    sessionStorage.setItem("orderCompleted", "true");
     toast({
       title: "Order Placed!",
       description: "Your order has been successfully placed.",
@@ -477,7 +478,7 @@ const Checkout = () => {
                         <span className="mr-2">{item.quantity}x</span>
                         <span className="font-medium">{item.product.name}</span>
                       </div>
-                      <span>${(item.product.price * item.quantity).toFixed(2)}</span>
+                      <span>£{(item.product.price * item.quantity).toFixed(2)}</span>
                     </div>
                   ))}
                 </div>

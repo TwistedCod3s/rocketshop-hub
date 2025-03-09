@@ -90,7 +90,7 @@ const Cart = () => {
               <div className="mt-6 space-y-3">
                 <div className="flex items-center text-sm text-gray-600">
                   <PackageCheck className="h-4 w-4 mr-2 text-rocketry-blue" />
-                  Free shipping on orders over $150
+                  Free shipping on orders over £150
                 </div>
                 <div className="flex items-center text-sm text-gray-600">
                   <ShoppingCart className="h-4 w-4 mr-2 text-rocketry-blue" />

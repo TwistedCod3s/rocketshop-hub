@@ -76,7 +76,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             {product.description}
           </p>
           <div className="mt-3 flex justify-between items-center">
-            <span className="font-semibold">${product.price.toFixed(2)}</span>
+            <span className="font-semibold">£{product.price.toFixed(2)}</span>
             <span className="text-sm text-muted-foreground">
               {product.inStock ? "In stock" : "Out of stock"}
             </span>

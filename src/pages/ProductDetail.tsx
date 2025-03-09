@@ -126,7 +126,7 @@ const ProductDetail = () => {
               <span className="text-sm text-gray-500">({product.reviews?.length || 0} reviews)</span>
             </div>
             
-            <p className="text-2xl font-bold text-rocketry-blue mb-6">${product.price.toFixed(2)}</p>
+            <p className="text-2xl font-bold text-rocketry-blue mb-6">£{product.price.toFixed(2)}</p>
             
             <div className="prose prose-blue mb-6">
               <p>{product.description}</p>
@@ -182,7 +182,7 @@ const ProductDetail = () => {
             <div className="space-y-3 mb-8">
               <div className="flex items-center gap-2">
                 <Truck className="h-5 w-5 text-rocketry-blue" />
-                <span>Free shipping for orders over $100</span>
+                <span>Free shipping for orders over £100</span>
               </div>
               <div className="flex items-center gap-2">
                 <ShieldCheck className="h-5 w-5 text-rocketry-blue" />
