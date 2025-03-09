@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Search, X, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -62,25 +63,20 @@ const CategoryFilters: React.FC<CategoryFiltersProps> = ({
               </div>
             </div>
             
-            {/* Price Range */}
+            {/* Price Range - Now using Slider instead of number inputs */}
             <div>
               <h4 className="font-medium mb-2">Price Range</h4>
-              <div className="flex items-center gap-4">
-                <Input 
-                  type="number" 
-                  min="0"
-                  value={priceRange[0]}
-                  onChange={(e) => setPriceRange([Number(e.target.value), priceRange[1]])}
-                  className="w-1/2"
-                />
-                <span>to</span>
-                <Input 
-                  type="number" 
-                  min="0"
-                  value={priceRange[1]}
-                  onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])}
-                  className="w-1/2"
-                />
+              <Slider
+                defaultValue={[0, 500]}
+                max={500}
+                step={10}
+                value={priceRange}
+                onValueChange={setPriceRange}
+                className="my-6"
+              />
+              <div className="flex justify-between">
+                <span>${priceRange[0]}</span>
+                <span>${priceRange[1]}</span>
               </div>
             </div>
             
