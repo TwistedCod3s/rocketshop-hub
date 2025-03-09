@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { 
@@ -182,15 +181,8 @@ const Header: React.FC = () => {
               </Button>
             </Link>
 
-            {/* Admin Indicator */}
-            {isAdmin && (
-              <Link to="/admin">
-                <Badge variant="outline" className="bg-rocketry-navy text-white border-rocketry-navy">
-                  Admin
-                </Badge>
-              </Link>
-            )}
-
+            {/* Removed Admin Indicator */}
+            
             {/* Mobile Menu */}
             {isMobile && (
               <Sheet>

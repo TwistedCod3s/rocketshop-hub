@@ -3,11 +3,13 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ProductCard from "./ProductCard";
 import { Product } from "@/types/shop";
+
 interface ProductCarouselProps {
   products: Product[];
   title?: string;
   description?: string;
 }
+
 const ProductCarousel: React.FC<ProductCarouselProps> = ({
   products,
   title,
@@ -51,6 +53,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
       setCurrent(0); // Reset to start
     }
   };
+
   const prev = () => {
     if (current > 0) {
       setCurrent(current - 1);
@@ -66,16 +69,25 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
     }, 5000);
     return () => clearInterval(interval);
   }, [current]);
+
   if (products.length === 0) {
     return null;
   }
-  return <div className="mt-12 mb-16">
-      {title && <div className="text-center mb-10">
+
+  return (
+    <div className="mt-12 mb-16">
+      {title && (
+        <div className="text-center mb-6">
+          {/* Reduced margin-bottom from mb-10 to mb-6 */}
           
-          {description && <p className="mt-3 text-muted-foreground max-w-2xl mx-auto">
+          {description && (
+            <p className="mt-1 text-muted-foreground max-w-2xl mx-auto">
+              {/* Reduced margin-top from mt-3 to mt-1 */}
               {description}
-            </p>}
-        </div>}
+            </p>
+          )}
+        </div>
+      )}
       
       <div className="relative" ref={containerRef}>
         {/* Carousel Navigation */}
@@ -109,6 +121,8 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
         }).map((_, i) => <button key={i} className={`h-2 rounded-full transition-all ${i === Math.floor(current / itemsPerView) ? "w-6 bg-rocketry-navy" : "w-2 bg-gray-300"}`} onClick={() => setCurrent(i * itemsPerView)} />)}
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default ProductCarousel;
