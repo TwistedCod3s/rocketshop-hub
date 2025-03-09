@@ -1,7 +1,15 @@
+
 import MainLayout from "@/components/layout/MainLayout";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+
 const FAQ = () => {
-  return <MainLayout>
+  return (
+    <MainLayout>
       <div className="container py-12">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-4xl font-bold text-rocketry-navy mb-4">
@@ -43,7 +51,7 @@ const FAQ = () => {
             </AccordionItem>
             
             <AccordionItem value="item-4">
-              
+              <AccordionTrigger>What teaching resources do you provide?</AccordionTrigger>
               <AccordionContent>
                 All our educational kits come with teaching resources, including lesson plans, student
                 worksheets, assessment templates, and curriculum links. Additional resources are
@@ -94,6 +102,8 @@ const FAQ = () => {
           </Accordion>
         </div>
       </div>
-    </MainLayout>;
+    </MainLayout>
+  );
 };
+
 export default FAQ;
