@@ -1,5 +1,7 @@
+
 import { Link } from "react-router-dom";
 import { CATEGORY_MAP } from "@/constants/categories";
+import { useAdmin } from "@/hooks/useAdmin";
 
 // Define image paths for each category
 export const CATEGORY_IMAGES = {
@@ -12,8 +14,17 @@ export const CATEGORY_IMAGES = {
 };
 
 const CategorySection = () => {
+  const { categoryImages } = useAdmin();
+  
+  // Function to get the correct image URL for a category
+  const getCategoryImage = (slug: string) => {
+    return categoryImages[slug] || 
+           CATEGORY_IMAGES[slug as keyof typeof CATEGORY_IMAGES] || "";
+  };
+  
   // Add console logging to help debug
   console.log("CategorySection rendering with categories:", CATEGORY_MAP);
+  console.log("Custom category images:", categoryImages);
   
   return (
     <section className="py-12 bg-gray-50">
@@ -25,8 +36,8 @@ const CategorySection = () => {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {Object.entries(CATEGORY_MAP).map(([slug, name]) => {
             const categoryPath = `/category/${slug}`;
-            const imagePath = CATEGORY_IMAGES[slug as keyof typeof CATEGORY_IMAGES] || "";
-            console.log(`Creating link for category: ${name} with path: ${categoryPath}`);
+            const imagePath = getCategoryImage(slug);
+            console.log(`Creating link for category: ${name} with path: ${categoryPath}, image: ${imagePath}`);
             
             return (
               <Link 

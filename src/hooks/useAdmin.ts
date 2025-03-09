@@ -3,12 +3,19 @@ import { useState, useCallback, useEffect } from "react";
 
 export function useAdmin() {
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [categoryImages, setCategoryImages] = useState<Record<string, string>>({});
   
   // Check if admin is logged in
   useEffect(() => {
     const adminLoggedIn = localStorage.getItem("adminLoggedIn");
     if (adminLoggedIn === "true") {
       setIsAdmin(true);
+    }
+    
+    // Load saved category images from localStorage if available
+    const savedImages = localStorage.getItem("categoryImages");
+    if (savedImages) {
+      setCategoryImages(JSON.parse(savedImages));
     }
   }, []);
   
@@ -36,10 +43,22 @@ export function useAdmin() {
       reader.readAsDataURL(file);
     });
   }, []);
+  
+  // Function to update category image
+  const updateCategoryImage = useCallback((categorySlug: string, imageUrl: string) => {
+    setCategoryImages(prev => {
+      const updated = { ...prev, [categorySlug]: imageUrl };
+      // Save to localStorage for persistence
+      localStorage.setItem("categoryImages", JSON.stringify(updated));
+      return updated;
+    });
+  }, []);
 
   return {
     isAdmin,
+    categoryImages,
     tryAdminLogin,
-    handleFileUpload
+    handleFileUpload,
+    updateCategoryImage
   };
 }

@@ -20,12 +20,14 @@ const AdminCategories: React.FC<AdminCategoriesProps> = ({ products }) => {
   const [imageUrl, setImageUrl] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const { handleFileUpload } = useAdmin();
+  const { handleFileUpload, updateCategoryImage, categoryImages } = useAdmin();
   const { toast } = useToast();
 
   const handleEditImage = (categorySlug: string) => {
     const category = CATEGORY_MAP[categorySlug];
-    const currentImageUrl = CATEGORY_IMAGES[categorySlug as keyof typeof CATEGORY_IMAGES] || "";
+    // Use custom image if available, otherwise use default
+    const currentImageUrl = categoryImages[categorySlug] || 
+                           CATEGORY_IMAGES[categorySlug as keyof typeof CATEGORY_IMAGES] || "";
     
     setCurrentCategory(categorySlug);
     setImageUrl(currentImageUrl);
@@ -53,21 +55,24 @@ const AdminCategories: React.FC<AdminCategoriesProps> = ({ products }) => {
   };
 
   const handleSaveImage = () => {
-    // In a real application, this would save to a database
-    // For now, we'll just close the dialog and show a message
     const newImagePath = imagePreview || imageUrl;
+    
+    // Update the category image
+    updateCategoryImage(currentCategory, newImagePath);
+    
     console.log(`Updated image for ${currentCategory} to: ${newImagePath}`);
     setIsImageDialogOpen(false);
     
-    // This would update the image in a real application
-    // For demonstration purposes only
     toast({
       title: "Image updated",
       description: `Image for ${CATEGORY_MAP[currentCategory]} has been updated successfully`,
     });
-    
-    // In a real app, we'd update the database here
-    // For demo purposes, we're just showing a success message
+  };
+
+  // Get the appropriate image URL for a category
+  const getCategoryImage = (slug: string) => {
+    return categoryImages[slug] || 
+           CATEGORY_IMAGES[slug as keyof typeof CATEGORY_IMAGES] || "";
   };
 
   return (
@@ -80,7 +85,7 @@ const AdminCategories: React.FC<AdminCategoriesProps> = ({ products }) => {
             <div className="flex items-center space-x-4">
               <div className="w-12 h-12 rounded-md overflow-hidden bg-gray-100">
                 <img 
-                  src={CATEGORY_IMAGES[slug as keyof typeof CATEGORY_IMAGES] || ""} 
+                  src={getCategoryImage(slug)} 
                   alt={name}
                   className="w-full h-full object-cover"
                   onError={(e) => {
