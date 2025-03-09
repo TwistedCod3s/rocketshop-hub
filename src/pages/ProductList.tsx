@@ -13,11 +13,24 @@ const ProductList = () => {
   const [displayProducts, setDisplayProducts] = useState<Product[]>([]);
   const [filterOpen, setFilterOpen] = useState(false);
   
-  // Load products
+  // Load products and refresh when products change
   useEffect(() => {
     const allProducts = fetchAllProducts();
-    console.log("All products:", allProducts);
+    console.log("All products:", allProducts.length);
     setDisplayProducts(allProducts);
+    
+    // Set up a custom event listener for product updates
+    const handleProductUpdate = () => {
+      const updatedProducts = fetchAllProducts();
+      console.log("Products updated, refreshing list:", updatedProducts.length);
+      setDisplayProducts(updatedProducts);
+    };
+    
+    window.addEventListener('rocketry-product-update', handleProductUpdate);
+    
+    return () => {
+      window.removeEventListener('rocketry-product-update', handleProductUpdate);
+    };
   }, [fetchAllProducts]);
   
   // Use our custom hook for filtering

@@ -3,7 +3,7 @@ import { useState, useCallback, useEffect } from "react";
 import { CartItem, Product } from "@/types/shop";
 
 // Use a consistent storage key with version suffix
-const CART_STORAGE_KEY = "ROCKETRY_SHOP_CART_V2";
+const CART_STORAGE_KEY = "ROCKETRY_SHOP_CART_V3";
 
 export function useCart() {
   const [cart, setCart] = useState<CartItem[]>([]);
