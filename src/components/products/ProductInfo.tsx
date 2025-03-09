@@ -95,7 +95,7 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
       <div className="space-y-3 mb-8">
         <div className="flex items-center gap-2">
           <Truck className="h-5 w-5 text-rocketry-blue" />
-          <span>Free shipping for orders over £100</span>
+          <span>Free shipping for orders over £200</span>
         </div>
         <div className="flex items-center gap-2">
           <ShieldCheck className="h-5 w-5 text-rocketry-blue" />

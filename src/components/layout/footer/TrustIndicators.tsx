@@ -8,7 +8,7 @@ const TrustIndicators: React.FC = () => {
     {
       icon: Truck,
       title: "Free Shipping",
-      description: "On orders over $150"
+      description: "On orders over £200"
     },
     {
       icon: ShieldCheck,

@@ -38,7 +38,7 @@ const CartSummary: React.FC<CartSummaryProps> = ({ cart, subtotal: propSubtotal,
   };
   
   // Calculate totals
-  const shipping = calculatedSubtotal > 150 ? 0 : 12.99;
+  const shipping = calculatedSubtotal > 200 ? 0 : 12.99;
   const tax = (calculatedSubtotal - discount) * 0.07; // Assuming 7% tax
   const total = calculatedSubtotal - discount + shipping + tax;
   
@@ -99,7 +99,7 @@ const CartSummary: React.FC<CartSummaryProps> = ({ cart, subtotal: propSubtotal,
       </Link>
       
       <p className="text-xs text-center text-muted-foreground">
-        Free shipping on orders over £150. <br/>
+        Free shipping on orders over £200. <br/>
         Educational institutions may qualify for additional discounts.
       </p>
     </div>
