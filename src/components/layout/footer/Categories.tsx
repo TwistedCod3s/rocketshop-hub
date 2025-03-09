@@ -8,32 +8,32 @@ const Categories: React.FC = () => {
       <h3 className="font-semibold mb-6">Categories</h3>
       <ul className="space-y-3">
         <li>
-          <Link to="/category/Rocket Kits" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
+          <Link to="/category/rocket-kits" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
             Rocket Kits
           </Link>
         </li>
         <li>
-          <Link to="/category/Engines" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
+          <Link to="/category/engines" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
             Engines
           </Link>
         </li>
         <li>
-          <Link to="/category/Tools" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
+          <Link to="/category/tools" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
             Tools
           </Link>
         </li>
         <li>
-          <Link to="/category/Materials" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
+          <Link to="/category/materials" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
             Materials
           </Link>
         </li>
         <li>
-          <Link to="/category/UKROC" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
+          <Link to="/category/ukroc" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
             UKROC
           </Link>
         </li>
         <li>
-          <Link to="/category/Accessories" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
+          <Link to="/category/accessories" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
             Accessories
           </Link>
         </li>

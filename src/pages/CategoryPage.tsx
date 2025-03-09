@@ -1,5 +1,6 @@
+
 import { useEffect, useState } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import MainLayout from "@/components/layout/MainLayout";
 import ProductCard from "@/components/products/ProductCard";
 import { useShopContext } from "@/context/ShopContext";
@@ -27,8 +28,11 @@ const SUBCATEGORIES = {
   "Accessories": ["Display Stands", "Decals", "Recovery Wadding", "Books"]
 };
 
-const CategoryPage = () => {
-  const { category } = useParams();
+interface CategoryPageProps {
+  categoryName?: string;
+}
+
+const CategoryPage = ({ categoryName }: CategoryPageProps) => {
   const [searchParams] = useSearchParams();
   const { products, fetchProductsByCategory } = useShopContext();
   const [displayProducts, setDisplayProducts] = useState<Product[]>([]);
@@ -39,25 +43,26 @@ const CategoryPage = () => {
   const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState([0, 500]);
   
-  // Get the proper category name
-  const decodedCategory = category ? decodeURIComponent(category) : "";
-  // Use the category name directly - no need for special handling now
-  const categoryTitle = decodedCategory;
+  // Use the provided category name
+  const categoryTitle = categoryName || "All Products";
   const subcategories = SUBCATEGORIES[categoryTitle] || [];
   
   // Debug logs
   useEffect(() => {
-    console.log("Category param:", decodedCategory);
+    console.log("Category name prop:", categoryName);
     console.log("All products from context:", products);
-  }, [decodedCategory, products]);
+  }, [categoryName, products]);
   
   useEffect(() => {
     // Get products for this specific category
-    if (categoryTitle) {
+    if (categoryTitle && categoryTitle !== "All Products") {
       console.log(`Looking for products in category: ${categoryTitle}`);
       const categoryProducts = fetchProductsByCategory(categoryTitle);
       console.log(`Products for category ${categoryTitle}:`, categoryProducts);
       setDisplayProducts(categoryProducts);
+    } else {
+      // If no category or "All Products", show all products
+      setDisplayProducts(products);
     }
   }, [categoryTitle, fetchProductsByCategory, products]);
   

@@ -57,7 +57,7 @@ const DesktopNav: React.FC<DesktopNavProps> = ({
                 {categories.map((category) => (
                   <Link
                     key={category.path}
-                    to={`/category/${encodeURIComponent(category.name)}`}
+                    to={`/category/${category.path}`}
                     className="block p-3 hover:bg-accent rounded-md transition-colors"
                   >
                     {category.name}
