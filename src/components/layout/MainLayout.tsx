@@ -11,7 +11,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="flex-grow pt-4 page-transition">
+      <main className="flex-grow page-transition">
         {children}
       </main>
       <Footer />
