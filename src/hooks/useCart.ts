@@ -2,20 +2,32 @@
 import { useState, useCallback, useEffect } from "react";
 import { CartItem, Product } from "@/types/shop";
 
+// Use a consistent storage key that won't change between deployments
+const CART_STORAGE_KEY = "rocketry-shop-cart";
+
 export function useCart() {
   const [cart, setCart] = useState<CartItem[]>([]);
   
   // Load cart from localStorage
   useEffect(() => {
-    const savedCart = localStorage.getItem("cart");
+    const savedCart = localStorage.getItem(CART_STORAGE_KEY);
     if (savedCart) {
-      setCart(JSON.parse(savedCart));
+      try {
+        const parsedCart = JSON.parse(savedCart);
+        setCart(parsedCart);
+        console.log("Loaded cart from localStorage:", parsedCart.length);
+      } catch (error) {
+        console.error("Error parsing saved cart:", error);
+        // Fall back to empty cart if there's a parsing error
+        setCart([]);
+      }
     }
   }, []);
   
   // Update localStorage when cart changes
   useEffect(() => {
-    localStorage.setItem("cart", JSON.stringify(cart));
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+    console.log("Saved cart to localStorage:", cart.length);
   }, [cart]);
   
   // Cart Management Functions
