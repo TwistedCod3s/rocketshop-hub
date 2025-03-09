@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import ProductCard from "@/components/products/ProductCard";
@@ -15,13 +16,14 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { Search, SlidersHorizontal, X } from "lucide-react";
+import { Product } from "@/types/shop";
 
 const ProductList = () => {
   const { category } = useParams();
   const [searchParams] = useSearchParams();
-  const { products, fetchProductsByCategory, fetchAllProducts } = useShopContext();
-  const [displayProducts, setDisplayProducts] = useState([]);
-  const [filteredProducts, setFilteredProducts] = useState([]);
+  const { fetchProductsByCategory, fetchAllProducts } = useShopContext();
+  const [displayProducts, setDisplayProducts] = useState<Product[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [filterOpen, setFilterOpen] = useState(false);
   const [priceRange, setPriceRange] = useState([0, 500]);
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");

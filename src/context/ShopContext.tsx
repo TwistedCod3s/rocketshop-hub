@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { Product, CartItem, ShopContextType } from "@/types/shop";
 import { initialProducts } from "@/data/initialProducts";
@@ -97,13 +96,11 @@ export const ShopProvider = ({ children }) => {
   
   const fetchAllProducts = useCallback(() => {
     // In a real app, this would be an API call
-    // For now, we just use the state
     return products;
   }, [products]);
   
   const fetchProductsByCategory = useCallback((category: string) => {
     // In a real app, this would be an API call
-    // Fixed: Actually filter the products by category and return the filtered array
     const filteredProducts = products.filter(p => 
       p.category.toLowerCase() === category.toLowerCase()
     );
