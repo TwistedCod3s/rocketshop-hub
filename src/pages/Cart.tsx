@@ -81,6 +81,7 @@ const Cart = () => {
           <div>
             <div className="bg-white rounded-lg shadow-sm p-6 sticky top-24">
               <CartSummary 
+                cart={cart}
                 subtotal={subtotal}
                 itemCount={itemCount}
               />
