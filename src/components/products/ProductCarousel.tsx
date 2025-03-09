@@ -77,7 +77,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
   }
 
   return (
-    <div className="mt-6 mb-16">
+    <div className="mt-4 mb-16">
       {title && (
         <div className="text-center mb-6">
           <h2 className="text-display-small font-bold text-rocketry-navy">
