@@ -19,7 +19,7 @@ const About = () => {
             </p>
             
             <h2 className="text-2xl font-semibold mb-4 mt-8">Our Story</h2>
-            <p>Founded in 2024 by a group of student and rocketry enthusiasts, Rocketry For Schools began as a small initiative to make it easy to let small schools compete in UKROC. Today, we've worked with over 100 teams nationwide, helping thousands of students design, build, and launch their own rockets.</p>
+            <p>We believe in learning through doing. Our rocket kits and educational materials are designed to provide hands-on experiences that make complex scientific concepts tangible and engaging. Our competition-ready resources help teachers integrate rocketry into their extracurricular program easily with the same capabilities as schools with experience at UKROC </p>
             
             <h2 className="text-2xl font-semibold mb-4 mt-8">Our Approach</h2>
             <p>
