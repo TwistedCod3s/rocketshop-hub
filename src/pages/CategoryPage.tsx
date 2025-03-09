@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import MainLayout from "@/components/layout/MainLayout";
 import { useShopContext } from "@/context/ShopContext";
 import { Product } from "@/types/shop";
@@ -19,13 +19,20 @@ const CategoryPage = ({ categoryName: propCategoryName }: CategoryPageProps) => 
   const { categoryName: paramCategoryName } = useParams();
   const { products, fetchProductsByCategory } = useShopContext();
   const [displayProducts, setDisplayProducts] = useState<Product[]>([]);
+  const navigate = useNavigate();
+
+  console.log("CategoryPage rendering with params:", { 
+    propCategoryName, 
+    paramCategoryName, 
+    pathContents: window.location.pathname 
+  });
   
   // Determine which category to use (prop or param)
   let resolvedCategoryName = propCategoryName;
   
   // If no prop was provided, try to get it from the URL parameter
   if (!resolvedCategoryName && paramCategoryName) {
-    // First check if the parameter is a slug in our category map
+    // First check if the parameter is a slug in our CATEGORY_MAP
     resolvedCategoryName = CATEGORY_MAP[paramCategoryName];
     
     // If not found in map, use the parameter directly (for backward compatibility)

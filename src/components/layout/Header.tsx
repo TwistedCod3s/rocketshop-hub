@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -26,7 +27,7 @@ const Header: React.FC = () => {
     setSearchQuery("");
   }, [location.pathname]);
 
-  // Updated navigation categories
+  // Updated navigation categories with correct paths
   const categories = [
     { name: "Rocket Kits", path: "/category/rocket-kits" },
     { name: "Engines", path: "/category/engines" },

@@ -34,10 +34,7 @@ const App = () => (
             <Route path="/products" element={<ProductList />} />
             <Route path="/shop" element={<Navigate to="/products" replace />} />
             
-            {/* Generic category route for dynamic parameters */}
-            <Route path="/category/:categoryName" element={<CategoryPage />} />
-            
-            {/* Individual category routes with specific names pre-defined */}
+            {/* Specific category routes should come before the dynamic route */}
             {Object.entries(CATEGORY_MAP).map(([slug, name]) => (
               <Route 
                 key={slug}
@@ -45,6 +42,9 @@ const App = () => (
                 element={<CategoryPage categoryName={name} />} 
               />
             ))}
+            
+            {/* Fallback dynamic category route - should be after specific routes */}
+            <Route path="/category/:categoryName" element={<CategoryPage />} />
             
             <Route path="/product/:productId" element={<ProductDetail />} />
             <Route path="/cart" element={<Cart />} />
