@@ -1,12 +1,9 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
-
 const HeroSection: React.FC = () => {
-  return (
-    <div className="relative min-h-[85vh] flex items-center overflow-hidden">
+  return <div className="relative min-h-[85vh] flex items-center overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 hero-pattern"></div>
       
@@ -21,13 +18,11 @@ const HeroSection: React.FC = () => {
             </div>
             
             <h1 className="text-display-large font-bold tracking-tight text-rocketry-navy">
-              Launch Your School's <br/>
+              Launch Your School's <br />
               <span className="text-rocketry-blue">Rocketry Program</span>
             </h1>
             
-            <p className="text-lg text-muted-foreground max-w-md">
-              High-quality rocketry kits, components, and curriculum materials designed specifically for educational institutions.
-            </p>
+            <p className="text-lg text-muted-foreground max-w-md">High-quality rocketry kits, components, and curriculum materials designed specifically for educational institutions, beginners and enthusiasts.</p>
             
             <div className="flex flex-wrap gap-4 pt-2">
               <Link to="/shop">
@@ -48,8 +43,8 @@ const HeroSection: React.FC = () => {
               <div className="flex items-center">
                 <div className="h-12 w-12 rounded-full bg-rocketry-gray flex items-center justify-center">
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-rocketry-navy">
-                    <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
-                    <path d="M12 11V5a2 2 0 1 0-4 0v1h4"/>
+                    <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                    <path d="M12 11V5a2 2 0 1 0-4 0v1h4" />
                   </svg>
                 </div>
                 <div className="ml-3">
@@ -61,9 +56,9 @@ const HeroSection: React.FC = () => {
               <div className="flex items-center">
                 <div className="h-12 w-12 rounded-full bg-rocketry-gray flex items-center justify-center">
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-rocketry-navy">
-                    <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/>
-                    <path d="M12 12v9"/>
-                    <path d="m8 17 4 4 4-4"/>
+                    <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" />
+                    <path d="M12 12v9" />
+                    <path d="m8 17 4 4 4-4" />
                   </svg>
                 </div>
                 <div className="ml-3">
@@ -76,18 +71,12 @@ const HeroSection: React.FC = () => {
           
           <div className="flex justify-center lg:justify-end items-center">
             <div className="relative">
-              <img
-                src="/lovable-uploads/464bb92b-3c96-4abd-9987-49654404f1b3.png"
-                alt="Rocketry for Schools"
-                className="object-contain max-h-[500px] animate-rocket-move"
-              />
+              <img src="/lovable-uploads/464bb92b-3c96-4abd-9987-49654404f1b3.png" alt="Rocketry for Schools" className="object-contain max-h-[500px] animate-rocket-move" />
               <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent rounded-full blur-3xl -z-10"></div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default HeroSection;
