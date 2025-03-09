@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminLogin from "@/components/admin/AdminLogin";
@@ -8,6 +7,10 @@ import { Plus, PackageOpen, LayoutGrid, Users, Settings, LogOut } from "lucide-r
 import ProductForm from "@/components/admin/ProductForm";
 import { useShopContext } from "@/context/ShopContext";
 import { useToast } from "@/hooks/use-toast";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const Admin = () => {
   const navigate = useNavigate();
