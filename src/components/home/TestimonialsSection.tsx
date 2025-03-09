@@ -4,22 +4,22 @@ import { Card, CardContent } from "@/components/ui/card";
 
 const testimonials = [
   {
-    quote: "Implementing the Rocketry For Schools program transformed our STEM curriculum. Students are more engaged and excited about science than ever before.",
-    author: "Dr. J. Thompson",
-    role: "Science Department Head",
-    school: "International Academy of Science",
+    quote: "The Rocketry For Schools program has been an incredible addition to our UKROC competition preparation. Our students have gained valuable hands-on experience that truly gives them an edge in the national competitions.",
+    author: "Mr Coffee",
+    role: "Teacher",
+    school: "Bolton School",
   },
   {
-    quote: "The quality of materials and the accompanying curriculum made it incredibly easy to integrate rocketry into our after-school program. Customer support has been exceptional.",
-    author: "Prof. R. Martinez",
-    role: "STEM Education Specialist",
-    school: "Regional Education Institute",
+    quote: "As someone passionate about rocket science, I've tried many educational kits, but the quality and design of the Rocketry For Schools products stand out. Their detailed instructions and high-quality materials make complex concepts accessible.",
+    author: "Hanaan Ahmed",
+    role: "Rocket Enthusiast",
+    school: "Hobbyist",
   },
   {
-    quote: "We've seen a dramatic increase in students pursuing engineering pathways after introducing the rocketry program from Rocketry For Schools. The hands-on experience makes all the difference.",
-    author: "C. Wilson, PhD",
-    role: "Education Director",
-    school: "National STEM Alliance",
+    quote: "Building and launching my first rocket was an unforgettable experience. The concepts I learned through the Rocketry For Schools program have made physics and engineering so much more exciting and relevant to me.",
+    author: "Alfred",
+    role: "Student",
+    school: "Bolton School",
   },
 ];
 
