@@ -53,14 +53,15 @@ export function useProducts() {
     console.log(`Filtering products by category: ${category}`);
     console.log("Available products:", products);
     
-    // Skip filtering for invalid category value
-    if (category === ':category') {
+    // Return all products for special cases
+    if (!category || category === ':category' || category === 'All Products') {
+      console.log("Returning all products");
       return products;
     }
     
     // Case-insensitive comparison for more reliable filtering
     const filteredProducts = products.filter(p => 
-      p.category.toLowerCase() === category.toLowerCase()
+      p.category && p.category.toLowerCase() === category.toLowerCase()
     );
     
     console.log("Filtered products result:", filteredProducts);
