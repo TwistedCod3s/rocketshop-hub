@@ -79,9 +79,9 @@ const TermsConditions = () => {
           <p>
             If you have any questions about these Terms, please contact us at:
           </p>
-          <p>Email: terms@rocketryforschools.com</p>
-          <p>Phone: +44 1234 567890</p>
-          <p>Address: 123 Rocket Lane, London, UK, SW1A 1AA</p>
+          <p>Email: admin@rocketryforschools.co.uk</p>
+          <p>Phone: +44 7496 178309</p>
+          <p>Address: BL1 1HL Churchgate House, Bolton, UK</p>
         </div>
       </div>
     </MainLayout>

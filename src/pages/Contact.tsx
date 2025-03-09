@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
@@ -87,9 +88,9 @@ const Contact = () => {
                   <div>
                     <h3 className="font-semibold text-lg">Address</h3>
                     <p className="text-gray-600">
-                      123 Rocket Lane<br />
-                      Launchpad Industrial Estate<br />
-                      Birmingham, B12 3XY<br />
+                      BL1 1HL<br />
+                      Churchgate House<br />
+                      Bolton<br />
                       United Kingdom
                     </p>
                   </div>
@@ -102,7 +103,7 @@ const Contact = () => {
                   <div>
                     <h3 className="font-semibold text-lg">Phone</h3>
                     <p className="text-gray-600">
-                      +44 (0)121 456 7890
+                      +44 7496 178309
                     </p>
                   </div>
                 </div>

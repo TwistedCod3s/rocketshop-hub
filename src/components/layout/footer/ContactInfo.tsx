@@ -1,3 +1,4 @@
+
 import React from "react";
 import { MapPin, Phone, Mail } from "lucide-react";
 const ContactInfo: React.FC = () => {
@@ -18,7 +19,7 @@ const ContactInfo: React.FC = () => {
         </div>
         <div>
           <h4 className="font-medium text-sm">Call Us</h4>
-          <p className="text-muted-foreground text-sm">(123) 456-7890</p>
+          <p className="text-muted-foreground text-sm">+44 7496 178309</p>
         </div>
       </div>
       

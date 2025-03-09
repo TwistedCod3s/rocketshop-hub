@@ -89,6 +89,11 @@ const FAQ = () => {
               </AccordionContent>
             </AccordionItem>
           </Accordion>
+          
+          <div className="mt-12 p-6 bg-gray-50 rounded-lg">
+            <h2 className="text-xl font-semibold mb-4">Still have questions?</h2>
+            <p>Contact our team at admin@rocketryforschools.co.uk or visit us at BL1 1HL Churchgate House, Bolton.</p>
+          </div>
         </div>
       </div>
     </MainLayout>

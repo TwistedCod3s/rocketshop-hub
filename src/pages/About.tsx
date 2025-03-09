@@ -1,3 +1,4 @@
+
 import MainLayout from "@/components/layout/MainLayout";
 const About = () => {
   return <MainLayout>
@@ -38,6 +39,9 @@ const About = () => {
                 wanting to encourage your child's interest in STEM, we're here to help. Explore
                 our range of products and resources, or get in touch to discuss how we can support
                 your educational needs.
+              </p>
+              <p className="mt-4">
+                Contact us at admin@rocketryforschools.co.uk or visit us at BL1 1HL Churchgate House, Bolton.
               </p>
             </div>
           </div>

@@ -41,6 +41,24 @@ const AdminSettings: React.FC = () => {
           />
         </div>
         
+        <div className="space-y-4">
+          <h4 className="font-medium">Contact Information</h4>
+          <div className="grid grid-cols-1 gap-4">
+            <div>
+              <Label htmlFor="address">Address</Label>
+              <Input id="address" defaultValue="BL1 1HL Churchgate House" />
+            </div>
+            <div>
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" defaultValue="admin@rocketryforschools.co.uk" />
+            </div>
+            <div>
+              <Label htmlFor="phone">Phone</Label>
+              <Input id="phone" defaultValue="+44 7496 178309" />
+            </div>
+          </div>
+        </div>
+        
         <div className="pt-4 border-t">
           <Button>Save Settings</Button>
         </div>
