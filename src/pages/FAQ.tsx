@@ -51,26 +51,15 @@ const FAQ = () => {
             </AccordionItem>
             
             <AccordionItem value="item-4">
-              <AccordionTrigger>What teaching resources do you provide?</AccordionTrigger>
-              <AccordionContent>
-                All our educational kits come with teaching resources, including lesson plans, student
-                worksheets, assessment templates, and curriculum links. Additional resources are
-                available on our website for registered educational users. We also offer teacher
-                training workshops and online support.
-              </AccordionContent>
-            </AccordionItem>
-            
-            <AccordionItem value="item-5">
               <AccordionTrigger>How do I order for my school?</AccordionTrigger>
               <AccordionContent>
                 Schools can place orders through our website using a purchase order number, or we
                 can provide a quotation for your finance department. For large orders or custom
-                requirements, please contact our education team directly at education@rocketryforschools.co.uk
-                or call +44 (0)121 456 7890.
+                requirements, please contact our education team directly at admin@rocketryforschools.co.uk.
               </AccordionContent>
             </AccordionItem>
             
-            <AccordionItem value="item-6">
+            <AccordionItem value="item-5">
               <AccordionTrigger>What is the UKROC Competition?</AccordionTrigger>
               <AccordionContent>
                 UKROC (UK Rocketry Challenge) is a national competition for school students to design,
@@ -80,17 +69,17 @@ const FAQ = () => {
               </AccordionContent>
             </AccordionItem>
             
-            <AccordionItem value="item-7">
+            <AccordionItem value="item-6">
               <AccordionTrigger>Do you ship internationally?</AccordionTrigger>
               <AccordionContent>
-                Yes, we ship to most international destinations. Please note that different countries
-                have varying regulations regarding model rockets and their components. You are responsible
-                for ensuring compliance with your local laws. International shipping costs and delivery
-                times are calculated at checkout.
+                We do ship internationally for most of our products, but we do not ship rocket engines or 
+                motor components outside of the UK due to international transport regulations. All other 
+                items such as rocket kits (without motors), accessories, and educational materials can be 
+                shipped worldwide. International shipping costs are calculated at checkout.
               </AccordionContent>
             </AccordionItem>
             
-            <AccordionItem value="item-8">
+            <AccordionItem value="item-7">
               <AccordionTrigger>What is your returns policy?</AccordionTrigger>
               <AccordionContent>
                 We accept returns of unused, unopened items within 30 days of delivery. Custom orders
