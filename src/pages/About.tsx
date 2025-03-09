@@ -1,9 +1,6 @@
-
 import MainLayout from "@/components/layout/MainLayout";
-
 const About = () => {
-  return (
-    <MainLayout>
+  return <MainLayout>
       <div className="container py-12">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-4xl font-bold text-rocketry-navy mb-6">About Rocketry For Schools</h1>
@@ -22,12 +19,7 @@ const About = () => {
             </p>
             
             <h2 className="text-2xl font-semibold mb-4 mt-8">Our Story</h2>
-            <p>
-              Founded in 2012 by a group of aerospace engineers and educators, Rocketry For Schools
-              began as a small initiative to bring practical science experiences to classrooms.
-              Today, we've worked with over 500 schools nationwide, helping thousands of students
-              design, build, and launch their own rockets.
-            </p>
+            <p>Founded in 2024 by a group of student and rocketry enthusiasts, Rocketry For Schools began as a small initiative to make it easy to let small schools compete in UKROC. Today, we've worked with over 100 teams nationwide, helping thousands of students design, build, and launch their own rockets.</p>
             
             <h2 className="text-2xl font-semibold mb-4 mt-8">Our Approach</h2>
             <p>
@@ -56,8 +48,6 @@ const About = () => {
           </div>
         </div>
       </div>
-    </MainLayout>
-  );
+    </MainLayout>;
 };
-
 export default About;
