@@ -20,7 +20,7 @@ const Index = () => {
     <MainLayout>
       <HeroSection />
       
-      <section className="container py-0">
+      <section className="container py-0 -mt-6">
         <ProductCarousel 
           products={featuredProducts} 
           title="Featured Products"
