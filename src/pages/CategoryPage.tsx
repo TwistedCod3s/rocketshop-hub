@@ -1,6 +1,5 @@
-
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import MainLayout from "@/components/layout/MainLayout";
 import ProductCard from "@/components/products/ProductCard";
 import { useShopContext } from "@/context/ShopContext";
@@ -28,11 +27,22 @@ const SUBCATEGORIES = {
   "Accessories": ["Display Stands", "Decals", "Recovery Wadding", "Books"]
 };
 
+// Map URL slugs to category names
+const CATEGORY_MAP = {
+  "rocket-kits": "Rocket Kits",
+  "engines": "Engines",
+  "tools": "Tools",
+  "materials": "Materials",
+  "ukroc": "UKROC",
+  "accessories": "Accessories"
+};
+
 interface CategoryPageProps {
   categoryName?: string;
 }
 
-const CategoryPage = ({ categoryName }: CategoryPageProps) => {
+const CategoryPage = ({ categoryName: propCategoryName }: CategoryPageProps) => {
+  const { categoryName: paramCategoryName } = useParams();
   const [searchParams] = useSearchParams();
   const { products, fetchProductsByCategory } = useShopContext();
   const [displayProducts, setDisplayProducts] = useState<Product[]>([]);
@@ -43,15 +53,25 @@ const CategoryPage = ({ categoryName }: CategoryPageProps) => {
   const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState([0, 500]);
   
-  // Use the provided category name
-  const categoryTitle = categoryName || "All Products";
+  // Determine which category to use (prop or param)
+  let resolvedCategoryName = propCategoryName;
+  
+  // If no prop was provided, try to get it from the URL parameter
+  if (!resolvedCategoryName && paramCategoryName) {
+    resolvedCategoryName = CATEGORY_MAP[paramCategoryName];
+  }
+  
+  // Use the resolved category name or default to "All Products"
+  const categoryTitle = resolvedCategoryName || "All Products";
   const subcategories = SUBCATEGORIES[categoryTitle] || [];
   
   // Debug logs
   useEffect(() => {
-    console.log("Category name prop:", categoryName);
+    console.log("Category name prop:", propCategoryName);
+    console.log("Category name param:", paramCategoryName);
+    console.log("Resolved category name:", resolvedCategoryName);
     console.log("All products from context:", products);
-  }, [categoryName, products]);
+  }, [propCategoryName, paramCategoryName, resolvedCategoryName, products]);
   
   useEffect(() => {
     // Get products for this specific category
