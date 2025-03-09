@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
@@ -6,9 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { Mail, Phone, MapPin, Clock } from "lucide-react";
-
 const Contact = () => {
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -16,21 +16,25 @@ const Contact = () => {
     message: ""
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const {
+      name,
+      value
+    } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     // Simulate form submission
     setTimeout(() => {
       toast({
         title: "Message sent",
-        description: "We've received your message and will get back to you soon.",
+        description: "We've received your message and will get back to you soon."
       });
       setFormData({
         name: "",
@@ -41,9 +45,7 @@ const Contact = () => {
       setIsSubmitting(false);
     }, 1500);
   };
-
-  return (
-    <MainLayout>
+  return <MainLayout>
       <div className="container py-12">
         <div className="max-w-5xl mx-auto">
           <h1 className="text-4xl font-bold text-rocketry-navy mb-3">Contact Us</h1>
@@ -57,50 +59,18 @@ const Contact = () => {
               <h2 className="text-2xl font-semibold mb-6">Send us a message</h2>
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                  <Input
-                    type="text"
-                    name="name"
-                    placeholder="Your Name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required
-                  />
+                  <Input type="text" name="name" placeholder="Your Name" value={formData.name} onChange={handleChange} required />
                 </div>
                 <div>
-                  <Input
-                    type="email"
-                    name="email"
-                    placeholder="Your Email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                  />
+                  <Input type="email" name="email" placeholder="Your Email" value={formData.email} onChange={handleChange} required />
                 </div>
                 <div>
-                  <Input
-                    type="text"
-                    name="subject"
-                    placeholder="Subject"
-                    value={formData.subject}
-                    onChange={handleChange}
-                    required
-                  />
+                  <Input type="text" name="subject" placeholder="Subject" value={formData.subject} onChange={handleChange} required />
                 </div>
                 <div>
-                  <Textarea
-                    name="message"
-                    placeholder="Your Message"
-                    value={formData.message}
-                    onChange={handleChange}
-                    rows={6}
-                    required
-                  />
+                  <Textarea name="message" placeholder="Your Message" value={formData.message} onChange={handleChange} rows={6} required />
                 </div>
-                <Button 
-                  type="submit" 
-                  className="w-full bg-rocketry-navy hover:bg-rocketry-navy/90"
-                  disabled={isSubmitting}
-                >
+                <Button type="submit" className="w-full bg-rocketry-navy hover:bg-rocketry-navy/90" disabled={isSubmitting}>
                   {isSubmitting ? "Sending..." : "Send Message"}
                 </Button>
               </form>
@@ -143,9 +113,7 @@ const Contact = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold text-lg">Email</h3>
-                    <p className="text-gray-600">
-                      info@rocketryforschools.co.uk
-                    </p>
+                    <p className="text-gray-600">admin@rocketryforschools.co.uk</p>
                   </div>
                 </div>
                 
@@ -167,8 +135,6 @@ const Contact = () => {
           </div>
         </div>
       </div>
-    </MainLayout>
-  );
+    </MainLayout>;
 };
-
 export default Contact;
