@@ -44,9 +44,9 @@ export interface ShopContextType {
   updateProduct: (product: Product) => void;
   removeProduct: (productId: string) => void;
   getProduct: (productId: string) => Product | undefined;
-  fetchAllProducts: () => void;
-  fetchProductsByCategory: (category: string) => void;
-  fetchFeaturedProducts: () => void;
+  fetchAllProducts: () => Product[];
+  fetchProductsByCategory: (category: string) => Product[];
+  fetchFeaturedProducts: () => Product[];
   getRelatedProducts: (category: string, excludeProductId: string) => Product[];
   updateFeaturedProducts: (productId: string, isFeatured: boolean) => void;
   addToCart: (product: Product, quantity: number) => void;

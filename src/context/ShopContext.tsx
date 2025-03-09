@@ -11,9 +11,9 @@ const ShopContext = createContext<ShopContextType>({
   updateProduct: () => {},
   removeProduct: () => {},
   getProduct: () => undefined,
-  fetchAllProducts: () => {},
-  fetchProductsByCategory: () => {},
-  fetchFeaturedProducts: () => {},
+  fetchAllProducts: () => [],
+  fetchProductsByCategory: () => [],
+  fetchFeaturedProducts: () => [],
   getRelatedProducts: () => [],
   updateFeaturedProducts: () => {},
   addToCart: () => {},
@@ -94,20 +94,18 @@ export const ShopProvider = ({ children }) => {
     return products.find(p => p.id === productId);
   }, [products]);
   
-  const fetchAllProducts = useCallback(() => {
-    // In a real app, this would be an API call
+  const fetchAllProducts = useCallback((): Product[] => {
     return products;
   }, [products]);
   
-  const fetchProductsByCategory = useCallback((category: string) => {
-    // In a real app, this would be an API call
+  const fetchProductsByCategory = useCallback((category: string): Product[] => {
     const filteredProducts = products.filter(p => 
       p.category.toLowerCase() === category.toLowerCase()
     );
     return filteredProducts;
   }, [products]);
   
-  const fetchFeaturedProducts = useCallback(() => {
+  const fetchFeaturedProducts = useCallback((): Product[] => {
     const featured = products.filter(p => p.featured);
     setFeaturedProducts(featured);
     return featured;

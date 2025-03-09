@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import ProductCard from "@/components/products/ProductCard";
@@ -30,15 +29,15 @@ const ProductList = () => {
   const [sortBy, setSortBy] = useState("featured");
   
   useEffect(() => {
+    let products: Product[] = [];
     if (category) {
       // If there's a category parameter, fetch products for that category
-      const categoryProducts = fetchProductsByCategory(category);
-      setDisplayProducts(categoryProducts);
+      products = fetchProductsByCategory(category);
     } else {
       // Otherwise, fetch all products
-      const allProducts = fetchAllProducts();
-      setDisplayProducts(allProducts);
+      products = fetchAllProducts();
     }
+    setDisplayProducts(products);
   }, [category, fetchProductsByCategory, fetchAllProducts]);
   
   useEffect(() => {
