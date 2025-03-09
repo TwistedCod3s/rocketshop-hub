@@ -1,46 +1,21 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
 import { ArrowRight } from "lucide-react";
 import { CartItem, CartSummaryProps } from "@/types/shop";
 import { useShopContext } from "@/context/ShopContext";
 
 const CartSummary: React.FC<CartSummaryProps> = ({ cart, subtotal: propSubtotal, itemCount: propItemCount }) => {
-  const [couponCode, setCouponCode] = useState("");
-  const [discount, setDiscount] = useState(0);
   
   // Calculate subtotal and item count if not provided as props
   const calculatedSubtotal = propSubtotal || cart.reduce((total, item) => total + (item.product.price * item.quantity), 0);
   const calculatedItemCount = propItemCount || cart.reduce((count, item) => count + item.quantity, 0);
   
-  const handleApplyCoupon = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Mock coupon codes
-    if (couponCode.toUpperCase() === "SCHOOL10") {
-      setDiscount(calculatedSubtotal * 0.1);
-      toast.success("Coupon applied successfully!", {
-        description: "10% discount applied to your order."
-      });
-    } else if (couponCode.toUpperCase() === "EDUCATION20") {
-      setDiscount(calculatedSubtotal * 0.2);
-      toast.success("Coupon applied successfully!", {
-        description: "20% discount applied to your order."
-      });
-    } else {
-      toast.error("Invalid coupon code", {
-        description: "Please check your coupon code and try again."
-      });
-    }
-  };
-  
   // Calculate totals
   const shipping = calculatedSubtotal > 200 ? 0 : 12.99;
-  const tax = (calculatedSubtotal - discount) * 0.07; // Assuming 7% tax
-  const total = calculatedSubtotal - discount + shipping + tax;
+  const tax = calculatedSubtotal * 0.07; // Assuming 7% tax
+  const total = calculatedSubtotal + shipping + tax;
   
   return (
     <div className="bg-gray-50 rounded-lg p-6 border">
@@ -51,13 +26,6 @@ const CartSummary: React.FC<CartSummaryProps> = ({ cart, subtotal: propSubtotal,
           <span className="text-muted-foreground">Subtotal ({calculatedItemCount} items)</span>
           <span>£{calculatedSubtotal.toFixed(2)}</span>
         </div>
-        
-        {discount > 0 && (
-          <div className="flex justify-between text-green-600">
-            <span>Discount</span>
-            <span>-£{discount.toFixed(2)}</span>
-          </div>
-        )}
         
         <div className="flex justify-between">
           <span className="text-muted-foreground">Shipping</span>
@@ -74,22 +42,6 @@ const CartSummary: React.FC<CartSummaryProps> = ({ cart, subtotal: propSubtotal,
           <span>£{total.toFixed(2)}</span>
         </div>
       </div>
-      
-      <form onSubmit={handleApplyCoupon} className="mb-6">
-        <div className="flex space-x-2">
-          <Input
-            type="text"
-            placeholder="Coupon code"
-            value={couponCode}
-            onChange={(e) => setCouponCode(e.target.value)}
-            className="flex-grow"
-          />
-          <Button type="submit" variant="outline">Apply</Button>
-        </div>
-        <p className="text-xs text-muted-foreground mt-2">
-          Try "SCHOOL10" for 10% off or "EDUCATION20" for 20% off
-        </p>
-      </form>
       
       <Link to="/checkout">
         <Button className="w-full bg-rocketry-navy hover:bg-rocketry-navy/90 mb-3">
