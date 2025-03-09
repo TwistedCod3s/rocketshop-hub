@@ -1,11 +1,11 @@
 
 import { useEffect, useState } from "react";
+import { useParams, useSearchParams } from "react-router-dom";
 import MainLayout from "@/components/layout/MainLayout";
 import ProductCard from "@/components/products/ProductCard";
-import { useSearchParams } from "react-router-dom";
 import { useShopContext } from "@/context/ShopContext";
+import { Product } from "@/types/shop";
 import { Input } from "@/components/ui/input";
-import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { 
@@ -16,40 +16,48 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { Search, SlidersHorizontal, X } from "lucide-react";
-import { Product } from "@/types/shop";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-// Updated categories constant to match our new structure
-const CATEGORIES = [
-  "Rocket Kits",
-  "Engines",
-  "Tools",
-  "Materials",
-  "UKROC",
-  "Accessories"
-];
+// Define subcategories for each main category
+const SUBCATEGORIES = {
+  "Rocket Kits": ["Beginner", "Intermediate", "Advanced", "Educational"],
+  "Engines": ["A Class", "B Class", "C Class", "D Class", "Bulk Packs"],
+  "Tools": ["Launch Controllers", "Construction Tools", "Safety Equipment"],
+  "Materials": ["Body Tubes", "Nose Cones", "Fins", "Parachutes"],
+  "UKROC": ["Competition Kits", "Egg Lofters", "Supplies"],
+  "Accessories": ["Display Stands", "Decals", "Recovery Wadding", "Books"]
+};
 
-const ProductList = () => {
+const CategoryPage = () => {
+  const { category } = useParams();
   const [searchParams] = useSearchParams();
-  const { products, fetchAllProducts } = useShopContext();
+  const { products, fetchProductsByCategory } = useShopContext();
   const [displayProducts, setDisplayProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [filterOpen, setFilterOpen] = useState(false);
-  const [priceRange, setPriceRange] = useState([0, 500]);
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
   const [sortBy, setSortBy] = useState("featured");
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>([]);
+  const [priceRange, setPriceRange] = useState([0, 500]);
+  
+  const decodedCategory = category ? decodeURIComponent(category) : "";
+  const subcategories = SUBCATEGORIES[decodedCategory] || [];
   
   // Debug logs
   useEffect(() => {
+    console.log("Category param:", decodedCategory);
     console.log("All products from context:", products);
-  }, [products]);
+  }, [decodedCategory, products]);
   
   useEffect(() => {
-    // Initial products load - get all products for this main page
-    const allProducts = fetchAllProducts();
-    console.log("All products:", allProducts);
-    setDisplayProducts(allProducts);
-  }, [fetchAllProducts, products]);
+    // Get products for this category
+    if (decodedCategory && decodedCategory !== ':category') {
+      console.log(`Looking for products in category: ${decodedCategory}`);
+      const categoryProducts = fetchProductsByCategory(decodedCategory);
+      console.log(`Products for category ${decodedCategory}:`, categoryProducts);
+      setDisplayProducts(categoryProducts);
+    }
+  }, [decodedCategory, fetchProductsByCategory, products]);
   
   useEffect(() => {
     const search = searchParams.get("search");
@@ -74,11 +82,13 @@ const ProductList = () => {
       product.price >= priceRange[0] && product.price <= priceRange[1]
     );
     
-    // Apply category filters if any are selected
-    if (selectedCategories.length > 0) {
-      result = result.filter(product => 
-        selectedCategories.includes(product.category)
-      );
+    // Apply subcategory filters if any are selected
+    if (selectedSubcategories.length > 0) {
+      // This is just a simulation since we don't have subcategory data
+      // In a real app, products would have a subcategory field
+      const filtered = [...result];
+      // For demonstration, we'll just take a subset of products for each subcategory
+      result = filtered.slice(0, 2 * selectedSubcategories.length);
     }
     
     // Apply sorting
@@ -92,14 +102,14 @@ const ProductList = () => {
     
     setFilteredProducts(result);
     console.log("Filtered products:", result);
-  }, [displayProducts, searchTerm, priceRange, sortBy, selectedCategories]);
+  }, [displayProducts, searchTerm, priceRange, sortBy, selectedSubcategories]);
   
-  const handleCategoryChange = (category: string) => {
-    setSelectedCategories(prev => {
-      if (prev.includes(category)) {
-        return prev.filter(c => c !== category);
+  const handleSubcategoryChange = (subcategory: string) => {
+    setSelectedSubcategories(prev => {
+      if (prev.includes(subcategory)) {
+        return prev.filter(c => c !== subcategory);
       } else {
-        return [...prev, category];
+        return [...prev, subcategory];
       }
     });
   };
@@ -109,12 +119,31 @@ const ProductList = () => {
       <div className="container py-12">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-rocketry-navy mb-2">
-            All Products
+            {decodedCategory}
           </h1>
           <p className="text-muted-foreground">
-            Browse our complete collection of rocketry products.
+            Browse our selection of {decodedCategory.toLowerCase()} for your rocketry projects.
           </p>
         </div>
+        
+        {subcategories.length > 0 && (
+          <Tabs defaultValue="all" className="mb-8">
+            <TabsList className="w-full flex overflow-x-auto max-w-full">
+              <TabsTrigger value="all" className="flex-shrink-0">All {decodedCategory}</TabsTrigger>
+              {subcategories.map(sub => (
+                <TabsTrigger key={sub} value={sub} className="flex-shrink-0">{sub}</TabsTrigger>
+              ))}
+            </TabsList>
+            <TabsContent value="all">
+              {/* All products shown by default */}
+            </TabsContent>
+            {subcategories.map(sub => (
+              <TabsContent key={sub} value={sub}>
+                {/* Subcategory specific content would go here */}
+              </TabsContent>
+            ))}
+          </Tabs>
+        )}
         
         <div className="flex flex-col md:flex-row gap-8">
           {/* Filter Sidebar - Mobile Toggle */}
@@ -152,41 +181,48 @@ const ProductList = () => {
                 {/* Price Range */}
                 <div>
                   <h4 className="font-medium mb-2">Price Range</h4>
-                  <Slider
-                    defaultValue={[0, 500]}
-                    max={500}
-                    step={10}
-                    value={priceRange}
-                    onValueChange={setPriceRange}
-                    className="my-6"
-                  />
-                  <div className="flex justify-between">
-                    <span>${priceRange[0]}</span>
-                    <span>${priceRange[1]}</span>
+                  <div className="flex items-center gap-4">
+                    <Input 
+                      type="number" 
+                      min="0"
+                      value={priceRange[0]}
+                      onChange={(e) => setPriceRange([Number(e.target.value), priceRange[1]])}
+                      className="w-1/2"
+                    />
+                    <span>to</span>
+                    <Input 
+                      type="number" 
+                      min="0"
+                      value={priceRange[1]}
+                      onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])}
+                      className="w-1/2"
+                    />
                   </div>
                 </div>
                 
-                {/* Categories */}
-                <div>
-                  <h4 className="font-medium mb-2">Categories</h4>
-                  <div className="space-y-2">
-                    {CATEGORIES.map((cat) => (
-                      <div key={cat} className="flex items-center space-x-2">
-                        <Checkbox 
-                          id={`category-${cat}`} 
-                          checked={selectedCategories.includes(cat)}
-                          onCheckedChange={() => handleCategoryChange(cat)}
-                        />
-                        <label 
-                          htmlFor={`category-${cat}`} 
-                          className="text-sm cursor-pointer"
-                        >
-                          {cat}
-                        </label>
-                      </div>
-                    ))}
+                {/* Subcategories */}
+                {subcategories.length > 0 && (
+                  <div>
+                    <h4 className="font-medium mb-2">Subcategories</h4>
+                    <div className="space-y-2">
+                      {subcategories.map((sub) => (
+                        <div key={sub} className="flex items-center space-x-2">
+                          <Checkbox 
+                            id={`subcategory-${sub}`} 
+                            checked={selectedSubcategories.includes(sub)}
+                            onCheckedChange={() => handleSubcategoryChange(sub)}
+                          />
+                          <label 
+                            htmlFor={`subcategory-${sub}`} 
+                            className="text-sm cursor-pointer"
+                          >
+                            {sub}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </div>
@@ -229,4 +265,4 @@ const ProductList = () => {
   );
 };
 
-export default ProductList;
+export default CategoryPage;

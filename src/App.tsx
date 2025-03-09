@@ -8,6 +8,7 @@ import { ShopProvider } from "@/context/ShopContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import ProductList from "./pages/ProductList";
+import CategoryPage from "./pages/CategoryPage";
 import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
@@ -28,7 +29,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/products" element={<ProductList />} />
             <Route path="/shop" element={<Navigate to="/products" replace />} />
-            <Route path="/products/category/:category" element={<ProductList />} />
+            <Route path="/products/category/:category" element={<CategoryPage />} />
             <Route path="/category/:category" element={<Navigate to="/products/category/:category" replace />} />
             <Route path="/product/:productId" element={<ProductDetail />} />
             <Route path="/cart" element={<Cart />} />

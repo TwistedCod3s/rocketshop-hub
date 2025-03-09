@@ -66,6 +66,9 @@ const MobileNav: React.FC<MobileNavProps> = ({
                 <ChevronDown className="h-5 w-5" />
               </div>
               <div className="mt-2 ml-2 flex flex-col space-y-2">
+                <Link to="/products" className="py-1.5 px-2 hover:bg-accent rounded-md transition-colors font-medium">
+                  All Products
+                </Link>
                 {categories.map((category) => (
                   <Link
                     key={category.path}
