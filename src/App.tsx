@@ -18,6 +18,7 @@ import Account from "./pages/Account";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import FAQ from "./pages/FAQ";
+import { CATEGORY_MAP } from "./constants/categories";
 
 const queryClient = new QueryClient();
 
@@ -37,12 +38,13 @@ const App = () => (
             <Route path="/category/:categoryName" element={<CategoryPage />} />
             
             {/* Individual category routes for direct access */}
-            <Route path="/category/rocket-kits" element={<CategoryPage categoryName="Rocket Kits" />} />
-            <Route path="/category/engines" element={<CategoryPage categoryName="Engines" />} />
-            <Route path="/category/tools" element={<CategoryPage categoryName="Tools" />} />
-            <Route path="/category/materials" element={<CategoryPage categoryName="Materials" />} />
-            <Route path="/category/ukroc" element={<CategoryPage categoryName="UKROC" />} />
-            <Route path="/category/accessories" element={<CategoryPage categoryName="Accessories" />} />
+            {Object.entries(CATEGORY_MAP).map(([slug, name]) => (
+              <Route 
+                key={slug}
+                path={`/category/${slug}`} 
+                element={<CategoryPage categoryName={name} />} 
+              />
+            ))}
             
             <Route path="/product/:productId" element={<ProductDetail />} />
             <Route path="/cart" element={<Cart />} />

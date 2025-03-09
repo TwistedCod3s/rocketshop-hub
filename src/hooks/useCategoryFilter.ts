@@ -22,6 +22,7 @@ export function useCategoryFilter(displayProducts: Product[], subcategories: str
   
   // Apply filters and sorting
   useEffect(() => {
+    console.log("Filtering products:", displayProducts);
     let result = [...displayProducts];
     
     // Apply search filter
@@ -39,11 +40,14 @@ export function useCategoryFilter(displayProducts: Product[], subcategories: str
     
     // Apply subcategory filters if any are selected
     if (selectedSubcategories.length > 0) {
-      // This is just a simulation since we don't have subcategory data
-      // In a real app, products would have a subcategory field
-      const filtered = [...result];
-      // For demonstration, we'll just take a subset of products for each subcategory
-      result = filtered.slice(0, 2 * selectedSubcategories.length);
+      // For real implementation, products would have a subcategory field
+      // This is a simplified version that filters based on name/description
+      result = result.filter(product => 
+        selectedSubcategories.some(sub => 
+          product.name.toLowerCase().includes(sub.toLowerCase()) || 
+          product.description.toLowerCase().includes(sub.toLowerCase())
+        )
+      );
     }
     
     // Apply sorting
@@ -55,6 +59,7 @@ export function useCategoryFilter(displayProducts: Product[], subcategories: str
       result.sort((a, b) => a.name.localeCompare(b.name));
     }
     
+    console.log("Filtered results:", result);
     setFilteredProducts(result);
   }, [displayProducts, searchTerm, priceRange, sortBy, selectedSubcategories]);
   

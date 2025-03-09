@@ -37,6 +37,24 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
   filterOpen,
   setFilterOpen
 }) => {
+  // Handle min price slider change
+  const handleMinPriceChange = (value: number[]) => {
+    const newMin = value[0];
+    // Ensure min price doesn't exceed max price
+    if (newMin <= priceRange[1]) {
+      setPriceRange([newMin, priceRange[1]]);
+    }
+  };
+
+  // Handle max price slider change
+  const handleMaxPriceChange = (value: number[]) => {
+    const newMax = value[0];
+    // Ensure max price isn't less than min price
+    if (newMax >= priceRange[0]) {
+      setPriceRange([priceRange[0], newMax]);
+    }
+  };
+
   return (
     <>
       {/* Filter Sidebar - Mobile Toggle */}
@@ -71,20 +89,43 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
               </div>
             </div>
             
-            {/* Price Range */}
+            {/* Price Range - Using two separate sliders */}
             <div>
               <h4 className="font-medium mb-2">Price Range</h4>
-              <Slider
-                defaultValue={[0, 500]}
-                max={500}
-                step={10}
-                value={priceRange}
-                onValueChange={setPriceRange}
-                className="my-6"
-              />
-              <div className="flex justify-between">
-                <span>${priceRange[0]}</span>
-                <span>${priceRange[1]}</span>
+              
+              {/* Min Price Slider */}
+              <div className="mb-4">
+                <div className="flex justify-between mb-1">
+                  <span className="text-sm">Min Price</span>
+                  <span className="text-sm font-medium">${priceRange[0]}</span>
+                </div>
+                <Slider
+                  defaultValue={[0]}
+                  value={[priceRange[0]]}
+                  max={500}
+                  step={10}
+                  onValueChange={handleMinPriceChange}
+                />
+              </div>
+              
+              {/* Max Price Slider */}
+              <div>
+                <div className="flex justify-between mb-1">
+                  <span className="text-sm">Max Price</span>
+                  <span className="text-sm font-medium">${priceRange[1]}</span>
+                </div>
+                <Slider
+                  defaultValue={[500]}
+                  value={[priceRange[1]]}
+                  max={500}
+                  step={10}
+                  onValueChange={handleMaxPriceChange}
+                />
+              </div>
+              
+              {/* Price Range Display */}
+              <div className="flex justify-between items-center mt-4 text-sm">
+                <span>Range: ${priceRange[0]} - ${priceRange[1]}</span>
               </div>
             </div>
             
