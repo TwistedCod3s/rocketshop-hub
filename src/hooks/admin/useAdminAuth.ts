@@ -23,6 +23,7 @@ export function useAdminAuth() {
       console.log("Admin login successful");
       return true;
     }
+    console.log("Admin login failed");
     return false;
   }, []);
 

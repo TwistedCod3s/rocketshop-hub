@@ -19,6 +19,19 @@ export function useAdmin() {
       console.log("useAdmin hook unmounted");
     };
   }, []);
+
+  // Debug logging for state changes
+  useEffect(() => {
+    console.log("useAdmin: categoryImages updated", categoryImagesHook.categoryImages);
+  }, [categoryImagesHook.categoryImages]);
+
+  useEffect(() => {
+    console.log("useAdmin: subcategories updated", subcategoriesHook.subcategories);
+  }, [subcategoriesHook.subcategories]);
+
+  useEffect(() => {
+    console.log("useAdmin: coupons updated", couponsHook.coupons);
+  }, [couponsHook.coupons]);
   
   return {
     // Admin authentication

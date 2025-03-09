@@ -10,7 +10,7 @@ import { CouponCode } from "@/types/shop";
 import { v4 as uuidv4 } from "uuid";
 
 // Initialize default coupons
-const defaultCoupons = [
+const defaultCoupons: CouponCode[] = [
   {
     id: "coupon-1",
     code: "SCHOOL10",
@@ -38,12 +38,14 @@ export function useCoupons() {
     console.log("Setting up coupons event listeners");
     
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === COUPONS_KEY && e.newValue) {
+      if (e.key === COUPONS_KEY) {
         try {
-          console.log("Storage event detected for coupons");
-          const updatedCoupons = JSON.parse(e.newValue);
-          setCoupons(updatedCoupons);
-          console.log("Coupons updated from storage event:", updatedCoupons);
+          console.log("Storage event detected for coupons", e);
+          if (e.newValue) {
+            const updatedCoupons = JSON.parse(e.newValue);
+            setCoupons(updatedCoupons);
+            console.log("Coupons updated from storage event:", updatedCoupons);
+          }
         } catch (error) {
           console.error("Error parsing coupons from storage event:", error);
         }
@@ -52,16 +54,31 @@ export function useCoupons() {
     
     // Custom event handlers
     const handleCouponsEvent = (e: CustomEvent<CouponCode[]>) => {
-      console.log("Custom event detected for coupons");
-      setCoupons(e.detail);
-      console.log("Coupons updated from custom event:", e.detail);
+      console.log("Custom event detected for coupons", e);
+      if (e.detail) {
+        setCoupons(e.detail);
+        console.log("Coupons updated from custom event:", e.detail);
+      }
     };
     
     // Add event listeners
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener(COUPONS_EVENT, handleCouponsEvent as EventListener);
     
+    // Force initial sync
+    const storedData = localStorage.getItem(COUPONS_KEY);
+    if (storedData) {
+      try {
+        const parsedData = JSON.parse(storedData);
+        setCoupons(parsedData);
+        console.log("Initial sync of coupons from localStorage:", parsedData);
+      } catch (e) {
+        console.error("Error during initial sync of coupons:", e);
+      }
+    }
+    
     return () => {
+      console.log("Removing coupons event listeners");
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener(COUPONS_EVENT, handleCouponsEvent as EventListener);
     };
@@ -80,7 +97,7 @@ export function useCoupons() {
       
       // Save to localStorage and broadcast
       saveAndBroadcast(COUPONS_KEY, COUPONS_EVENT, updatedCoupons);
-      console.log("Added new coupon:", newCoupon.code);
+      console.log("Added new coupon:", newCoupon.code, newCoupon);
       
       return updatedCoupons;
     });
@@ -93,7 +110,7 @@ export function useCoupons() {
       
       // Save to localStorage and broadcast
       saveAndBroadcast(COUPONS_KEY, COUPONS_EVENT, updatedCoupons);
-      console.log("Updated coupon:", coupon.code);
+      console.log("Updated coupon:", coupon.code, coupon);
       
       return updatedCoupons;
     });
@@ -113,6 +130,7 @@ export function useCoupons() {
   }, []);
 
   const validateCoupon = useCallback((code: string) => {
+    console.log("Validating coupon:", code, "against", coupons);
     return coupons.find(
       c => c.code.toLowerCase() === code.toLowerCase() && c.active
     );

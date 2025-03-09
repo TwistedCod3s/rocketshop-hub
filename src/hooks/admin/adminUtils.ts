@@ -23,24 +23,38 @@ export const saveAndBroadcast = <T>(key: string, eventName: string, value: T): v
   try {
     // First save to localStorage
     localStorage.setItem(key, JSON.stringify(value));
-    console.log(`Saved ${key} to localStorage`);
+    console.log(`Saved ${key} to localStorage`, value);
     
     // Then dispatch custom event for same-window communication
-    window.dispatchEvent(new CustomEvent(eventName, { detail: value }));
-    console.log(`Broadcast ${eventName} custom event`);
+    const customEvent = new CustomEvent(eventName, { detail: value });
+    window.dispatchEvent(customEvent);
+    console.log(`Broadcast ${eventName} custom event`, value);
     
     // Then dispatch storage event manually for cross-window communication
     // We have to manually trigger this because changes in the same window don't trigger storage events
     try {
+      // Create event with correct properties
       const storageEvent = new StorageEvent('storage', {
         key: key,
         newValue: JSON.stringify(value),
+        oldValue: null,
         storageArea: localStorage
       });
+      
+      // Dispatch it
       window.dispatchEvent(storageEvent);
-      console.log(`Manually triggered storage event for ${key}`);
+      console.log(`Manually triggered storage event for ${key}`, {
+        key,
+        newValue: JSON.stringify(value)
+      });
     } catch (e) {
       console.error("Failed to manually trigger storage event:", e);
+      
+      // Fallback mechanism - less reliable but might help in some browsers
+      setTimeout(() => {
+        console.log("Using fallback window.dispatchEvent for 'storage'");
+        window.dispatchEvent(new Event('storage'));
+      }, 0);
     }
   } catch (error) {
     console.error(`Error in saveAndBroadcast for ${key}:`, error);
@@ -48,12 +62,12 @@ export const saveAndBroadcast = <T>(key: string, eventName: string, value: T): v
 };
 
 // Define consistent storage keys with version suffix
-export const ADMIN_STORAGE_KEY = "ROCKETRY_SHOP_ADMIN_V4"; // Bump version
-export const CATEGORY_IMAGES_KEY = "ROCKETRY_SHOP_CATEGORY_IMAGES_V4"; // Bump version
-export const SUBCATEGORIES_KEY = "ROCKETRY_SHOP_SUBCATEGORIES_V4"; // Bump version
-export const COUPONS_KEY = "ROCKETRY_SHOP_COUPONS_V4"; // Bump version
+export const ADMIN_STORAGE_KEY = "ROCKETRY_SHOP_ADMIN_V5"; // Bump version
+export const CATEGORY_IMAGES_KEY = "ROCKETRY_SHOP_CATEGORY_IMAGES_V5"; // Bump version
+export const SUBCATEGORIES_KEY = "ROCKETRY_SHOP_SUBCATEGORIES_V5"; // Bump version
+export const COUPONS_KEY = "ROCKETRY_SHOP_COUPONS_V5"; // Bump version
 
 // Custom event names for real-time sync
-export const CATEGORY_IMAGES_EVENT = "rocketry-category-images-update-v4"; // Bump version
-export const SUBCATEGORIES_EVENT = "rocketry-subcategories-update-v4"; // Bump version
-export const COUPONS_EVENT = "rocketry-coupons-update-v4"; // Bump version
+export const CATEGORY_IMAGES_EVENT = "rocketry-category-images-update-v5"; // Bump version
+export const SUBCATEGORIES_EVENT = "rocketry-subcategories-update-v5"; // Bump version
+export const COUPONS_EVENT = "rocketry-coupons-update-v5"; // Bump version
