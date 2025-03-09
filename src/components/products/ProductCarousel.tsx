@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -46,6 +47,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
       setTranslateX(-current * itemWidth);
     }
   }, [current, itemsPerView]);
+
   const next = () => {
     if (current < products.length - itemsPerView) {
       setCurrent(current + 1);
@@ -78,11 +80,12 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
     <div className="mt-12 mb-16">
       {title && (
         <div className="text-center mb-6">
-          {/* Reduced margin-bottom from mb-10 to mb-6 */}
+          <h2 className="text-display-small font-bold text-rocketry-navy">
+            {title}
+          </h2>
           
           {description && (
             <p className="mt-1 text-muted-foreground max-w-2xl mx-auto">
-              {/* Reduced margin-top from mt-3 to mt-1 */}
               {description}
             </p>
           )}
