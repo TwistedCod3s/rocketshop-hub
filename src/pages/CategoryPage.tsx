@@ -25,7 +25,13 @@ const CategoryPage = ({ categoryName: propCategoryName }: CategoryPageProps) => 
   
   // If no prop was provided, try to get it from the URL parameter
   if (!resolvedCategoryName && paramCategoryName) {
+    // First check if the parameter is a slug in our category map
     resolvedCategoryName = CATEGORY_MAP[paramCategoryName];
+    
+    // If not found in map, use the parameter directly (for backward compatibility)
+    if (!resolvedCategoryName) {
+      resolvedCategoryName = paramCategoryName;
+    }
   }
   
   // Use the resolved category name or default to "All Products"

@@ -34,10 +34,10 @@ const App = () => (
             <Route path="/products" element={<ProductList />} />
             <Route path="/shop" element={<Navigate to="/products" replace />} />
             
-            {/* Category routes */}
+            {/* Generic category route for dynamic parameters */}
             <Route path="/category/:categoryName" element={<CategoryPage />} />
             
-            {/* Individual category routes for direct access */}
+            {/* Individual category routes with specific names pre-defined */}
             {Object.entries(CATEGORY_MAP).map(([slug, name]) => (
               <Route 
                 key={slug}
