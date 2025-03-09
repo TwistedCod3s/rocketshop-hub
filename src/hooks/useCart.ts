@@ -3,12 +3,12 @@ import { useState, useCallback, useEffect } from "react";
 import { CartItem, Product } from "@/types/shop";
 
 // Use a consistent storage key
-const CART_STORAGE_KEY = "rocketry-shop-cart";
+const CART_STORAGE_KEY = "ROCKETRY_SHOP_CART";
 
 export function useCart() {
   const [cart, setCart] = useState<CartItem[]>([]);
   
-  // Load cart from sessionStorage
+  // Load cart from sessionStorage (per user)
   useEffect(() => {
     const savedCart = sessionStorage.getItem(CART_STORAGE_KEY);
     if (savedCart) {
@@ -26,8 +26,12 @@ export function useCart() {
   
   // Update sessionStorage when cart changes
   useEffect(() => {
-    sessionStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
-    console.log("Saved cart to sessionStorage:", cart.length);
+    try {
+      sessionStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+      console.log("Saved cart to sessionStorage:", cart.length);
+    } catch (error) {
+      console.error("Error saving cart to sessionStorage:", error);
+    }
   }, [cart]);
   
   // Cart Management Functions

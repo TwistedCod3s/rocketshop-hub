@@ -1,58 +1,75 @@
+
 import { useState, useCallback, useEffect } from "react";
 import { Product } from "@/types/shop";
 import { initialProducts } from "@/data/initialProducts";
 
-// Define a global variable to store products in memory for all users
-// This will persist during the lifecycle of the application
-let globalProducts: Product[] = [];
+// Define consistent storage key
+const PRODUCTS_STORAGE_KEY = "ROCKETRY_SHOP_PRODUCTS";
+
+// Initialize global products from localStorage if available
+let globalProducts: Product[] = (() => {
+  try {
+    if (typeof window !== 'undefined') {
+      const storedProducts = localStorage.getItem(PRODUCTS_STORAGE_KEY);
+      if (storedProducts) {
+        console.log("Initializing global products from localStorage");
+        return JSON.parse(storedProducts);
+      }
+    }
+  } catch (error) {
+    console.error("Error loading products from localStorage:", error);
+  }
+  console.log("Initializing global products with default data");
+  return [...initialProducts];
+})();
 
 export function useProducts() {
   const [products, setProducts] = useState<Product[]>([]);
   
   // Load initial data
   useEffect(() => {
-    // If we already have products in the global store, use those
-    if (globalProducts.length > 0) {
-      console.log("Using products from global store:", globalProducts.length);
-      setProducts(globalProducts);
-    } else {
-      // Otherwise, initialize with default products
-      console.log("Initializing products with default data");
-      setProducts(initialProducts);
-      globalProducts = [...initialProducts];
+    // Always use the current globalProducts as source of truth
+    console.log("Using products from global store:", globalProducts.length);
+    setProducts([...globalProducts]);
+  }, []);
+
+  // Sync to localStorage whenever globalProducts changes
+  const syncToLocalStorage = useCallback(() => {
+    try {
+      localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(globalProducts));
+      console.log("Saved products to localStorage:", globalProducts.length);
+    } catch (error) {
+      console.error("Error saving products to localStorage:", error);
     }
   }, []);
   
   // Product Management Functions
   const addProduct = useCallback((product: Product) => {
     setProducts(prev => {
-      const updated = [...prev, product];
-      // Update the global store
-      globalProducts = [...updated];
+      globalProducts = [...prev, product];
+      syncToLocalStorage();
       console.log("Added product to global store:", product.name);
-      return updated;
+      return globalProducts;
     });
-  }, []);
+  }, [syncToLocalStorage]);
   
   const updateProduct = useCallback((product: Product) => {
     setProducts(prev => {
-      const updated = prev.map(p => p.id === product.id ? product : p);
-      // Update the global store
-      globalProducts = [...updated];
+      globalProducts = prev.map(p => p.id === product.id ? product : p);
+      syncToLocalStorage();
       console.log("Updated product in global store:", product.name);
-      return updated;
+      return globalProducts;
     });
-  }, []);
+  }, [syncToLocalStorage]);
   
   const removeProduct = useCallback((productId: string) => {
     setProducts(prev => {
-      const updated = prev.filter(p => p.id !== productId);
-      // Update the global store
-      globalProducts = [...updated];
+      globalProducts = prev.filter(p => p.id !== productId);
+      syncToLocalStorage();
       console.log("Removed product from global store:", productId);
-      return updated;
+      return globalProducts;
     });
-  }, []);
+  }, [syncToLocalStorage]);
   
   const getProduct = useCallback((productId: string) => {
     return products.find(p => p.id === productId);
@@ -88,13 +105,12 @@ export function useProducts() {
   
   const updateFeaturedProducts = useCallback((productId: string, isFeatured: boolean) => {
     setProducts(prev => {
-      const updated = prev.map(p => p.id === productId ? { ...p, featured: isFeatured } : p);
-      // Update the global store
-      globalProducts = [...updated];
+      globalProducts = prev.map(p => p.id === productId ? { ...p, featured: isFeatured } : p);
+      syncToLocalStorage();
       console.log(`${isFeatured ? "Added" : "Removed"} product ${productId} ${isFeatured ? "to" : "from"} featured`);
-      return updated;
+      return globalProducts;
     });
-  }, []);
+  }, [syncToLocalStorage]);
 
   return {
     products,
