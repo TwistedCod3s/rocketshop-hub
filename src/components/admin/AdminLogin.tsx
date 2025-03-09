@@ -2,9 +2,8 @@
 import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useShopContext } from "@/context/ShopContext";
-import { useNavigate } from "react-router-dom";
 
 interface AdminLoginProps {
   onLogin: (success: boolean) => void;
@@ -63,12 +62,6 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
             </Button>
           </form>
         </CardContent>
-        <CardFooter>
-          <p className="text-xs text-muted-foreground text-center w-full">
-            <span className="block mb-1">For demo purposes, use:</span>
-            Username: admin | Password: password123
-          </p>
-        </CardFooter>
       </Card>
     </div>
   );
