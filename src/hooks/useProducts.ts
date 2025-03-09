@@ -53,9 +53,9 @@ export function useProducts() {
     console.log(`Filtering products by category: ${category}`);
     console.log("Available products:", products);
     
-    // Return all products for special cases
-    if (!category || category === ':category' || category === 'All Products') {
-      console.log("Returning all products");
+    // Return all products if no category is provided
+    if (!category) {
+      console.log("No category provided, returning all products");
       return products;
     }
     

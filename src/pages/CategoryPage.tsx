@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import MainLayout from "@/components/layout/MainLayout";
@@ -42,8 +41,9 @@ const CategoryPage = () => {
   
   // Get the proper category name
   const decodedCategory = category ? decodeURIComponent(category) : "";
-  const displayCategory = decodedCategory === ':category' ? 'All Products' : decodedCategory;
-  const subcategories = SUBCATEGORIES[decodedCategory] || [];
+  // Use the category name directly - no need for special handling now
+  const categoryTitle = decodedCategory;
+  const subcategories = SUBCATEGORIES[categoryTitle] || [];
   
   // Debug logs
   useEffect(() => {
@@ -52,17 +52,14 @@ const CategoryPage = () => {
   }, [decodedCategory, products]);
   
   useEffect(() => {
-    // Get products for this category or all products if category is ':category'
-    if (decodedCategory === ':category') {
-      console.log("Getting all products");
-      setDisplayProducts(products);
-    } else if (decodedCategory) {
-      console.log(`Looking for products in category: ${decodedCategory}`);
-      const categoryProducts = fetchProductsByCategory(decodedCategory);
-      console.log(`Products for category ${decodedCategory}:`, categoryProducts);
+    // Get products for this specific category
+    if (categoryTitle) {
+      console.log(`Looking for products in category: ${categoryTitle}`);
+      const categoryProducts = fetchProductsByCategory(categoryTitle);
+      console.log(`Products for category ${categoryTitle}:`, categoryProducts);
       setDisplayProducts(categoryProducts);
     }
-  }, [decodedCategory, fetchProductsByCategory, products]);
+  }, [categoryTitle, fetchProductsByCategory, products]);
   
   useEffect(() => {
     const search = searchParams.get("search");
@@ -124,17 +121,17 @@ const CategoryPage = () => {
       <div className="container py-12">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-rocketry-navy mb-2">
-            {displayCategory}
+            {categoryTitle}
           </h1>
           <p className="text-muted-foreground">
-            Browse our selection of {displayCategory.toLowerCase()} for your rocketry projects.
+            Browse our selection of {categoryTitle.toLowerCase()} for your rocketry projects.
           </p>
         </div>
         
         {subcategories.length > 0 && (
           <Tabs defaultValue="all" className="mb-8">
             <TabsList className="w-full flex overflow-x-auto max-w-full">
-              <TabsTrigger value="all" className="flex-shrink-0">All {displayCategory}</TabsTrigger>
+              <TabsTrigger value="all" className="flex-shrink-0">All {categoryTitle}</TabsTrigger>
               {subcategories.map(sub => (
                 <TabsTrigger key={sub} value={sub} className="flex-shrink-0">{sub}</TabsTrigger>
               ))}

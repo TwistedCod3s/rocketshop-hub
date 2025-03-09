@@ -29,8 +29,19 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/products" element={<ProductList />} />
             <Route path="/shop" element={<Navigate to="/products" replace />} />
+            
+            {/* Category routes - now direct to the specific category page */}
+            <Route path="/category/rocket-kits" element={<CategoryPage />} />
+            <Route path="/category/engines" element={<CategoryPage />} />
+            <Route path="/category/tools" element={<CategoryPage />} />
+            <Route path="/category/materials" element={<CategoryPage />} />
+            <Route path="/category/ukroc" element={<CategoryPage />} />
+            <Route path="/category/accessories" element={<CategoryPage />} />
+            
+            {/* Generic category route as fallback */}
             <Route path="/products/category/:category" element={<CategoryPage />} />
             <Route path="/category/:category" element={<Navigate to="/products/category/:category" replace />} />
+            
             <Route path="/product/:productId" element={<ProductDetail />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/checkout" element={<Checkout />} />
