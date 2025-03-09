@@ -1,15 +1,14 @@
-
 import { Link } from "react-router-dom";
 import { CATEGORY_MAP } from "@/constants/categories";
 
 // Define image paths for each category
 export const CATEGORY_IMAGES = {
-  "rocket-kits": "/lovable-uploads/5e9df28c-dfeb-451d-aa2d-e34a30a769c6.png",
-  "engines": "/lovable-uploads/464bb92b-3c96-4abd-9987-49654404f1b3.png",
-  "tools": "/lovable-uploads/6deeac36-da1c-460a-8457-ffb92c527e95.png",
-  "materials": "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?auto=format&fit=crop&w=300&h=300",
-  "ukroc": "https://images.unsplash.com/photo-1472396961693-142e6e269027?auto=format&fit=crop&w=300&h=300",
-  "accessories": "https://images.unsplash.com/photo-1493962853295-0fd70327578a?auto=format&fit=crop&w=300&h=300"
+  "rocket-kits": "https://images.unsplash.com/photo-1518365050014-70fe7232897f?auto=format&fit=crop&w=300&h=300", // Model rocket image
+  "engines": "https://images.unsplash.com/photo-1518955163464-83bbd23ba2a4?auto=format&fit=crop&w=300&h=300", // Black powder engines
+  "tools": "https://images.unsplash.com/photo-1572981779307-38e923e7e42e?auto=format&fit=crop&w=300&h=300", // Launch platform
+  "materials": "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&w=300&h=300", // Cardboard tube
+  "ukroc": "https://ukroc.com/wp-content/uploads/2017/12/ukroclogo.png", // UKROC logo
+  "accessories": "https://images.unsplash.com/photo-1504610494206-63238da5e9ed?auto=format&fit=crop&w=300&h=300" // Altimeter-like device
 };
 
 const CategorySection = () => {
