@@ -3,26 +3,40 @@ import { useState, useCallback, useEffect } from "react";
 import { Product } from "@/types/shop";
 import { initialProducts } from "@/data/initialProducts";
 
+// Use a consistent storage key that won't change between deployments
+const PRODUCTS_STORAGE_KEY = "rocketry-shop-products";
+
 export function useProducts() {
   const [products, setProducts] = useState<Product[]>([]);
   
   // Load initial data
   useEffect(() => {
     // Try to load products from localStorage
-    const savedProducts = localStorage.getItem("products");
+    const savedProducts = localStorage.getItem(PRODUCTS_STORAGE_KEY);
     if (savedProducts) {
-      setProducts(JSON.parse(savedProducts));
+      try {
+        const parsedProducts = JSON.parse(savedProducts);
+        setProducts(parsedProducts);
+        console.log("Loaded products from localStorage:", parsedProducts.length);
+      } catch (error) {
+        console.error("Error parsing saved products:", error);
+        // Fall back to initial products if there's a parsing error
+        setProducts(initialProducts);
+        localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(initialProducts));
+      }
     } else {
       // Use initial products data if nothing in localStorage
+      console.log("No saved products found, using initial data");
       setProducts(initialProducts);
-      localStorage.setItem("products", JSON.stringify(initialProducts));
+      localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(initialProducts));
     }
   }, []);
   
   // Update localStorage when products change
   useEffect(() => {
     if (products.length > 0) {
-      localStorage.setItem("products", JSON.stringify(products));
+      localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(products));
+      console.log("Saved products to localStorage:", products.length);
     }
   }, [products]);
 
