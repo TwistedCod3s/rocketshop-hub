@@ -1,4 +1,3 @@
-
 export interface Product {
   id: string;
   name: string;
@@ -6,6 +5,7 @@ export interface Product {
   fullDescription?: string;
   price: number;
   category: string;
+  subcategory?: string;
   images: string[];
   inStock: boolean;
   featured: boolean;
@@ -57,4 +57,12 @@ export interface ShopContextType {
   getCartCount: () => number;
   isAdmin?: boolean;
   tryAdminLogin: (username: string, password: string) => boolean;
+  subcategories: Record<string, string[]>;
+  updateSubcategories: (category: string, subcategories: string[]) => void;
+}
+
+export interface Category {
+  name: string;
+  slug: string;
+  subcategories: string[];
 }

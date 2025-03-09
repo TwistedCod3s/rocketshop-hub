@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +14,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { X, ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
+import { useShopContext } from "@/context/ShopContext";
 
 // Updated categories list for the form
 const CATEGORIES = [
@@ -25,6 +27,8 @@ const CATEGORIES = [
 ];
 
 const ProductForm = ({ product, onSubmit, onCancel }) => {
+  const { subcategories } = useShopContext();
+  
   const [formData, setFormData] = useState({
     id: "",
     name: "",
@@ -32,6 +36,7 @@ const ProductForm = ({ product, onSubmit, onCancel }) => {
     fullDescription: "",
     price: 0,
     category: "",
+    subcategory: "",
     inStock: true,
     featured: false,
     rating: 0,
@@ -39,6 +44,8 @@ const ProductForm = ({ product, onSubmit, onCancel }) => {
     specifications: [{ name: "", value: "" }],
     reviews: []
   });
+  
+  const [availableSubcategories, setAvailableSubcategories] = useState<string[]>([]);
   
   useEffect(() => {
     if (product) {
@@ -55,6 +62,20 @@ const ProductForm = ({ product, onSubmit, onCancel }) => {
       setFormData(prev => ({ ...prev, id: uuidv4() }));
     }
   }, [product]);
+  
+  // Update available subcategories when category changes
+  useEffect(() => {
+    if (formData.category) {
+      setAvailableSubcategories(subcategories[formData.category] || []);
+      
+      // If current subcategory is not in the new list, reset it
+      if (formData.subcategory && !subcategories[formData.category]?.includes(formData.subcategory)) {
+        setFormData(prev => ({ ...prev, subcategory: "" }));
+      }
+    } else {
+      setAvailableSubcategories([]);
+    }
+  }, [formData.category, subcategories]);
   
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -219,6 +240,34 @@ const ProductForm = ({ product, onSubmit, onCancel }) => {
               </div>
               
               <div>
+                <Label htmlFor="subcategory">Subcategory</Label>
+                <Select 
+                  value={formData.subcategory} 
+                  onValueChange={(value) => handleToggleChange("subcategory", value)}
+                  disabled={!formData.category || availableSubcategories.length === 0}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={
+                      !formData.category 
+                        ? "Select a category first" 
+                        : availableSubcategories.length === 0
+                          ? "No subcategories available"
+                          : "Select a subcategory"
+                    } />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableSubcategories.map((subcategory) => (
+                      <SelectItem key={subcategory} value={subcategory}>
+                        {subcategory}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
                 <Label htmlFor="rating">Rating (0-5)</Label>
                 <Input 
                   id="rating"
@@ -231,25 +280,25 @@ const ProductForm = ({ product, onSubmit, onCancel }) => {
                   onChange={handleChange}
                 />
               </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="flex items-center space-x-2">
-                <Switch 
-                  checked={formData.inStock} 
-                  onCheckedChange={(checked) => handleToggleChange("inStock", checked)}
-                  id="in-stock"
-                />
-                <Label htmlFor="in-stock">In Stock</Label>
-              </div>
               
-              <div className="flex items-center space-x-2">
-                <Switch 
-                  checked={formData.featured} 
-                  onCheckedChange={(checked) => handleToggleChange("featured", checked)}
-                  id="featured"
-                />
-                <Label htmlFor="featured">Featured Product</Label>
+              <div className="flex items-center space-x-8 mt-8">
+                <div className="flex items-center space-x-2">
+                  <Switch 
+                    checked={formData.inStock} 
+                    onCheckedChange={(checked) => handleToggleChange("inStock", checked)}
+                    id="in-stock"
+                  />
+                  <Label htmlFor="in-stock">In Stock</Label>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <Switch 
+                    checked={formData.featured} 
+                    onCheckedChange={(checked) => handleToggleChange("featured", checked)}
+                    id="featured"
+                  />
+                  <Label htmlFor="featured">Featured Product</Label>
+                </div>
               </div>
             </div>
             

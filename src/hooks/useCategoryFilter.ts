@@ -40,13 +40,8 @@ export function useCategoryFilter(displayProducts: Product[], subcategories: str
     
     // Apply subcategory filters if any are selected
     if (selectedSubcategories.length > 0) {
-      // For real implementation, products would have a subcategory field
-      // This is a simplified version that filters based on name/description
       result = result.filter(product => 
-        selectedSubcategories.some(sub => 
-          product.name.toLowerCase().includes(sub.toLowerCase()) || 
-          product.description.toLowerCase().includes(sub.toLowerCase())
-        )
+        product.subcategory && selectedSubcategories.includes(product.subcategory)
       );
     }
     

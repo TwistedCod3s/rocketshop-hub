@@ -27,6 +27,8 @@ const ShopContext = createContext<ShopContextType>({
   getCartTotal: () => 0,
   getCartCount: () => 0,
   tryAdminLogin: () => false,
+  subcategories: {},
+  updateSubcategories: () => {},
 });
 
 // Hook for using the shop context
@@ -52,6 +54,8 @@ export const ShopProvider = ({ children }) => {
     featuredProducts: featuredHook.featuredProducts,
     cart: cartHook.cart,
     isAdmin: adminHook.isAdmin,
+    subcategories: adminHook.subcategories,
+    updateSubcategories: adminHook.updateSubcategories,
   };
   
   return (
