@@ -53,6 +53,11 @@ export function useProducts() {
     console.log(`Filtering products by category: ${category}`);
     console.log("Available products:", products);
     
+    // Skip filtering for invalid category value
+    if (category === ':category') {
+      return products;
+    }
+    
     // Case-insensitive comparison for more reliable filtering
     const filteredProducts = products.filter(p => 
       p.category.toLowerCase() === category.toLowerCase()

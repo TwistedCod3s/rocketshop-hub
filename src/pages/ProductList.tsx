@@ -48,7 +48,7 @@ const ProductList = () => {
   
   useEffect(() => {
     // Initial products load
-    if (category) {
+    if (category && category !== ':category') {
       // If there's a category parameter, fetch products for that category
       // Need to decode the category parameter as it might be URL-encoded
       const decodedCategory = decodeURIComponent(category);
