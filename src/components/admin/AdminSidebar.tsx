@@ -9,7 +9,8 @@ import {
   Settings, 
   LogOut,
   Home,
-  TagIcon
+  TagIcon,
+  RefreshCw
 } from "lucide-react";
 
 const sidebarItems = [
@@ -45,6 +46,7 @@ interface AdminSidebarProps {
   setActiveSection: (section: string) => void;
   handleLogout: () => void;
   navigate: (path: string) => void;
+  forceSyncDatabase: () => void;
 }
 
 const AdminSidebar: React.FC<AdminSidebarProps> = ({
@@ -52,6 +54,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
   setActiveSection,
   handleLogout,
   navigate,
+  forceSyncDatabase,
 }) => {
   return (
     <div className="w-64 bg-white border-r min-h-screen flex flex-col">
@@ -81,6 +84,15 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
       </nav>
       
       <div className="p-4 border-t space-y-3">
+        <Button
+          onClick={forceSyncDatabase}
+          variant="secondary"
+          className="w-full flex items-center justify-center bg-blue-100 hover:bg-blue-200 text-blue-800"
+        >
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Sync Database
+        </Button>
+
         <Button
           onClick={() => navigate('/')}
           variant="outline"

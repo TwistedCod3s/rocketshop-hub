@@ -22,7 +22,8 @@ const Admin = () => {
     removeProduct, 
     updateFeaturedProducts,
     isAdmin,
-    tryAdminLogin
+    tryAdminLogin,
+    reloadAllAdminData
   } = useShopContext();
   
   // Use the shared admin state
@@ -30,6 +31,7 @@ const Admin = () => {
   const [showProductForm, setShowProductForm] = useState(false);
   const [productToEdit, setProductToEdit] = useState(null);
   const [activeSection, setActiveSection] = useState("products");
+  const [isSyncing, setIsSyncing] = useState(false);
   
   // Sync with global admin state
   useEffect(() => {
@@ -58,6 +60,29 @@ const Admin = () => {
       title: "Logged out",
       description: "You have been logged out successfully",
     });
+  };
+  
+  const forceSyncDatabase = () => {
+    setIsSyncing(true);
+    
+    // Force reload all admin data
+    try {
+      reloadAllAdminData();
+      
+      toast({
+        title: "Database synchronized",
+        description: "All changes have been pushed to all users",
+      });
+    } catch (error) {
+      toast({
+        title: "Sync failed",
+        description: "There was an error synchronizing the database",
+        variant: "destructive",
+      });
+      console.error("Error syncing database:", error);
+    } finally {
+      setIsSyncing(false);
+    }
   };
   
   const handleProductSubmit = (product) => {
@@ -123,6 +148,7 @@ const Admin = () => {
         setActiveSection={setActiveSection} 
         handleLogout={handleLogout}
         navigate={navigate}
+        forceSyncDatabase={forceSyncDatabase}
       />
       
       <div className="flex-1 overflow-auto bg-gray-50">
