@@ -60,25 +60,31 @@ const DatabaseSettings = () => {
       localStorage.setItem('ROCKETRY_DB_URL', supabaseUrl);
       localStorage.setItem('ROCKETRY_DB_KEY', supabaseKey);
       
-      // Set environment variables for the current session
-      // Note: This won't actually modify the .env file but will make them available to the app
+      // Reset any existing client instance
+      window.supabaseClientInstance = null;
+      
+      // Make sure environment variables are available for the current session
       if (import.meta.env) {
         import.meta.env.VITE_SUPABASE_URL = supabaseUrl;
         import.meta.env.VITE_SUPABASE_ANON_KEY = supabaseKey;
       }
       
-      // Force re-creation of Supabase client
-      window.supabaseClientInstance = null;
+      console.log("Testing connection with URL:", supabaseUrl.substring(0, 15) + "...");
       
-      // Test connection
+      // Test connection directly with a simple query
       const client = getSupabaseClient();
       if (!client) {
         throw new Error("Failed to create Supabase client");
       }
       
-      const { error } = await client.from('products').select('count', { count: 'exact', head: true });
+      // Simple check to see if we can connect at all
+      const { data, error } = await client
+        .from('products')
+        .select('count', { count: 'exact', head: true })
+        .limit(0);
       
       if (error) {
+        console.error("Database connection test error:", error);
         throw error;
       }
       
@@ -97,7 +103,27 @@ const DatabaseSettings = () => {
     } catch (error) {
       console.error("Connection test error:", error);
       setConnectionStatus('error');
-      setErrorMessage(error instanceof Error ? error.message : "Unknown error occurred");
+      
+      // Enhanced error handling for specific error codes
+      if (error && typeof error === 'object' && 'code' in error) {
+        const err = error as { code: string; message: string };
+        
+        if (err.code === '42P01') {
+          setErrorMessage("Table 'products' does not exist. Please create the required tables in your Supabase project.");
+        } else if (err.code === 'PGRST204') {
+          setErrorMessage("Schema mismatch: The table structure doesn't match what the app expects. Check the required column names.");
+        } else if (err.code === 'AuthApiError') {
+          setErrorMessage("Authentication error: Invalid API key or URL.");
+        } else if (err.code === 'AuthRetryableFetchError' || err.message?.includes('fetch')) {
+          setErrorMessage("Network error: Could not reach the Supabase server. Check your URL and internet connection.");
+        } else if (err.message?.includes('404')) {
+          setErrorMessage("404 Not Found: The Supabase URL is invalid or the service endpoint doesn't exist.");
+        } else {
+          setErrorMessage(err.message || "Unknown error occurred");
+        }
+      } else {
+        setErrorMessage(error instanceof Error ? error.message : "Unknown error occurred");
+      }
     } finally {
       setIsTesting(false);
     }

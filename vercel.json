@@ -11,5 +11,8 @@
       "VERCEL_FILESYSTEM_API_ENABLED": "true"
     }
   },
-  "outputDirectory": "dist"
+  "outputDirectory": "dist",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }
