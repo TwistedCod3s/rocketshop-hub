@@ -49,14 +49,14 @@ export interface Database {
           id?: string
           category?: string | null
           description?: string | null
-          featured?: boolean | null
+          featured?: string | null
           fullDescription?: string | null
           images: string[] | null
-          inStock?: boolean | null
+          inStock?: string | null
           name?: string | null
-          price?: number | null
-          rating?: number | null
-          reviews?: number | null
+          price?: string | null
+          rating?: string | null
+          reviews?: string | null
           specifications?: string[] | null
           original_id?: string | null  // Add original_id field
         }
@@ -269,7 +269,7 @@ export const dbHelpers = {
     return (data || []).map(item => convertDbToProductSchema(item));
   },
   
-  saveProducts: async (products: Record<string, any>[]): Promise<void> => {
+  saveProducts: async (products: Record<string, any>[] | Product[]): Promise<void> => {
     const client = getSupabaseClient();
     if (!client) {
       throw new Error("Could not create Supabase client");
