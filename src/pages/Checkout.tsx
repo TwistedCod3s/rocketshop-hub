@@ -15,7 +15,7 @@ import { CartSummaryProps } from "@/types/shop";
 const Checkout = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { cart, clearCart } = useShopContext();
+  const { cart, clearCart, getCartTotal, getCartCount } = useShopContext();
   const [step, setStep] = useState(1);
   
   // Form states
@@ -95,6 +95,10 @@ const Checkout = () => {
     setStep(step - 1);
     window.scrollTo(0, 0);
   };
+  
+  // Calculate subtotal and item count for CartSummary
+  const subtotal = getCartTotal ? getCartTotal() : cart.reduce((total, item) => total + (item.product.price * item.quantity), 0);
+  const itemCount = getCartCount ? getCartCount() : cart.reduce((count, item) => count + item.quantity, 0);
   
   if (cart.length === 0) {
     navigate("/cart");
@@ -484,7 +488,11 @@ const Checkout = () => {
                 </div>
               </div>
               
-              <CartSummary cart={cart} />
+              <CartSummary 
+                cart={cart}
+                subtotal={subtotal}
+                itemCount={itemCount}
+              />
             </div>
           </div>
         </div>

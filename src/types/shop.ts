@@ -117,7 +117,7 @@ export interface ShopContextType {
   removeCoupon?: () => void;
   
   // Subcategory management
-  updateSubcategories?: (subcategories: Record<string, string[]>) => void;
+  updateSubcategories?: (category: string, newSubcategories: string[]) => void;
   
   // Admin-related properties
   isAdmin?: boolean;

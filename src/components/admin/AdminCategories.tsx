@@ -20,9 +20,9 @@ const AdminCategories: React.FC<AdminCategoriesProps> = ({ products }) => {
   const [currentCategory, setCurrentCategory] = useState("");
   const [currentCategoryName, setCurrentCategoryName] = useState("");
   
-  const { handleFileUpload, updateCategoryImage, categoryImages, subcategories, updateSubcategories } = useAdmin();
+  const { handleFileUpload, updateCategoryImage, categoryImages } = useAdmin();
+  const { subcategories, updateSubcategories, updateProduct } = useShopContext();
   const { toast } = useToast();
-  const { updateProduct } = useShopContext();
 
   const handleEditImage = (categorySlug: string) => {
     const category = CATEGORY_MAP[categorySlug];
@@ -52,10 +52,12 @@ const AdminCategories: React.FC<AdminCategoriesProps> = ({ products }) => {
 
   const handleSaveSubcategories = (newSubcategoryList: string[]) => {
     // Update subcategories
-    updateSubcategories(currentCategoryName, newSubcategoryList);
+    if (updateSubcategories) {
+      updateSubcategories(currentCategoryName, newSubcategoryList);
+    }
     
     // Update products with old subcategories to use new ones if needed
-    const oldSubcategories = subcategories[currentCategoryName] || [];
+    const oldSubcategories = subcategories?.[currentCategoryName] || [];
     const removedSubcategories = oldSubcategories.filter(sub => !newSubcategoryList.includes(sub));
     
     // If there are removed subcategories, we need to update products
@@ -100,7 +102,7 @@ const AdminCategories: React.FC<AdminCategoriesProps> = ({ products }) => {
             name={name}
             image={getCategoryImage(slug)}
             productCount={products.filter(p => p.category === name).length}
-            subcategoryCount={subcategories[name]?.length || 0}
+            subcategoryCount={subcategories?.[name]?.length || 0}
             onEditImage={handleEditImage}
             onEditSubcategories={handleEditSubcategories}
           />
@@ -122,7 +124,7 @@ const AdminCategories: React.FC<AdminCategoriesProps> = ({ products }) => {
         isOpen={isSubcategoryDialogOpen}
         onOpenChange={setIsSubcategoryDialogOpen}
         categoryName={currentCategoryName}
-        currentSubcategories={subcategories[currentCategoryName] || []}
+        currentSubcategories={subcategories?.[currentCategoryName] || []}
         onSaveSubcategories={handleSaveSubcategories}
       />
     </div>
