@@ -151,11 +151,11 @@ const DatabaseInitializer = () => {
           } else if (dbError.code === '42703') {
             errorMessage = "Required columns are missing. Please check your table structure.";
           } else if (dbError.code === 'PGRST204') {
-            // Handle the specific error for missing columns
+            // Provide more specific guidance about the missing column
             if (dbError.message.includes("Could not find the 'fullDescription' column")) {
-              errorMessage = "Your 'products' table is missing the 'fullDescription' column. Please add it to your database schema.";
+              errorMessage = "Your 'products' table is missing the 'fullDescription' column. You can either: 1) Add this column to your database schema, or 2) The app will automatically handle this by storing full descriptions in the 'description' field as a workaround.";
             } else {
-              errorMessage = "Table schema mismatch: The column mentioned in the error message doesn't exist in your Supabase tables. Please update your database schema.";
+              errorMessage = `Schema mismatch: ${dbError.message}. Please update your database schema to match what the app expects.`;
             }
           } else if (dbError.code === '23502') {
             errorMessage = "Required fields are missing. Please check your data format.";

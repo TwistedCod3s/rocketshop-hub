@@ -1,5 +1,6 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Product, Coupon } from '@/types/shop';
+import { convertProductToDbSchema, convertDbToProductSchema } from '@/utils/schemaUtils';
 
 // Declare the global window property correctly
 // The existing declaration likely already defines supabaseClientInstance as 'any'
@@ -48,7 +49,7 @@ export interface Database {
           description?: string | null
           featured?: boolean | null
           fullDescription?: string | null
-          images?: string[] | null
+          images: string[] | null
           inStock?: boolean | null
           name?: string | null
           price?: number | null
@@ -261,20 +262,31 @@ export const dbHelpers = {
       throw error;
     }
     
-    return data || [];
+    // Convert each product from the database schema to the application schema
+    return (data || []).map(item => convertDbToProductSchema(item));
   },
+  
   saveProducts: async (products: Product[]): Promise<void> => {
     const client = getSupabaseClient();
     if (!client) {
       throw new Error("Could not create Supabase client");
     }
     
-    const { error } = await client
-      .from('products')
-      .upsert(products, { onConflict: 'id' });
+    // Convert each product to the database schema to handle missing columns
+    const dbProducts = products.map(product => convertProductToDbSchema(product));
+    console.log("Saving products with database schema conversion:", dbProducts.length);
     
-    if (error) {
-      console.error("Error saving products:", error);
+    try {
+      const { error } = await client
+        .from('products')
+        .upsert(dbProducts, { onConflict: 'id' });
+      
+      if (error) {
+        console.error("Error saving products:", error);
+        throw error;
+      }
+    } catch (error) {
+      console.error("Exception saving products:", error);
       throw error;
     }
   },
