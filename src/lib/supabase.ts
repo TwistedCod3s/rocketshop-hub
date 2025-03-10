@@ -22,7 +22,17 @@ export const getSupabaseClient = () => {
 
   try {
     console.log("Initializing Supabase client with URL:", supabaseUrl.substring(0, 15) + "...");
-    supabaseClientInstance = createClient(supabaseUrl, supabaseAnonKey);
+    
+    // Use the same createClient options to avoid multiple client warnings
+    supabaseClientInstance = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: false,
+        storageKey: 'rocketry-supabase-auth'
+      }
+    });
+    
     return supabaseClientInstance;
   } catch (e) {
     console.error("Error initializing Supabase client:", e);
@@ -270,8 +280,8 @@ export const dbHelpers = {
         id: coupon.id,
         code: coupon.code,
         discount: coupon.discount,
-        discountPercentage: coupon.discount_percentage, // Use underscore format from database
-        expiryDate: coupon.expiry_date, // Use underscore format from database
+        discountPercentage: coupon.discount_percentage, // Map from database format
+        expiryDate: coupon.expiry_date, // Map from database format
         active: coupon.active,
         description: coupon.description
       }));
@@ -293,8 +303,8 @@ export const dbHelpers = {
         id: ensureValidUUID(coupon.id),
         code: coupon.code,
         discount: coupon.discount,
-        discount_percentage: coupon.discountPercentage, // Use underscore format for database
-        expiry_date: coupon.expiryDate, // Use underscore format for database
+        discount_percentage: coupon.discountPercentage, // Use database column format
+        expiry_date: coupon.expiryDate, // Use database column format
         active: coupon.active,
         description: coupon.description,
       }));

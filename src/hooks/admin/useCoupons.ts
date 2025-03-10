@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from "react";
 import { 
   loadFromStorage, 
@@ -9,10 +8,10 @@ import {
 import { Coupon } from "@/types/shop";
 import { v4 as uuidv4 } from "uuid";
 
-// Initialize default coupons
+// Initialize default coupons with correct field names
 const defaultCoupons: Coupon[] = [
   {
-    id: "coupon-1",
+    id: uuidv4(), // Use UUID instead of "coupon-1"
     code: "SCHOOL10",
     discount: 0.1, // 10% as a decimal
     discountPercentage: 10,
@@ -21,7 +20,7 @@ const defaultCoupons: Coupon[] = [
     description: "10% discount for schools"
   },
   {
-    id: "coupon-2",
+    id: uuidv4(), // Use UUID instead of "coupon-2"
     code: "EDUCATION20",
     discount: 0.2, // 20% as a decimal
     discountPercentage: 20,
@@ -95,12 +94,12 @@ export function useCoupons() {
     };
   }, [reloadFromStorage]);
 
-  // Coupon management functions with improved error handling
+  // Coupon management functions with improved UUID generation
   const addCoupon = useCallback((coupon: Omit<Coupon, 'id'>) => {
     try {
       const newCoupon = {
         ...coupon,
-        id: uuidv4()
+        id: uuidv4() // Always use UUID for new coupons
       };
       
       // Update local state using functional form to ensure we're working with the latest state
