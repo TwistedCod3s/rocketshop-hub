@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Database, Loader, AlertCircle, CheckCircle } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { initializeDatabaseFromLocalStorage } from "@/utils/databaseUtils";
 
@@ -41,12 +41,25 @@ const DatabaseInitializer = () => {
         // Handle Supabase specific error format
         if ('code' in err && 'message' in err) {
           const supabaseError = err as { code: string; message: string; hint?: string };
-          errorMessage = `Database error: ${supabaseError.message}`;
           
-          if (supabaseError.code === '22P02' && supabaseError.message.includes('uuid: "placeholder"')) {
-            errorMessage = "Database schema error: The tables might not be properly set up. Please ensure your Supabase tables have the correct structure.";
-          } else if (supabaseError.hint) {
-            errorMessage += ` (Hint: ${supabaseError.hint})`;
+          // Specific handling for UUID errors
+          if (supabaseError.code === '22P02' && supabaseError.message.includes('uuid')) {
+            errorMessage = "Database schema error: UUID format issue. Please ensure your Supabase tables have primary key columns with UUID data type.";
+          } 
+          // Handle foreign key violations
+          else if (supabaseError.code === '23503') {
+            errorMessage = "Database constraint error: Foreign key violation. Check that your table relationships are correctly set up.";
+          }
+          // Handle unique constraint violations
+          else if (supabaseError.code === '23505') {
+            errorMessage = "Database constraint error: Unique violation. Duplicate entries detected.";
+          }
+          // Default error message
+          else {
+            errorMessage = `Database error (${supabaseError.code}): ${supabaseError.message}`;
+            if (supabaseError.hint) {
+              errorMessage += ` (Hint: ${supabaseError.hint})`;
+            }
           }
         } else if (err instanceof Error) {
           errorMessage = err.message;
@@ -86,27 +99,41 @@ const DatabaseInitializer = () => {
         ) : error ? (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Database Initialization Failed</AlertTitle>
             <AlertDescription>
               {error}
-              {error.includes("schema") && (
-                <div className="mt-2 text-sm">
-                  Make sure your Supabase project has tables named:
-                  <ul className="list-disc ml-5 mt-1">
-                    <li>products (with UUID primary key)</li>
-                    <li>category_images (with UUID primary key)</li>
-                    <li>subcategories (with UUID primary key)</li>
-                    <li>coupons (with UUID primary key)</li>
-                  </ul>
-                </div>
-              )}
+              <div className="mt-2 text-sm">
+                Please ensure your Supabase project has the following tables properly set up:
+                <ul className="list-disc ml-5 mt-1">
+                  <li>products (with id column as UUID primary key)</li>
+                  <li>category_images (with id column as UUID primary key)</li>
+                  <li>subcategories (with id column as UUID primary key)</li>
+                  <li>coupons (with id column as UUID primary key)</li>
+                </ul>
+                <p className="mt-2">Each table must have an ID column of type UUID that is the primary key and set to auto-generate.</p>
+              </div>
             </AlertDescription>
           </Alert>
         ) : (
-          <p className="text-sm text-gray-500">
-            This will copy all your current products, categories, subcategories, and coupons 
-            from your browser's localStorage to your Supabase database. This operation only 
-            needs to be performed once when first setting up the database approach.
-          </p>
+          <div className="space-y-4">
+            <p className="text-sm text-gray-500">
+              This will copy all your current products, categories, subcategories, and coupons 
+              from your browser's localStorage to your Supabase database. This operation only 
+              needs to be performed once when first setting up the database approach.
+            </p>
+            
+            <Alert className="bg-blue-50 border-blue-200">
+              <AlertDescription className="text-blue-700">
+                <strong>Before initializing:</strong> Make sure you've created the required tables in your Supabase project:
+                <ul className="list-disc ml-5 mt-1">
+                  <li>products (with id column as UUID primary key)</li>
+                  <li>category_images (with id column as UUID primary key)</li>
+                  <li>subcategories (with id column as UUID primary key)</li>
+                  <li>coupons (with id column as UUID primary key)</li>
+                </ul>
+              </AlertDescription>
+            </Alert>
+          </div>
         )}
       </CardContent>
       <CardFooter>
