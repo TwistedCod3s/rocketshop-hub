@@ -8,6 +8,10 @@ const DeploymentInfo = () => {
         <li>This ensures all users see the same content without sync issues</li> 
         <li>Your changes will be included in all future deployments automatically</li>
       </ol>
+      <p className="mt-2 pt-2 border-t border-gray-200">
+        <strong>Vercel Setup:</strong> After deploying to Vercel, set up the environment variables 
+        needed for filesystem access in the Vercel dashboard. See the README for details.
+      </p>
     </div>
   );
 };

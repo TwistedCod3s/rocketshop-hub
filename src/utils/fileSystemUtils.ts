@@ -15,7 +15,7 @@ export const writeDataToFile = async (
     const jsonData = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
     
     // Create a POST request to our API endpoint that handles filesystem operations
-    const response = await fetch('/api/admin/filesystem', {
+    const response = await fetch('/api/filesystem', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -45,7 +45,7 @@ export const readDataFromFile = async <T>(path: string): Promise<T | null> => {
     console.log(`Reading data from file: ${path}`);
     
     // Create a GET request to read from the filesystem
-    const response = await fetch(`/api/admin/filesystem?path=${encodeURIComponent(path)}`, {
+    const response = await fetch(`/api/filesystem?path=${encodeURIComponent(path)}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
