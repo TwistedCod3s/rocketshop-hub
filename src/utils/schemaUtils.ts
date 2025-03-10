@@ -26,10 +26,16 @@ export const convertProductToDbSchema = (product: Product): Record<string, any> 
   const dbProduct: Record<string, any> = {};
   
   // Handle ID - ensure it's a valid UUID
-  if (!isValidUUID(product.id)) {
-    // Generate a new UUID if the current ID is not a valid UUID
+  if (!product.id) {
+    // Generate a new UUID if id is missing
     dbProduct.id = uuidv4();
-    console.log(`Converted invalid UUID "${product.id}" to valid UUID: ${dbProduct.id}`);
+    console.log(`Generated UUID for product without ID: ${dbProduct.id}`);
+  } else if (!isValidUUID(product.id)) {
+    // For numeric or invalid IDs, generate a UUID replacement
+    // Check if it's a numeric ID
+    const isNumeric = /^\d+$/.test(product.id);
+    dbProduct.id = uuidv4();
+    console.log(`Converted ${isNumeric ? 'numeric' : 'invalid'} ID "${product.id}" to UUID: ${dbProduct.id}`);
   } else {
     dbProduct.id = product.id;
   }

@@ -1,6 +1,18 @@
 
 import { dbHelpers } from '@/lib/supabase';
 import { Product, Coupon } from '@/types/shop';
+import { v4 as uuidv4 } from 'uuid';
+
+// Helper function to ensure UUID validity
+const ensureValidUUID = (id: string | undefined): string => {
+  if (!id) return uuidv4();
+  
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  if (!uuidRegex.test(id)) {
+    return uuidv4();
+  }
+  return id;
+};
 
 // Function to save all admin data to the database
 export const saveAdminDataToDatabase = async (
@@ -33,10 +45,16 @@ export const saveAdminDataToDatabase = async (
       console.log("Saved subcategories to database");
     }
     
-    // Save coupons
+    // Save coupons with UUID validation
     if (coupons && coupons.length > 0) {
-      console.log(`Attempting to save ${coupons.length} coupons to database`);
-      await dbHelpers.saveCoupons(coupons);
+      // Make sure all coupons have valid UUIDs
+      const validatedCoupons = coupons.map(coupon => ({
+        ...coupon,
+        id: ensureValidUUID(coupon.id)
+      }));
+      
+      console.log(`Attempting to save ${validatedCoupons.length} coupons to database`);
+      await dbHelpers.saveCoupons(validatedCoupons);
       console.log("Saved coupons to database");
     }
     
