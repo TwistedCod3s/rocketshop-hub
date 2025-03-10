@@ -47,8 +47,22 @@ export default defineConfig(({ mode }) => ({
             'class-variance-authority',
             'clsx',
             'tailwind-merge'
-          ]
+          ],
+          lucide: ['lucide-react'],
+          components: [
+            '/src/components/ui/',
+            '/src/components/layout/'
+          ],
+          admin: ['/src/components/admin/']
         }
+      }
+    },
+    target: 'esnext',
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true
       }
     }
   }

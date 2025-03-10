@@ -1,5 +1,5 @@
 
-import { Info, Cloud, FileJson } from "lucide-react";
+import { Info, Cloud, FileJson, AlertTriangle } from "lucide-react";
 
 const DeploymentInfo = () => {
   return (
@@ -24,28 +24,49 @@ const DeploymentInfo = () => {
             <div className="mt-3 mb-4">
               <div className="flex items-center gap-2">
                 <FileJson className="h-4 w-4 text-blue-700" />
-                <h6 className="font-medium text-blue-800">Recommended: Use vercel.json</h6>
+                <h6 className="font-medium text-blue-800">Required: Use vercel.json</h6>
               </div>
               <p className="text-blue-700 mt-1">
-                The easiest way to enable filesystem access is by adding a <code className="bg-blue-100 px-1.5 py-0.5 rounded">vercel.json</code> file:
+                Include a <code className="bg-blue-100 px-1.5 py-0.5 rounded">vercel.json</code> file in your project root with the minimal configuration:
               </p>
               <pre className="bg-blue-100 p-2 rounded mt-2 text-xs overflow-x-auto">
 {`{
   "functions": {
     "api/*.js": {
-      "includeFiles": "src/data/**/*.{json,js,ts}"
+      "includeFiles": "src/data/initialProducts.ts"
     }
   },
   "build": {
     "env": {
       "VERCEL_FILESYSTEM_API_ENABLED": "true"
     }
+  },
+  "output": {
+    "clean": true
   }
 }`}
               </pre>
               <p className="text-blue-700 mt-2">
-                Add this file to your project root and redeploy. This approach works for all Vercel plans.
+                This configuration includes only the necessary data files to stay under Vercel's 250MB function size limit.
               </p>
+            </div>
+            
+            <div className="bg-amber-50 border-l-4 border-amber-500 p-3 my-3">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 text-amber-700 mt-0.5" />
+                <div>
+                  <h6 className="font-medium text-amber-800">Troubleshooting Size Limit Errors</h6>
+                  <p className="text-amber-700 mt-1">
+                    If you're seeing a "exceeded the maximum size of 250 MB" error, try these solutions:
+                  </p>
+                  <ul className="list-disc list-inside text-amber-700 space-y-1.5 mt-2">
+                    <li>Be very specific in the <code className="bg-amber-100 px-1.5 py-0.5 rounded">includeFiles</code> pattern (only include files you need)</li>
+                    <li>Remove large dependencies from API routes</li>
+                    <li>Use dynamic imports for non-critical code</li>
+                    <li>Consider switching to Enterprise plan if you need larger functions</li>
+                  </ul>
+                </div>
+              </div>
             </div>
             
             <div className="border-t border-blue-200 pt-3 mt-3">
@@ -59,7 +80,6 @@ const DeploymentInfo = () => {
             <div className="border-t border-blue-200 pt-3 mt-3">
               <h6 className="font-medium text-blue-800 mb-2">Alternative Approaches:</h6>
               <ul className="list-disc list-inside text-blue-700 space-y-1.5">
-                <li><span className="font-medium">Use Vercel CLI:</span> Deploy with <code className="bg-blue-100 px-1.5 py-0.5 rounded">vercel deploy --build-env VERCEL_FILESYSTEM_API_ENABLED=true</code></li>
                 <li><span className="font-medium">Use a database:</span> Store content in Vercel KV, Postgres, or similar database service</li>
                 <li><span className="font-medium">GitHub integration:</span> Use GitHub's API to commit changes through a serverless function</li>
               </ul>
