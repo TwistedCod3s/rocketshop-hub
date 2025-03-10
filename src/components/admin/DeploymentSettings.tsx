@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useShopContext } from "@/context/ShopContext";
 import { useToast } from "@/hooks/use-toast";
@@ -117,7 +116,7 @@ const DeploymentSettings = () => {
     }
   };
   
-  const handleDeploy = async () => {
+  const handleDeploy = async (): Promise<boolean> => {
     // First, ensure all data is properly synchronized
     try {
       setIsSyncing(true);
@@ -141,14 +140,18 @@ const DeploymentSettings = () => {
           // Clear pending changes flag
           localStorage.setItem('ROCKETRY_SHOP_CHANGES_PENDING', 'false');
           setHasPendingChanges(false);
+          
+          return true;
         } else {
           toast({
             title: "Deployment error",
             description: "There was a problem starting the deployment",
             variant: "destructive"
           });
+          return false;
         }
       }
+      return false;
     } catch (error) {
       console.error("Error during deployment:", error);
       toast({
@@ -157,6 +160,7 @@ const DeploymentSettings = () => {
         variant: "destructive"
       });
       setIsSyncing(false);
+      return false;
     }
   };
   

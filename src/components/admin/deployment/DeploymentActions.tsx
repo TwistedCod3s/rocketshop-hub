@@ -49,7 +49,7 @@ const DeploymentActions = ({
         <div>
           <Button
             onClick={handleDeploy}
-            disabled={isDeploying || (!pendingChanges && lastDeployTime)}
+            disabled={isDeploying || (!pendingChanges && lastDeployTime !== null)}
             className="w-full sm:w-auto"
           >
             {isDeploying ? (
