@@ -31,8 +31,11 @@ const DeploymentInfo = () => {
             You must set <code className="bg-gray-100 px-1 py-0.5 rounded">VERCEL_FILESYSTEM_API_ENABLED=true</code> in your 
             Vercel project's environment variables for file system access to work.
           </p>
-          <p>
+          <p className="mb-2">
             Make sure your Vercel deployment webhook has proper permissions to trigger builds.
+          </p>
+          <p>
+            Ensure your Vercel project has the latest vercel.json configuration from the codebase.
           </p>
         </AlertDescription>
       </Alert>

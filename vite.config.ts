@@ -50,10 +50,10 @@ export default defineConfig(({ mode }) => ({
           ],
           lucide: ['lucide-react'],
           components: [
-            '/src/components/ui/',
-            '/src/components/layout/'
+            './src/components/ui/',
+            './src/components/layout/'
           ],
-          admin: ['/src/components/admin/']
+          admin: ['./src/components/admin/']
         }
       }
     },
