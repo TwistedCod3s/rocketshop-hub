@@ -1,5 +1,5 @@
 
-import { Info } from "lucide-react";
+import { Info, Cloud, FileJson } from "lucide-react";
 
 const DeploymentInfo = () => {
   return (
@@ -16,23 +16,20 @@ const DeploymentInfo = () => {
           </ol>
           
           <div className="bg-blue-50 border-l-4 border-blue-500 p-3 mt-2">
-            <h5 className="font-medium text-blue-800 mb-1">Vercel Setup Required</h5>
-            <p className="text-blue-700">
-              For the deployment feature to work, you must configure specific settings in your Vercel project:
-            </p>
-            <ul className="list-disc list-inside mt-1 text-blue-700 space-y-1">
-              <li>Enable filesystem access for API functions (may be in different locations based on your plan)</li>
-              <li>Set required environment variables including <code className="bg-blue-100 px-1.5 py-0.5 rounded">VERCEL_FILESYSTEM_API_ENABLED=true</code></li>
-              <li>Create a deployment webhook</li>
-            </ul>
+            <div className="flex items-center gap-2">
+              <Cloud className="h-4 w-4 text-blue-700" />
+              <h5 className="font-medium text-blue-800">Vercel Setup</h5>
+            </div>
             
-            <div className="mt-4 border-t border-blue-200 pt-3">
-              <h5 className="font-medium text-blue-800 mb-1">Can't Find Filesystem Access?</h5>
-              <p className="text-blue-700">If you can't locate the filesystem setting, here are alternative approaches:</p>
-              
-              <h6 className="font-medium text-blue-700 mt-3">Option 1: Use vercel.json Configuration</h6>
-              <p className="text-blue-700 mt-1">Add a <code className="bg-blue-100 px-1.5 py-0.5 rounded">vercel.json</code> file to your project root with:</p>
-              <pre className="bg-blue-100 p-2 rounded mt-1 text-xs overflow-x-auto">
+            <div className="mt-3 mb-4">
+              <div className="flex items-center gap-2">
+                <FileJson className="h-4 w-4 text-blue-700" />
+                <h6 className="font-medium text-blue-800">Recommended: Use vercel.json</h6>
+              </div>
+              <p className="text-blue-700 mt-1">
+                The easiest way to enable filesystem access is by adding a <code className="bg-blue-100 px-1.5 py-0.5 rounded">vercel.json</code> file:
+              </p>
+              <pre className="bg-blue-100 p-2 rounded mt-2 text-xs overflow-x-auto">
 {`{
   "functions": {
     "api/*.js": {
@@ -46,36 +43,30 @@ const DeploymentInfo = () => {
   }
 }`}
               </pre>
-              
-              <h6 className="font-medium text-blue-700 mt-3">Option 2: Use Vercel CLI for Deployment</h6>
-              <p className="text-blue-700 mt-1">Deploy using the Vercel CLI with the filesystem flag:</p>
-              <pre className="bg-blue-100 p-2 rounded mt-1 text-xs overflow-x-auto">
-{`# Install Vercel CLI first
-npm i -g vercel
-
-# Deploy with filesystem enabled
-vercel deploy --build-env VERCEL_FILESYSTEM_API_ENABLED=true`}
-              </pre>
-              
-              <h6 className="font-medium text-blue-700 mt-3">Option 3: Use Serverless Function with DB</h6>
-              <p className="text-blue-700 mt-1">Instead of filesystem access, store data in a database:</p>
-              <ul className="list-disc list-inside mt-1 text-blue-700 space-y-1">
-                <li>Use Vercel KV, Vercel Postgres, or other database services</li>
-                <li>Modify the admin panel to use database storage instead of filesystem</li>
-                <li>This approach may require more extensive code changes</li>
+              <p className="text-blue-700 mt-2">
+                Add this file to your project root and redeploy. This approach works for all Vercel plans.
+              </p>
+            </div>
+            
+            <div className="border-t border-blue-200 pt-3 mt-3">
+              <h6 className="font-medium text-blue-800 mb-2">Other Requirements:</h6>
+              <ul className="list-disc list-inside text-blue-700 space-y-1.5">
+                <li>Create a deployment webhook in Vercel (Project Settings → Git Integration → Deploy Hooks)</li>
+                <li>Add the webhook URL to the Deployment Settings in your admin panel</li>
               </ul>
-              
-              <h6 className="font-medium text-blue-700 mt-3">Option 4: GitHub Integration</h6>
-              <p className="text-blue-700 mt-1">Use GitHub's API to commit changes to your repository:</p>
-              <ul className="list-disc list-inside mt-1 text-blue-700 space-y-1">
-                <li>Create a GitHub token with repo access</li>
-                <li>Set up a serverless function to commit changes via GitHub API</li>
-                <li>Configure Vercel to auto-deploy on GitHub commits</li>
+            </div>
+            
+            <div className="border-t border-blue-200 pt-3 mt-3">
+              <h6 className="font-medium text-blue-800 mb-2">Alternative Approaches:</h6>
+              <ul className="list-disc list-inside text-blue-700 space-y-1.5">
+                <li><span className="font-medium">Use Vercel CLI:</span> Deploy with <code className="bg-blue-100 px-1.5 py-0.5 rounded">vercel deploy --build-env VERCEL_FILESYSTEM_API_ENABLED=true</code></li>
+                <li><span className="font-medium">Use a database:</span> Store content in Vercel KV, Postgres, or similar database service</li>
+                <li><span className="font-medium">GitHub integration:</span> Use GitHub's API to commit changes through a serverless function</li>
               </ul>
             </div>
             
             <p className="mt-3 pt-3 border-t border-blue-200 text-blue-700 font-medium">
-              See the detailed <code className="bg-blue-100 px-1.5 py-0.5 rounded">vercel-setup.md</code> file for step-by-step instructions on all approaches.
+              See the detailed <code className="bg-blue-100 px-1.5 py-0.5 rounded">vercel-setup.md</code> file for full instructions on all approaches.
             </p>
           </div>
         </div>

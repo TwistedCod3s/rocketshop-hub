@@ -1,0 +1,13 @@
+
+{
+  "functions": {
+    "api/*.js": {
+      "includeFiles": "**/*"
+    }
+  },
+  "build": {
+    "env": {
+      "VERCEL_FILESYSTEM_API_ENABLED": "true"
+    }
+  }
+}
