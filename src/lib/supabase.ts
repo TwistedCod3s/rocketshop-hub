@@ -137,13 +137,14 @@ export const dbHelpers = {
     }
     
     try {
-      // First delete all existing products
+      // First delete all existing products - FIX: Use a simpler approach
       console.log("Deleting existing products...");
+      
+      // Use a single delete operation without chaining multiple operations
       const { error: deleteError } = await client
         .from('products')
         .delete()
-        .is('id', null)
-        .then(() => client.from('products').delete().not('id', null));
+        .neq('id', 'placeholder-id-that-doesnt-exist');  // This will match all records
         
       if (deleteError) {
         console.error("Error deleting products:", deleteError);
@@ -228,12 +229,11 @@ export const dbHelpers = {
       }));
       
       console.log("Deleting existing category images...");
-      // Delete existing records
+      // Delete existing records - FIX: Use a simpler approach
       const { error: deleteError } = await client
         .from('category_images')
         .delete()
-        .is('id', null)
-        .then(() => client.from('category_images').delete().not('id', null));
+        .neq('id', 'placeholder-id-that-doesnt-exist');  // This will match all records
         
       if (deleteError) {
         console.error("Error deleting category images:", deleteError);
@@ -306,12 +306,11 @@ export const dbHelpers = {
       }));
       
       console.log("Deleting existing subcategories...");
-      // Delete existing records
+      // Delete existing records - FIX: Use a simpler approach
       const { error: deleteError } = await client
         .from('subcategories')
         .delete()
-        .is('id', null)
-        .then(() => client.from('subcategories').delete().not('id', null));
+        .neq('id', 'placeholder-id-that-doesnt-exist');  // This will match all records
         
       if (deleteError) {
         console.error("Error deleting subcategories:", deleteError);
@@ -380,12 +379,11 @@ export const dbHelpers = {
       });
       
       console.log("Deleting existing coupons...");
-      // Delete existing records
+      // Delete existing records - FIX: Use a simpler approach
       const { error: deleteError } = await client
         .from('coupons')
         .delete()
-        .is('id', null)
-        .then(() => client.from('coupons').delete().not('id', null));
+        .neq('id', 'placeholder-id-that-doesnt-exist');  // This will match all records
         
       if (deleteError) {
         console.error("Error deleting coupons:", deleteError);
