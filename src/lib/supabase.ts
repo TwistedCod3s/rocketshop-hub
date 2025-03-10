@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
@@ -80,14 +79,14 @@ export const dbHelpers = {
     const client = getSupabaseClient();
     if (!client) throw new Error('Database connection not configured');
     
-    // First delete all products - FIXED: Use truncate instead of delete with filter
-    const { error: deleteError } = await client.from('products').delete().not('id', 'is', null);
+    // First delete all products using delete() without conditions
+    const { error: deleteError } = await client.from('products').delete();
     if (deleteError) {
       console.error("Error deleting products:", deleteError);
       throw deleteError;
     }
     
-    // Then insert new products
+    // Then insert new products if there are any
     if (products.length > 0) {
       const { error } = await client.from('products').insert(products);
       if (error) throw error;
@@ -122,14 +121,14 @@ export const dbHelpers = {
       image_url
     }));
     
-    // Delete all existing category images - FIXED: Use truncate instead of delete with filter
-    const { error: deleteError } = await client.from('category_images').delete().not('id', 'is', null);
+    // Delete all existing category images without conditions
+    const { error: deleteError } = await client.from('category_images').delete();
     if (deleteError) {
       console.error("Error deleting category images:", deleteError);
       throw deleteError;
     }
     
-    // Insert new category images
+    // Insert new category images if there are any
     if (categoryImageArray.length > 0) {
       const { error } = await client.from('category_images').insert(categoryImageArray);
       if (error) throw error;
@@ -165,14 +164,14 @@ export const dbHelpers = {
       subcategory_list
     }));
     
-    // Delete all existing subcategories - FIXED: Use truncate instead of delete with filter
-    const { error: deleteError } = await client.from('subcategories').delete().not('id', 'is', null);
+    // Delete all existing subcategories without conditions
+    const { error: deleteError } = await client.from('subcategories').delete();
     if (deleteError) {
       console.error("Error deleting subcategories:", deleteError);
       throw deleteError;
     }
     
-    // Insert new subcategories
+    // Insert new subcategories if there are any
     if (subcategoryArray.length > 0) {
       const { error } = await client.from('subcategories').insert(subcategoryArray);
       if (error) throw error;
@@ -195,14 +194,14 @@ export const dbHelpers = {
     const client = getSupabaseClient();
     if (!client) throw new Error('Database connection not configured');
     
-    // Delete all existing coupons - FIXED: Use truncate instead of delete with filter
-    const { error: deleteError } = await client.from('coupons').delete().not('id', 'is', null);
+    // Delete all existing coupons without conditions
+    const { error: deleteError } = await client.from('coupons').delete();
     if (deleteError) {
       console.error("Error deleting coupons:", deleteError);
       throw deleteError;
     }
     
-    // Insert new coupons
+    // Insert new coupons if there are any
     if (coupons.length > 0) {
       const { error } = await client.from('coupons').insert(coupons);
       if (error) throw error;

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,6 +19,12 @@ const DatabaseInitializer = () => {
     setError(null);
 
     try {
+      // Make sure we have some data to initialize with
+      const productsStr = localStorage.getItem('ROCKETRY_SHOP_PRODUCTS_V7');
+      if (!productsStr) {
+        throw new Error("No products found in localStorage to initialize database with");
+      }
+
       const success = await initializeDatabaseFromLocalStorage();
       
       if (success) {
@@ -34,31 +39,22 @@ const DatabaseInitializer = () => {
     } catch (err) {
       console.error("Database initialization error:", err);
       
-      // Improved error handling for specific Supabase errors
       let errorMessage = "Unknown error occurred";
       
       if (err && typeof err === 'object') {
-        // Handle Supabase specific error format
         if ('code' in err && 'message' in err) {
-          const supabaseError = err as { code: string; message: string; hint?: string };
+          const dbError = err as { code: string; message: string; hint?: string };
           
-          // Specific handling for UUID errors
-          if (supabaseError.code === '22P02' && supabaseError.message.includes('uuid')) {
-            errorMessage = "Database schema error: UUID format issue. Please ensure your Supabase tables have primary key columns with UUID data type.";
-          } 
-          // Handle foreign key violations
-          else if (supabaseError.code === '23503') {
-            errorMessage = "Database constraint error: Foreign key violation. Check that your table relationships are correctly set up.";
-          }
-          // Handle unique constraint violations
-          else if (supabaseError.code === '23505') {
-            errorMessage = "Database constraint error: Unique violation. Duplicate entries detected.";
-          }
-          // Default error message
-          else {
-            errorMessage = `Database error (${supabaseError.code}): ${supabaseError.message}`;
-            if (supabaseError.hint) {
-              errorMessage += ` (Hint: ${supabaseError.hint})`;
+          if (dbError.code === '42P01') {
+            errorMessage = "Required tables are missing. Please create all necessary tables in your Supabase project.";
+          } else if (dbError.code === '42703') {
+            errorMessage = "Required columns are missing. Please check your table structure.";
+          } else if (dbError.code === '23502') {
+            errorMessage = "Required fields are missing. Please check your data format.";
+          } else {
+            errorMessage = `Database error (${dbError.code}): ${dbError.message}`;
+            if (dbError.hint) {
+              errorMessage += ` (Hint: ${dbError.hint})`;
             }
           }
         } else if (err instanceof Error) {
