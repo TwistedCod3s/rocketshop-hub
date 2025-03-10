@@ -65,6 +65,20 @@ export const initializeDatabaseFromLocalStorage = async (): Promise<boolean> => 
     
     if (result) {
       console.log("Successfully initialized database from localStorage");
+      
+      // Trigger a global sync notification after database update is complete
+      // This will notify all clients to refresh their data
+      const timestamp = new Date().toISOString();
+      localStorage.setItem("ROCKETRY_SHOP_SYNC_TRIGGER_V7", timestamp);
+      
+      // Dispatch a custom sync event
+      window.dispatchEvent(new CustomEvent("rocketry-sync-trigger-v7", { 
+        detail: { timestamp, source: "database-init" } 
+      }));
+      
+      // Update the last sync timestamp
+      localStorage.setItem("ROCKETRY_LAST_SYNC_TIMESTAMP", timestamp);
+      
       return true;
     } else {
       throw new Error("Database initialization returned false");
