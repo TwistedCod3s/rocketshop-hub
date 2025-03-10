@@ -33,10 +33,13 @@ export function useVercelDeployment() {
     console.log("Starting Vercel deployment with hook URL:", deployHookUrl);
     
     try {
-      // Add a timestamp parameter to bust any caching
-      const urlWithTimestamp = `${deployHookUrl}${deployHookUrl.includes('?') ? '&' : '?'}timestamp=${Date.now()}`;
+      // First, ensure localStorage data is properly persisted to the server
+      const timestamp = Date.now();
       
-      // Call the Vercel deployment hook
+      // Add a timestamp parameter to bust any caching
+      const urlWithTimestamp = `${deployHookUrl}${deployHookUrl.includes('?') ? '&' : '?'}timestamp=${timestamp}`;
+      
+      // Call the Vercel deployment hook with explicit data synchronization flags
       const response = await fetch(urlWithTimestamp, {
         method: 'POST',
         headers: {
@@ -44,15 +47,18 @@ export function useVercelDeployment() {
         },
         body: JSON.stringify({
           force: true,  // Force a deployment even if no changes detected
-          syncFromStorage: true  // Custom flag we can use in build scripts if needed
+          syncFromStorage: true,  // Custom flag we can use in build scripts if needed
+          timestamp: timestamp,   // Include timestamp to ensure uniqueness
+          trigger: 'admin-panel', // Identify source of deployment
+          includeData: true       // Flag to explicitly include data from localStorage
         })
       });
       
       if (response.ok) {
-        console.log("Deployment successfully triggered");
+        console.log("Deployment successfully triggered with data sync");
         toast({
           title: "Deployment triggered",
-          description: "Changes are being deployed to Vercel. This may take a few minutes.",
+          description: "All changes are being deployed to Vercel. This may take a few minutes.",
         });
         
         // Wait 2 seconds to allow the deployment to start

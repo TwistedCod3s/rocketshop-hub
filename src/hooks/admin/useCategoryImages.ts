@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from "react";
 import { 
   loadFromStorage, 
@@ -94,9 +95,15 @@ export function useCategoryImages() {
       setCategoryImages(prevImages => {
         const updatedImages = { ...prevImages, [categorySlug]: imageUrl };
         
-        // Save to localStorage and broadcast
+        // Save to localStorage and broadcast with more aggressive synchronization
         saveAndBroadcast(CATEGORY_IMAGES_KEY, CATEGORY_IMAGES_EVENT, updatedImages);
+        
+        // Also create a backup copy with timestamp to ensure persistence
+        const backupKey = `${CATEGORY_IMAGES_KEY}_BACKUP_${Date.now()}`;
+        localStorage.setItem(backupKey, JSON.stringify(updatedImages));
+        
         console.log("Updated category image for:", categorySlug, imageUrl);
+        console.log("Created backup copy at:", backupKey);
         
         return updatedImages;
       });

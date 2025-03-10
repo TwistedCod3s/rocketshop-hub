@@ -57,6 +57,14 @@ export const saveAndBroadcast = <T>(key: string, eventName: string, value: T): v
       window.dispatchEvent(syncEvent);
       
       console.log(`Manually triggered storage events for ${key} and sync trigger`);
+      
+      // Add a backup entry with timestamp to ensure data persistence
+      const backupKey = `${key}_BACKUP_${Date.now()}`;
+      localStorage.setItem(backupKey, JSON.stringify(valueCopy));
+      console.log(`Created backup for ${key} at ${backupKey}`);
+      
+      // Set a "dirty" flag to indicate that changes need to be deployed
+      localStorage.setItem('ROCKETRY_SHOP_CHANGES_PENDING', 'true');
     } catch (e) {
       console.error("Failed to manually trigger storage event:", e);
       

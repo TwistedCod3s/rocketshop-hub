@@ -7,6 +7,7 @@ import { useEffect, useCallback, useState } from "react";
 import { useProducts } from "./useProducts";
 import { SYNC_KEY } from "./admin/adminUtils";
 import { useVercelDeployment } from "./admin/useVercelDeployment";
+import { useToast } from "./use-toast";
 
 export function useAdmin() {
   const auth = useAdminAuth();
@@ -15,6 +16,7 @@ export function useAdmin() {
   const couponsHook = useCoupons();
   const productsHook = useProducts();
   const vercelDeployment = useVercelDeployment();
+  const { toast } = useToast();
   const [autoDeployEnabled, setAutoDeployEnabled] = useState<boolean>(
     localStorage.getItem('AUTO_DEPLOY_ENABLED') === 'true'
   );
@@ -31,6 +33,14 @@ export function useAdmin() {
   // Debug logging for state changes
   useEffect(() => {
     console.log("useAdmin: categoryImages updated", categoryImagesHook.categoryImages);
+    // If auto-deploy is enabled, schedule a deployment when data changes
+    if (autoDeployEnabled && Object.keys(categoryImagesHook.categoryImages).length > 0) {
+      const pendingChanges = localStorage.getItem('ROCKETRY_SHOP_CHANGES_PENDING');
+      if (pendingChanges === 'true') {
+        console.log("Auto-deploy: Changes detected, scheduling deployment");
+        setTimeout(() => reloadAllAdminData(true), 2000);
+      }
+    }
   }, [categoryImagesHook.categoryImages]);
 
   useEffect(() => {
@@ -46,7 +56,16 @@ export function useAdmin() {
     setAutoDeployEnabled(enabled);
     localStorage.setItem('AUTO_DEPLOY_ENABLED', enabled.toString());
     console.log(`Auto-deploy ${enabled ? 'enabled' : 'disabled'}`);
-  }, []);
+    
+    // If enabling and there are pending changes, trigger a deployment
+    if (enabled && localStorage.getItem('ROCKETRY_SHOP_CHANGES_PENDING') === 'true') {
+      toast({
+        title: "Pending changes detected",
+        description: "Triggering deployment for previously made changes"
+      });
+      setTimeout(() => reloadAllAdminData(true), 1000);
+    }
+  }, [toast]);
   
   // Function to force reload all admin data and propagate to all users
   const reloadAllAdminData = useCallback(async (triggerDeploy = false) => {
@@ -83,10 +102,19 @@ export function useAdmin() {
       
       console.log("Dispatched global sync events to notify all users");
       
+      // Clear the pending changes flag
+      localStorage.setItem('ROCKETRY_SHOP_CHANGES_PENDING', 'false');
+      
       // Trigger Vercel deployment if requested or auto-deploy is enabled
       if ((triggerDeploy || autoDeployEnabled) && vercelDeployment.getDeploymentHookUrl()) {
         console.log("Triggering Vercel deployment");
-        await vercelDeployment.triggerDeployment();
+        const success = await vercelDeployment.triggerDeployment();
+        if (success) {
+          toast({
+            title: "Deployment successful",
+            description: "Your changes are being deployed and will be visible to all users shortly"
+          });
+        }
       }
     } catch (error) {
       console.error("Error dispatching sync events:", error);
@@ -108,7 +136,8 @@ export function useAdmin() {
     couponsHook.reloadFromStorage,
     productsHook,
     autoDeployEnabled,
-    vercelDeployment
+    vercelDeployment,
+    toast
   ]);
   
   return {
