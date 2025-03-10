@@ -1,9 +1,9 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Loader, Database, AlertCircle } from "lucide-react";
+import { Loader, Database, AlertCircle, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { getSupabaseClient } from "@/lib/supabase";
 
 interface DataSyncButtonProps {
@@ -20,37 +20,53 @@ const DataSyncButton = ({
   const [dbError, setDbError] = useState<string | null>(null);
   const { toast } = useToast();
   
-  // Check database connection on mount
-  useEffect(() => {
-    const checkDbConnection = async () => {
-      try {
-        // Check if Supabase URL is configured - first by trying to get a client
-        const client = getSupabaseClient();
-        if (!client) {
-          setIsDbConnected(false);
-          setDbError("Supabase credentials not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables.");
-          return;
-        }
-        
-        // Try to ping the database
-        const { data, error } = await client.from('products').select('count', { count: 'exact', head: true });
-        
-        if (error) {
-          setIsDbConnected(false);
-          setDbError(`Database connection error: ${error.message}`);
-          console.error("Database connection error:", error);
-        } else {
-          setIsDbConnected(true);
-          setDbError(null);
-          console.log("Successfully connected to Supabase database");
-        }
-      } catch (error) {
+  // Check database connection on mount and add retry capability
+  const checkDbConnection = async () => {
+    try {
+      setIsDbConnected(null); // Reset to loading state
+      
+      // Check if environment variables are set
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      
+      console.log("Checking Supabase connection...");
+      console.log("Supabase URL defined:", !!supabaseUrl);
+      console.log("Supabase Anon Key defined:", !!supabaseAnonKey);
+      
+      if (!supabaseUrl || !supabaseAnonKey) {
         setIsDbConnected(false);
-        setDbError(`Database connection error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-        console.error("Database check error:", error);
+        setDbError(`Supabase credentials not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables. URL: ${supabaseUrl ? "defined" : "undefined"}, Key: ${supabaseAnonKey ? "defined" : "undefined"}`);
+        return;
       }
-    };
-    
+      
+      // Try to get a client
+      const client = getSupabaseClient();
+      if (!client) {
+        setIsDbConnected(false);
+        setDbError("Failed to create Supabase client. Check console for more details.");
+        return;
+      }
+      
+      // Try to ping the database
+      const { data, error } = await client.from('products').select('count', { count: 'exact', head: true });
+      
+      if (error) {
+        setIsDbConnected(false);
+        setDbError(`Database connection error: ${error.message}`);
+        console.error("Database connection error:", error);
+      } else {
+        setIsDbConnected(true);
+        setDbError(null);
+        console.log("Successfully connected to Supabase database");
+      }
+    } catch (error) {
+      setIsDbConnected(false);
+      setDbError(`Database connection error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error("Database check error:", error);
+    }
+  };
+  
+  useEffect(() => {
     checkDbConnection();
   }, []);
   
@@ -96,15 +112,17 @@ const DataSyncButton = ({
       <div className="space-y-4">
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Database Connection Error</AlertTitle>
           <AlertDescription>
             {dbError || "Database connection error. Please check your configuration."}
           </AlertDescription>
         </Alert>
         <Button
           variant="outline"
-          onClick={() => window.location.reload()}
+          onClick={checkDbConnection}
           className="w-full sm:w-auto"
         >
+          <RefreshCw className="mr-2 h-4 w-4" />
           Retry Connection
         </Button>
       </div>

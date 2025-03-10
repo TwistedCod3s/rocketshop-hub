@@ -5,6 +5,10 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
+// Improved debugging for environment variables
+console.log("Supabase URL defined:", !!supabaseUrl);
+console.log("Supabase Anon Key defined:", !!supabaseAnonKey);
+
 // Create a function to get the client that can be called when needed
 export const getSupabaseClient = () => {
   if (!supabaseUrl || !supabaseAnonKey) {
@@ -14,7 +18,12 @@ export const getSupabaseClient = () => {
     return null;
   }
   
-  return createClient(supabaseUrl, supabaseAnonKey);
+  try {
+    return createClient(supabaseUrl, supabaseAnonKey);
+  } catch (error) {
+    console.error("Error creating Supabase client:", error);
+    return null;
+  }
 };
 
 // Create the client but handle the case where credentials are missing
