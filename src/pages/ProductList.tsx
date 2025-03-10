@@ -8,12 +8,21 @@ import SortOptions from "@/components/products/SortOptions";
 import ProductGrid from "@/components/products/ProductGrid";
 import { useProductFilter } from "@/hooks/useProductFilter";
 import { dbHelpers } from "@/lib/supabase";
+import { useSyncChecker } from "@/hooks/useSyncChecker";
 
 const ProductList = () => {
-  const { fetchAllProducts, reloadProductsFromStorage, loadProductsFromSupabase } = useShopContext();
+  const { 
+    fetchAllProducts, 
+    reloadProductsFromStorage, 
+    loadProductsFromSupabase,
+    reloadAllAdminData 
+  } = useShopContext();
   const [displayProducts, setDisplayProducts] = useState<Product[]>([]);
   const [filterOpen, setFilterOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Use our new sync checker hook to periodically check for updates
+  useSyncChecker(reloadProductsFromStorage, loadProductsFromSupabase, reloadAllAdminData);
   
   // Load products and refresh when products change
   useEffect(() => {
@@ -99,7 +108,9 @@ const ProductList = () => {
       if (e.key === "ROCKETRY_SHOP_PRODUCTS_V7" || 
           e.key === "ROCKETRY_SHOP_SYNC_TRIGGER_V7" ||
           e.key === "ROCKETRY_SHOP_CHANGES_PENDING" ||
-          e.key === "EXTERNAL_SYNC_TRIGGER") {
+          e.key === "EXTERNAL_SYNC_TRIGGER" ||
+          e.key === "ROCKETRY_LAST_SYNC_TIMESTAMP" ||
+          e.key === "ROCKETRY_SYNC_NEEDED") {
         console.log(`Storage event detected for ${e.key}, refreshing products`);
         handleProductUpdate();
       }

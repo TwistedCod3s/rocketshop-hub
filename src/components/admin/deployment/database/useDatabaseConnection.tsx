@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { getSupabaseClient, resetSupabaseClient } from "@/lib/supabase";
+import { updateSyncTimestamp } from "@/utils/schemaUtils";
 
 export function useDatabaseConnection() {
   const [supabaseUrl, setSupabaseUrl] = useState("");
@@ -84,6 +85,21 @@ export function useDatabaseConnection() {
       
       // Connection successful
       setConnectionStatus('success');
+      
+      // Update sync timestamp to force data refresh on next operation
+      updateSyncTimestamp();
+      
+      // Set a flag to trigger synchronization after connection
+      localStorage.setItem('ROCKETRY_SYNC_NEEDED', 'true');
+      
+      // Dispatch a sync event to notify all components
+      window.dispatchEvent(new CustomEvent('rocketry-sync-trigger-v7', { 
+        detail: { 
+          timestamp: new Date().toISOString(),
+          action: 'connection-established'
+        } 
+      }));
+      
       toast({
         title: "Database connected",
         description: "Successfully connected to Supabase database"

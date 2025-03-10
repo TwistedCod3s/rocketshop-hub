@@ -30,10 +30,10 @@ export const convertProductToDbSchema = (product: Product): Record<string, any> 
     // Generate a new UUID if id is missing
     dbProduct.id = uuidv4();
     console.log(`Generated UUID for product without ID: ${dbProduct.id}`);
-  } else if (typeof product.id === 'number' || (typeof product.id === 'string' && /^\d+$/.test(product.id)) || !isValidUUID(product.id)) {
+  } else if (typeof product.id === 'number' || (typeof product.id === 'string' && /^\d+$/.test(product.id)) || !isValidUUID(String(product.id))) {
     // For numeric or invalid IDs, generate a UUID replacement
-    const isNumeric = typeof product.id === 'number' || /^\d+$/.test(product.id);
-    const originalId = product.id.toString();
+    const isNumeric = typeof product.id === 'number' || /^\d+$/.test(String(product.id));
+    const originalId = String(product.id);
     dbProduct.id = uuidv4();
     console.log(`Converted ${isNumeric ? 'numeric' : 'invalid'} ID "${originalId}" to UUID: ${dbProduct.id}`);
     
@@ -81,6 +81,9 @@ export const convertProductToDbSchema = (product: Product): Record<string, any> 
   if (product.specifications) {
     dbProduct.specifications = product.specifications;
   }
+  
+  // Set a timestamp for the last update to help with synchronization
+  dbProduct.last_updated = new Date().toISOString();
   
   return dbProduct;
 };
@@ -132,4 +135,40 @@ export const ensureCouponHasValidUUID = (coupon: Coupon): Coupon => {
   }
   
   return coupon;
+};
+
+/**
+ * Utility function to determine if data needs synchronization
+ * by comparing timestamps
+ */
+export const needsSynchronization = (localTimestamp: string | null, remoteTimestamp: string | null): boolean => {
+  if (!localTimestamp) return !!remoteTimestamp;
+  if (!remoteTimestamp) return true;
+  
+  try {
+    const localDate = new Date(localTimestamp);
+    const remoteDate = new Date(remoteTimestamp);
+    
+    // Return true if remote data is newer
+    return remoteDate > localDate;
+  } catch (e) {
+    console.error("Error comparing timestamps:", e);
+    return true; // When in doubt, sync
+  }
+};
+
+/**
+ * Store the last sync timestamp
+ */
+export const updateSyncTimestamp = (): string => {
+  const timestamp = new Date().toISOString();
+  localStorage.setItem('ROCKETRY_LAST_SYNC_TIMESTAMP', timestamp);
+  return timestamp;
+};
+
+/**
+ * Get the last sync timestamp
+ */
+export const getLastSyncTimestamp = (): string | null => {
+  return localStorage.getItem('ROCKETRY_LAST_SYNC_TIMESTAMP');
 };
