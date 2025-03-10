@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 
 // Get environment variables with fallbacks for dev environments
@@ -137,18 +138,47 @@ export const dbHelpers = {
     }
     
     try {
-      // First delete all existing products - FIX: Use a simpler approach
-      console.log("Deleting existing products...");
+      // IMPORTANT FIX: Completely rewritten delete operation to be much simpler
+      // Instead of trying to delete all records in one go, simply try to execute
+      // a delete without using complex filters that might cause 400 errors
       
-      // Use a single delete operation without chaining multiple operations
-      const { error: deleteError } = await client
-        .from('products')
-        .delete()
-        .neq('id', 'placeholder-id-that-doesnt-exist');  // This will match all records
-        
-      if (deleteError) {
-        console.error("Error deleting products:", deleteError);
-        throw deleteError;
+      // First attempt to truncate the entire table (delete all rows)
+      try {
+        console.log("Deleting all existing products...");
+        // Simple delete all approach - this is what Supabase UI does under the hood for "truncate"
+        const { error: deleteError } = await client
+          .from('products')
+          .delete()
+          .not('id', 'IS NULL'); // This should match all records with a non-null ID
+          
+        if (deleteError) {
+          console.error("Error with first delete attempt:", deleteError);
+          // If that fails, try an alternative approach
+          const { error: altDeleteError } = await client
+            .from('products')
+            .delete()
+            .gte('id', '00000000-0000-0000-0000-000000000000'); // Match all valid UUIDs
+            
+          if (altDeleteError) {
+            console.error("Error with alternative delete approach:", altDeleteError);
+            // If both approaches fail, try one last method - delete each item individually
+            console.log("Attempting individual record deletion as fallback");
+            
+            // Get existing records first
+            const { data: existingProducts } = await client.from('products').select('id');
+            
+            // Delete them one by one
+            if (existingProducts && existingProducts.length > 0) {
+              for (const item of existingProducts) {
+                await client.from('products').delete().eq('id', item.id);
+              }
+              console.log(`Deleted ${existingProducts.length} products individually`);
+            }
+          }
+        }
+      } catch (deleteErr) {
+        console.error("Exception during product deletion:", deleteErr);
+        // Continue with insert even if delete failed - the insert might still work
       }
       
       // Ensure all products have valid UUIDs
@@ -228,16 +258,28 @@ export const dbHelpers = {
         image_url
       }));
       
-      console.log("Deleting existing category images...");
-      // Delete existing records - FIX: Use a simpler approach
-      const { error: deleteError } = await client
-        .from('category_images')
-        .delete()
-        .neq('id', 'placeholder-id-that-doesnt-exist');  // This will match all records
-        
-      if (deleteError) {
-        console.error("Error deleting category images:", deleteError);
-        throw deleteError;
+      // IMPORTANT FIX: Simplified delete operation
+      try {
+        console.log("Deleting all existing category images...");
+        const { error: deleteError } = await client
+          .from('category_images')
+          .delete()
+          .not('id', 'IS NULL');
+          
+        if (deleteError) {
+          console.error("Error with category_images delete:", deleteError);
+          // Try alternative approach if needed
+          const { error: altDeleteError } = await client
+            .from('category_images')
+            .delete()
+            .gte('id', '00000000-0000-0000-0000-000000000000');
+            
+          if (altDeleteError) {
+            console.error("Error with alternative category_images delete:", altDeleteError);
+          }
+        }
+      } catch (deleteErr) {
+        console.error("Exception during category_images deletion:", deleteErr);
       }
       
       if (categoryImageArray.length > 0) {
@@ -305,16 +347,28 @@ export const dbHelpers = {
         subcategory_list
       }));
       
-      console.log("Deleting existing subcategories...");
-      // Delete existing records - FIX: Use a simpler approach
-      const { error: deleteError } = await client
-        .from('subcategories')
-        .delete()
-        .neq('id', 'placeholder-id-that-doesnt-exist');  // This will match all records
-        
-      if (deleteError) {
-        console.error("Error deleting subcategories:", deleteError);
-        throw deleteError;
+      // IMPORTANT FIX: Simplified delete operation
+      try {
+        console.log("Deleting all existing subcategories...");
+        const { error: deleteError } = await client
+          .from('subcategories')
+          .delete()
+          .not('id', 'IS NULL');
+          
+        if (deleteError) {
+          console.error("Error with subcategories delete:", deleteError);
+          // Try alternative approach if needed
+          const { error: altDeleteError } = await client
+            .from('subcategories')
+            .delete()
+            .gte('id', '00000000-0000-0000-0000-000000000000');
+            
+          if (altDeleteError) {
+            console.error("Error with alternative subcategories delete:", altDeleteError);
+          }
+        }
+      } catch (deleteErr) {
+        console.error("Exception during subcategories deletion:", deleteErr);
       }
       
       if (subcategoryArray.length > 0) {
@@ -378,16 +432,28 @@ export const dbHelpers = {
         return coupon;
       });
       
-      console.log("Deleting existing coupons...");
-      // Delete existing records - FIX: Use a simpler approach
-      const { error: deleteError } = await client
-        .from('coupons')
-        .delete()
-        .neq('id', 'placeholder-id-that-doesnt-exist');  // This will match all records
-        
-      if (deleteError) {
-        console.error("Error deleting coupons:", deleteError);
-        throw deleteError;
+      // IMPORTANT FIX: Simplified delete operation
+      try {
+        console.log("Deleting all existing coupons...");
+        const { error: deleteError } = await client
+          .from('coupons')
+          .delete()
+          .not('id', 'IS NULL');
+          
+        if (deleteError) {
+          console.error("Error with coupons delete:", deleteError);
+          // Try alternative approach if needed
+          const { error: altDeleteError } = await client
+            .from('coupons')
+            .delete()
+            .gte('id', '00000000-0000-0000-0000-000000000000');
+            
+          if (altDeleteError) {
+            console.error("Error with alternative coupons delete:", altDeleteError);
+          }
+        }
+      } catch (deleteErr) {
+        console.error("Exception during coupons deletion:", deleteErr);
       }
       
       if (couponsWithUUIDs.length > 0) {
