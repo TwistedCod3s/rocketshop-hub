@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 
 // Create a global variable to store the client instance
@@ -63,15 +62,24 @@ export const dbHelpers = {
       const client = getSupabaseClient();
       if (!client) return false;
 
+      // Remove any fields that might not exist in the database schema
+      const cleanedProducts = products.map(product => {
+        const { last_updated, ...rest } = product;
+        return rest;
+      });
+
       const { data, error } = await client
         .from('products')
-        .upsert(products);
+        .upsert(cleanedProducts, {
+          onConflict: 'id'
+        });
 
       if (error) {
         console.error("Error saving products:", error);
         return false;
       }
 
+      console.log("Saved products to database");
       return true;
     } catch (e) {
       console.error("Error in saveProducts:", e);
@@ -96,7 +104,13 @@ export const dbHelpers = {
       // Convert the array of objects to a single object
       const categoryImages: Record<string, string> = {};
       data.forEach((item: any) => {
-        categoryImages[item.category_slug] = item.image_url;
+        // Use the correct column name based on your schema
+        const categorySlug = item.category_slug || item.category || '';
+        const imageUrl = item.image_url || item.imageUrl || '';
+        
+        if (categorySlug) {
+          categoryImages[categorySlug] = imageUrl;
+        }
       });
 
       return categoryImages;
@@ -111,21 +125,48 @@ export const dbHelpers = {
       const client = getSupabaseClient();
       if (!client) return false;
 
-      // Convert the single object to an array of objects
-      const categoryImagesArray = Object.entries(categoryImages).map(([category_slug, image_url]) => ({
-        category_slug,
-        image_url
-      }));
+      // First check if the table has id column required
+      let needsId = false;
+      try {
+        const { data: tableInfo, error: tableError } = await client
+          .from('category_images')
+          .select('id')
+          .limit(1);
 
+        needsId = !tableError;
+      } catch (e) {
+        console.log("Couldn't determine if id column is needed, will include it");
+        needsId = true;
+      }
+
+      // Convert the single object to an array of objects
+      const categoryImagesArray = Object.entries(categoryImages).map(([category_slug, image_url]) => {
+        const entry: any = {
+          category_slug,
+          image_url
+        };
+        
+        // Add ID if needed
+        if (needsId) {
+          entry.id = crypto.randomUUID();
+        }
+        
+        return entry;
+      });
+
+      // Use update if conflict since these might already exist
       const { data, error } = await client
         .from('category_images')
-        .upsert(categoryImagesArray);
+        .upsert(categoryImagesArray, {
+          onConflict: 'category_slug'
+        });
 
       if (error) {
         console.error("Error saving category images:", error);
         return false;
       }
 
+      console.log("Saved category images to database");
       return true;
     } catch (e) {
       console.error("Error in saveCategoryImages:", e);
@@ -150,7 +191,13 @@ export const dbHelpers = {
       // Convert the array of objects to a single object
       const subcategories: Record<string, string[]> = {};
       data.forEach((item: any) => {
-        subcategories[item.category_slug] = item.subcategories;
+        // Try different possible column names
+        const categorySlug = item.category_slug || item.category || '';
+        const subcategoryList = item.subcategories || item.subcategory_list || [];
+        
+        if (categorySlug) {
+          subcategories[categorySlug] = subcategoryList;
+        }
       });
 
       return subcategories;
@@ -165,21 +212,69 @@ export const dbHelpers = {
       const client = getSupabaseClient();
       if (!client) return false;
 
+      // Determine the correct column names by testing the table structure
+      let categorySlugField = 'category_slug';
+      let subcategoriesField = 'subcategories';
+      
+      try {
+        // Try to get one record to see the column structure
+        const { data: sampleData, error: sampleError } = await client
+          .from('subcategories')
+          .select('*')
+          .limit(1);
+        
+        if (sampleError && sampleError.message.includes("category_slug")) {
+          categorySlugField = 'category'; // Fallback column name
+        }
+        
+        if (sampleError && sampleError.message.includes("subcategories")) {
+          subcategoriesField = 'subcategory_list'; // Fallback column name
+        }
+      } catch (e) {
+        console.log("Error checking subcategories table structure:", e);
+        // Keep the default column names
+      }
+
+      // Check if the table has id column
+      let needsId = false;
+      try {
+        const { data: tableInfo, error: tableError } = await client
+          .from('subcategories')
+          .select('id')
+          .limit(1);
+
+        needsId = !tableError;
+      } catch (e) {
+        console.log("Couldn't determine if id column is needed, will include it");
+        needsId = true;
+      }
+
       // Convert the single object to an array of objects
-      const subcategoriesArray = Object.entries(subcategories).map(([category_slug, subcategories]) => ({
-        category_slug,
-        subcategories
-      }));
+      const subcategoriesArray = Object.entries(subcategories).map(([category, subcategoryList]) => {
+        const entry: any = {};
+        entry[categorySlugField] = category;
+        entry[subcategoriesField] = subcategoryList;
+        
+        // Add ID if needed
+        if (needsId) {
+          entry.id = crypto.randomUUID();
+        }
+        
+        return entry;
+      });
 
       const { data, error } = await client
         .from('subcategories')
-        .upsert(subcategoriesArray);
+        .upsert(subcategoriesArray, {
+          onConflict: categorySlugField
+        });
 
       if (error) {
         console.error("Error saving subcategories:", error);
         return false;
       }
 
+      console.log("Saved subcategories to database");
       return true;
     } catch (e) {
       console.error("Error in saveSubcategories:", e);
@@ -213,40 +308,88 @@ export const dbHelpers = {
       const client = getSupabaseClient();
       if (!client) return false;
 
+      // Determine if discountPercentage column exists
+      let hasDiscountPercentage = true;
+      try {
+        const { error: testError } = await client
+          .from('coupons')
+          .select('discountPercentage')
+          .limit(1);
+        
+        if (testError && testError.message.includes('discountPercentage')) {
+          hasDiscountPercentage = false;
+        }
+      } catch (e) {
+        console.log("Error checking coupons table structure, assuming discountPercentage exists:", e);
+      }
+
+      // Remove fields that don't exist in the schema
+      const cleanedCoupons = coupons.map(coupon => {
+        const cleaned = { ...coupon };
+        
+        // Remove discountPercentage if it doesn't exist in the schema
+        if (!hasDiscountPercentage) {
+          delete cleaned.discountPercentage;
+        }
+        
+        return cleaned;
+      });
+
       const { data, error } = await client
         .from('coupons')
-        .upsert(coupons);
+        .upsert(cleanedCoupons, {
+          onConflict: 'id'
+        });
 
       if (error) {
         console.error("Error saving coupons:", error);
         return false;
       }
 
+      console.log("Saved coupons to database");
       return true;
     } catch (e) {
       console.error("Error in saveCoupons:", e);
       return false;
     }
   },
-    // Add this new function
+
   getLatestUpdateTimestamp: async (): Promise<string | null> => {
     try {
       const client = getSupabaseClient();
       if (!client) return null;
       
-      // Try to get the latest updated product
-      const { data, error } = await client
-        .from('products')
-        .select('last_updated')
-        .order('last_updated', { ascending: false })
-        .limit(1);
-      
-      if (error || !data || data.length === 0) {
-        console.error("Error getting latest timestamp:", error);
-        return null;
+      // Try to get the latest updated product - check if last_updated exists
+      try {
+        const { data, error } = await client
+          .from('products')
+          .select('last_updated')
+          .order('last_updated', { ascending: false })
+          .limit(1);
+        
+        if (!error && data && data.length > 0 && data[0].last_updated) {
+          return data[0].last_updated || null;
+        }
+      } catch (e) {
+        console.log("last_updated column doesn't exist, using created_at instead");
       }
       
-      return data[0].last_updated || null;
+      // Fallback to created_at if last_updated doesn't exist
+      try {
+        const { data, error } = await client
+          .from('products')
+          .select('created_at')
+          .order('created_at', { ascending: false })
+          .limit(1);
+        
+        if (!error && data && data.length > 0) {
+          return data[0].created_at || null;
+        }
+      } catch (e) {
+        console.log("created_at column doesn't exist either, returning null");
+      }
+      
+      return null;
     } catch (e) {
       console.error("Error in getLatestUpdateTimestamp:", e);
       return null;

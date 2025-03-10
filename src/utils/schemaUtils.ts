@@ -36,8 +36,6 @@ export const convertProductToDbSchema = (product: Product): Record<string, any> 
     const originalId = String(product.id);
     dbProduct.id = uuidv4();
     console.log(`Converted ${isNumeric ? 'numeric' : 'invalid'} ID "${originalId}" to UUID: ${dbProduct.id}`);
-    
-    // Don't store the original ID as this field doesn't exist in the database schema
   } else {
     dbProduct.id = product.id;
   }
@@ -81,8 +79,9 @@ export const convertProductToDbSchema = (product: Product): Record<string, any> 
     dbProduct.specifications = product.specifications;
   }
   
-  // Set a timestamp for the last update to help with synchronization
-  dbProduct.last_updated = new Date().toISOString();
+  // Don't use the last_updated field if it doesn't exist in the database
+  // Comment this out since the column doesn't exist
+  // dbProduct.last_updated = new Date().toISOString();
   
   return dbProduct;
 };
