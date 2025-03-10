@@ -1,11 +1,11 @@
-
 import { useAdminAuth } from "./admin/useAdminAuth";
 import { useCategoryImages } from "./admin/useCategoryImages";
 import { useSubcategories } from "./admin/useSubcategories";
 import { useCoupons } from "./admin/useCoupons";
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useState } from "react";
 import { useProducts } from "./useProducts";
 import { SYNC_KEY } from "./admin/adminUtils";
+import { useVercelDeployment } from "./admin/useVercelDeployment";
 
 export function useAdmin() {
   const auth = useAdminAuth();
@@ -13,6 +13,10 @@ export function useAdmin() {
   const subcategoriesHook = useSubcategories();
   const couponsHook = useCoupons();
   const productsHook = useProducts();
+  const vercelDeployment = useVercelDeployment();
+  const [autoDeployEnabled, setAutoDeployEnabled] = useState<boolean>(
+    localStorage.getItem('AUTO_DEPLOY_ENABLED') === 'true'
+  );
   
   // Debug logging
   useEffect(() => {
@@ -35,9 +39,15 @@ export function useAdmin() {
   useEffect(() => {
     console.log("useAdmin: coupons updated", couponsHook.coupons);
   }, [couponsHook.coupons]);
+
+  // Function to toggle auto-deployment
+  const toggleAutoDeploy = useCallback((enabled: boolean) => {
+    setAutoDeployEnabled(enabled);
+    localStorage.setItem('AUTO_DEPLOY_ENABLED', enabled.toString());
+  }, []);
   
   // Function to force reload all admin data and propagate to all users
-  const reloadAllAdminData = useCallback(() => {
+  const reloadAllAdminData = useCallback(async (triggerDeploy = false) => {
     console.log("Forcing reload of all admin data and propagating to all users");
     
     // Reload all admin data
@@ -70,6 +80,12 @@ export function useAdmin() {
       }));
       
       console.log("Dispatched global sync events to notify all users");
+      
+      // Trigger Vercel deployment if requested or auto-deploy is enabled
+      if ((triggerDeploy || autoDeployEnabled) && vercelDeployment.getDeploymentHookUrl()) {
+        console.log("Triggering Vercel deployment");
+        await vercelDeployment.triggerDeployment();
+      }
     } catch (error) {
       console.error("Error dispatching sync events:", error);
       
@@ -80,11 +96,15 @@ export function useAdmin() {
         console.log("Used fallback sync mechanism");
       }, 10);
     }
+    
+    return true;
   }, [
     categoryImagesHook.reloadFromStorage,
     subcategoriesHook.reloadFromStorage,
     couponsHook.reloadFromStorage,
-    productsHook
+    productsHook,
+    autoDeployEnabled,
+    vercelDeployment
   ]);
   
   return {
@@ -109,6 +129,14 @@ export function useAdmin() {
     updateCoupon: couponsHook.updateCoupon,
     deleteCoupon: couponsHook.deleteCoupon,
     validateCoupon: couponsHook.validateCoupon,
+    
+    // Deployment management
+    isDeploying: vercelDeployment.isDeploying,
+    triggerDeployment: vercelDeployment.triggerDeployment,
+    getDeploymentHookUrl: vercelDeployment.getDeploymentHookUrl,
+    setDeploymentHookUrl: vercelDeployment.setDeploymentHookUrl,
+    autoDeployEnabled,
+    toggleAutoDeploy,
     
     // Global admin functions
     reloadAllAdminData

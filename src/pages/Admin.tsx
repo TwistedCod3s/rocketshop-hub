@@ -23,7 +23,11 @@ const Admin = () => {
     updateFeaturedProducts,
     isAdmin,
     tryAdminLogin,
-    reloadAllAdminData
+    reloadAllAdminData,
+    triggerDeployment,
+    isDeploying,
+    autoDeployEnabled,
+    toggleAutoDeploy
   } = useShopContext();
   
   // Use the shared admin state
@@ -62,12 +66,12 @@ const Admin = () => {
     });
   };
   
-  const forceSyncDatabase = () => {
+  const forceSyncDatabase = async () => {
     setIsSyncing(true);
     
     // Force reload all admin data
     try {
-      reloadAllAdminData();
+      await reloadAllAdminData(true); // true to trigger deployment if auto-deploy is enabled
       
       toast({
         title: "Database synchronized",
@@ -149,6 +153,10 @@ const Admin = () => {
         handleLogout={handleLogout}
         navigate={navigate}
         forceSyncDatabase={forceSyncDatabase}
+        triggerDeployment={triggerDeployment}
+        isDeploying={isDeploying}
+        autoDeployEnabled={autoDeployEnabled}
+        toggleAutoDeploy={toggleAutoDeploy}
       />
       
       <div className="flex-1 overflow-auto bg-gray-50">

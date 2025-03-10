@@ -1,34 +1,52 @@
+import { Category } from "@/constants/categories";
 
 export interface Product {
   id: string;
   name: string;
   description: string;
-  fullDescription?: string;
   price: number;
-  category: string;
-  subcategory?: string;
-  images: string[];
-  inStock: boolean;
-  featured: boolean;
-  rating: number;
-  specifications?: {
-    name: string;
-    value: string;
-  }[];
-  reviews?: {
-    user: string;
-    rating: number;
-    comment: string;
-    date: string;
-  }[];
+  imageUrl: string;
+  category: Category;
+  subcategory: string;
+  isFeatured: boolean;
   quantity?: number;
-  inventory?: number;
 }
 
-export interface CartItem {
-  id: string;
-  product: Product;
+export interface CartItem extends Product {
   quantity: number;
+}
+
+export interface Customer {
+  id: string;
+  name: string;
+  email: string;
+  address: string;
+  phone: string;
+  orders: Order[];
+}
+
+export interface Order {
+  id: string;
+  customer: Customer;
+  items: CartItem[];
+  total: number;
+  date: Date;
+}
+
+export interface ShippingAddress {
+  name: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+}
+
+export interface PaymentInfo {
+  cardName: string;
+  cardNumber: string;
+  expMonth: string;
+  expYear: string;
+  cvv: string;
 }
 
 export interface CouponCode {
@@ -36,48 +54,42 @@ export interface CouponCode {
   code: string;
   discountPercentage: number;
   active: boolean;
-  description?: string;
+  description: string;
 }
 
-export interface CartSummaryProps {
-  cart: CartItem[];
-  subtotal?: number;
-  itemCount?: number;
-}
-
+// Define the type for the shop context
 export interface ShopContextType {
   products: Product[];
-  featuredProducts: Product[];
   cart: CartItem[];
+  shippingAddress: ShippingAddress | null;
+  paymentInfo: PaymentInfo | null;
+  coupon: CouponCode | null;
   addProduct: (product: Product) => void;
   updateProduct: (product: Product) => void;
-  removeProduct: (productId: string) => void;
-  getProduct: (productId: string) => Product | undefined;
-  fetchAllProducts: () => Product[];
-  fetchProductsByCategory: (category: string) => Product[];
-  fetchFeaturedProducts: () => Product[];
-  getRelatedProducts: (category: string, excludeProductId: string) => Product[];
-  updateFeaturedProducts: (productId: string, isFeatured: boolean) => void;
-  addToCart: (product: Product, quantity: number) => void;
-  removeFromCart: (productId: string) => void;
-  updateCartItemQuantity: (productId: string, quantity: number) => void;
+  removeProduct: (id: string) => void;
+  addToCart: (product: Product) => void;
+  removeFromCart: (id: string) => void;
+  updateCartItemQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
-  getCartTotal: () => number;
-  getCartCount: () => number;
-  isAdmin?: boolean;
+  calculateTotal: () => number;
+  applyCoupon: (code: string) => void;
+  removeCoupon: () => void;
+  setShippingAddress: (address: ShippingAddress) => void;
+  setPaymentInfo: (paymentInfo: PaymentInfo) => void;
+  fetchAllProducts: () => Product[];
+  fetchProductById: (id: string) => Product | undefined;
+  updateFeaturedProducts: (productId: string, isFeatured: boolean) => void;
+  
+  // Admin-related properties
+  isAdmin: boolean;
   tryAdminLogin: (username: string, password: string) => boolean;
-  subcategories: Record<string, string[]>;
-  updateSubcategories: (category: string, subcategories: string[]) => void;
-  coupons: CouponCode[];
-  addCoupon: (coupon: Omit<CouponCode, 'id'>) => void;
-  updateCoupon: (coupon: CouponCode) => void;
-  deleteCoupon: (couponId: string) => void;
-  validateCoupon: (code: string) => CouponCode | undefined;
-  reloadAllAdminData: () => void;
-}
-
-export interface Category {
-  name: string;
-  slug: string;
-  subcategories: string[];
+  reloadAllAdminData: (triggerDeploy?: boolean) => Promise<boolean>;
+  
+  // Vercel deployment properties
+  isDeploying: boolean;
+  triggerDeployment: () => Promise<boolean>;
+  getDeploymentHookUrl: () => string;
+  setDeploymentHookUrl: (url: string) => void;
+  autoDeployEnabled: boolean;
+  toggleAutoDeploy: (enabled: boolean) => void;
 }
