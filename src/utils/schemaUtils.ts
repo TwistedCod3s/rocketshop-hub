@@ -32,10 +32,12 @@ export const convertProductToDbSchema = (product: Product): Record<string, any> 
     console.log(`Generated UUID for product without ID: ${dbProduct.id}`);
   } else if (!isValidUUID(product.id)) {
     // For numeric or invalid IDs, generate a UUID replacement
-    // Check if it's a numeric ID
     const isNumeric = /^\d+$/.test(product.id);
     dbProduct.id = uuidv4();
     console.log(`Converted ${isNumeric ? 'numeric' : 'invalid'} ID "${product.id}" to UUID: ${dbProduct.id}`);
+    
+    // Store the original ID to maintain a mapping if needed
+    dbProduct.original_id = product.id;
   } else {
     dbProduct.id = product.id;
   }
@@ -106,4 +108,18 @@ export const convertDbToProductSchema = (dbProduct: any): Product => {
   }
   
   return product;
+};
+
+/**
+ * Ensures that a coupon has a valid UUID ID
+ */
+export const ensureCouponHasValidUUID = (coupon: Coupon): Coupon => {
+  if (!coupon.id || !isValidUUID(coupon.id)) {
+    return {
+      ...coupon,
+      id: uuidv4()
+    };
+  }
+  
+  return coupon;
 };

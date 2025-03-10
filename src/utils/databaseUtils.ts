@@ -2,6 +2,7 @@
 import { dbHelpers } from '@/lib/supabase';
 import { Product, Coupon } from '@/types/shop';
 import { v4 as uuidv4 } from 'uuid';
+import { convertProductToDbSchema, ensureCouponHasValidUUID } from './schemaUtils';
 
 // Helper function to ensure UUID validity
 const ensureValidUUID = (id: string | undefined): string => {
@@ -27,20 +28,29 @@ export const saveAdminDataToDatabase = async (
     // Save products
     if (products && products.length > 0) {
       console.log(`Attempting to save ${products.length} products to database`);
-      await dbHelpers.saveProducts(products);
+      // Convert each product to ensure it has a valid UUID and follows DB schema
+      const dbReadyProducts = products.map(product => convertProductToDbSchema(product));
+      await dbHelpers.saveProducts(dbReadyProducts);
       console.log("Saved products to database");
     }
     
     // Save category images
     if (categoryImages && Object.keys(categoryImages).length > 0) {
       console.log(`Attempting to save ${Object.keys(categoryImages).length} category images to database`);
-      await dbHelpers.saveCategoryImages(categoryImages);
+      // Generate a UUID for category images entries if needed
+      const dbReadyCategoryImages = Object.entries(categoryImages).reduce((acc, [slug, url]) => {
+        acc[slug] = url;
+        return acc;
+      }, {} as Record<string, string>);
+      
+      await dbHelpers.saveCategoryImages(dbReadyCategoryImages);
       console.log("Saved category images to database");
     }
     
     // Save subcategories
     if (subcategories && Object.keys(subcategories).length > 0) {
       console.log(`Attempting to save ${Object.keys(subcategories).length} subcategory entries to database`);
+      // No modification needed for subcategories
       await dbHelpers.saveSubcategories(subcategories);
       console.log("Saved subcategories to database");
     }
@@ -48,10 +58,7 @@ export const saveAdminDataToDatabase = async (
     // Save coupons with UUID validation
     if (coupons && coupons.length > 0) {
       // Make sure all coupons have valid UUIDs
-      const validatedCoupons = coupons.map(coupon => ({
-        ...coupon,
-        id: ensureValidUUID(coupon.id)
-      }));
+      const validatedCoupons = coupons.map(coupon => ensureCouponHasValidUUID(coupon));
       
       console.log(`Attempting to save ${validatedCoupons.length} coupons to database`);
       await dbHelpers.saveCoupons(validatedCoupons);

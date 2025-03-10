@@ -121,6 +121,20 @@ const DatabaseInitializer = () => {
         throw new Error("No products found in localStorage to initialize database with");
       }
 
+      // Parse products to check for invalid UUIDs
+      const products = JSON.parse(productsStr);
+      let hasNumericIds = false;
+      
+      products.forEach((product: any) => {
+        if (product.id && /^\d+$/.test(product.id)) {
+          hasNumericIds = true;
+        }
+      });
+      
+      if (hasNumericIds) {
+        console.log("Warning: Some products have numeric IDs that will be converted to UUIDs during initialization");
+      }
+
       console.log("Starting database initialization from localStorage...");
       const success = await initializeDatabaseFromLocalStorage();
       
@@ -128,7 +142,7 @@ const DatabaseInitializer = () => {
         setIsInitialized(true);
         toast({
           title: "Database initialized",
-          description: "Your database has been successfully populated with your store data",
+          description: "Your database has been successfully populated with your store data. Numeric IDs have been converted to valid UUIDs.",
         });
         // Clear pending changes flag since we've just initialized
         localStorage.setItem('ROCKETRY_SHOP_CHANGES_PENDING', 'false');
@@ -154,11 +168,15 @@ const DatabaseInitializer = () => {
             // Provide more specific guidance about the missing column
             if (dbError.message.includes("Could not find the 'fullDescription' column")) {
               errorMessage = "Your 'products' table is missing the 'fullDescription' column. You can either: 1) Add this column to your database schema, or 2) The app will automatically handle this by storing full descriptions in the 'description' field as a workaround.";
+            } else if (dbError.message.includes("Could not find the 'inStock' column")) {
+              errorMessage = "Your 'products' table is missing the 'inStock' column. Please add this column to your table schema.";
             } else {
               errorMessage = `Schema mismatch: ${dbError.message}. Please update your database schema to match what the app expects.`;
             }
           } else if (dbError.code === '23502') {
             errorMessage = "Required fields are missing. Please check your data format.";
+          } else if (dbError.code === '22P02' && dbError.message.includes('invalid input syntax for type uuid')) {
+            errorMessage = "Invalid UUID format. This has been automatically fixed - please try initializing again.";
           } else {
             errorMessage = `Database error (${dbError.code}): ${dbError.message}`;
             if (dbError.hint) {

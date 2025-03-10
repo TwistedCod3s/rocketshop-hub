@@ -3,6 +3,7 @@ import { useState, useCallback, useEffect } from "react";
 import { Product } from "@/types/shop";
 import { initialProducts } from "@/data/initialProducts";
 import { dbHelpers } from "@/lib/supabase";
+import { convertProductToDbSchema } from "@/utils/schemaUtils";
 
 // Define consistent storage key
 const PRODUCTS_STORAGE_KEY = "ROCKETRY_SHOP_PRODUCTS_V7"; // Bumped version
@@ -155,8 +156,11 @@ export function useProducts() {
       // Set dirty flag
       localStorage.setItem('ROCKETRY_SHOP_CHANGES_PENDING', 'true');
       
+      // Convert products to database schema to ensure UUID validity before syncing
+      const dbReadyProducts = productsCopy.map((product: Product) => convertProductToDbSchema(product));
+      
       // Sync to Supabase
-      dbHelpers.saveProducts(productsCopy)
+      dbHelpers.saveProducts(dbReadyProducts)
         .then(() => {
           console.log("Successfully synced products to Supabase");
           localStorage.setItem('ROCKETRY_SHOP_CHANGES_PENDING', 'false');
