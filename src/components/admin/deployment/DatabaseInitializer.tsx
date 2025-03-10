@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { initializeDatabaseFromLocalStorage } from "@/utils/database/adminDataSync";
@@ -7,15 +8,12 @@ const DatabaseInitializer = () => {
   const handleInitializeDatabase = async () => {
     try {
       await initializeDatabaseFromLocalStorage();
-      toast({
-        title: "Database Initialized",
-        description: "Successfully initialized the database from local storage.",
+      toast.success("Database Initialized", {
+        description: "Successfully initialized the database from local storage."
       });
     } catch (error) {
-      toast({
-        title: "Error Initializing Database",
-        description: "Failed to initialize the database from local storage.",
-        variant: "destructive",
+      toast.error("Error Initializing Database", {
+        description: "Failed to initialize the database from local storage."
       });
     }
   };
