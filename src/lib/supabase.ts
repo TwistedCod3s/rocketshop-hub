@@ -1,64 +1,75 @@
-
 import { createClient } from '@supabase/supabase-js';
 
+// Get environment variables with fallbacks for dev environments
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
-// Make sure URL format is correct - must start with https://
-const isValidUrl = (url: string) => {
-  try {
-    return url.startsWith('https://') && new URL(url).hostname.length > 0;
-  } catch (e) {
-    return false;
-  }
-};
-
-// Improved debugging for environment variables
-console.log("Supabase connection info:", {
-  url: supabaseUrl ? 'URL provided' : 'URL missing', 
-  isValidUrl: supabaseUrl ? isValidUrl(supabaseUrl) : false,
+// Add debug logging for environment variables
+console.log("Supabase environment variables check:", {
+  hasUrl: !!supabaseUrl,
+  urlStartsWithHttps: supabaseUrl.startsWith('https://'),
   hasKey: !!supabaseAnonKey,
-  keyLength: supabaseAnonKey?.length
+  keyLength: supabaseAnonKey?.length || 0
 });
 
-// Singleton pattern: Create a single supabase client instance once
+// Singleton pattern for Supabase client
 let supabaseClientInstance = null;
 
 export const getSupabaseClient = () => {
-  // Return the existing instance if already created
-  if (supabaseClientInstance) {
-    return supabaseClientInstance;
-  }
-  
-  if (!supabaseUrl || !supabaseAnonKey) {
-    console.error('Supabase credentials missing:', {
-      hasUrl: !!supabaseUrl,
-      hasKey: !!supabaseAnonKey
-    });
-    return null;
-  }
-  
-  if (!isValidUrl(supabaseUrl)) {
-    console.error('Invalid Supabase URL format:', supabaseUrl);
-    console.error('URL must start with https:// and be a valid URL');
-    return null;
-  }
-  
   try {
-    console.log("Creating Supabase client with:", {
-      url: supabaseUrl.substring(0, 20) + '...',
-      keyLength: supabaseAnonKey?.length
-    });
+    // Return existing instance if available
+    if (supabaseClientInstance) {
+      return supabaseClientInstance;
+    }
     
-    // Create the client only once for the entire application
+    // Check if required credentials are available
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.warn('Supabase credentials missing or invalid', {
+        hasUrl: !!supabaseUrl,
+        hasKey: !!supabaseAnonKey
+      });
+      
+      // In development environment, provide mock client for testing
+      if (import.meta.env.DEV) {
+        console.log("Creating mock Supabase client for development");
+        // Return a minimal mock that won't throw errors
+        return {
+          from: () => ({
+            select: () => Promise.resolve({ data: [], error: null }),
+            insert: () => Promise.resolve({ error: null }),
+            delete: () => ({ 
+              is: () => ({ then: (cb) => cb() && { error: null } }),
+              not: () => Promise.resolve({ error: null })
+            })
+          })
+        };
+      }
+      
+      return null;
+    }
+    
+    // Create new client with provided credentials
+    console.log("Creating new Supabase client");
     supabaseClientInstance = createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
-        persistSession: false, // Don't persist auth state in localStorage
-        autoRefreshToken: false // Disable automatic token refresh
+        persistSession: false,
+        autoRefreshToken: false
       }
     });
     
-    console.log("Supabase client created successfully");
+    // Test the connection by pinging the database
+    supabaseClientInstance.from('products').select('count', { count: 'exact', head: true })
+      .then(({ error }) => {
+        if (error) {
+          console.error('Supabase connection test failed:', error.message);
+        } else {
+          console.log('Supabase connection test successful');
+        }
+      })
+      .catch(err => {
+        console.error('Supabase connection test error:', err);
+      });
+    
     return supabaseClientInstance;
   } catch (error) {
     console.error("Error creating Supabase client:", error);
@@ -66,22 +77,33 @@ export const getSupabaseClient = () => {
   }
 };
 
-// Create the client but handle the case where credentials are missing
+// Make client available for direct import
 export const supabase = getSupabaseClient();
 
-// Helper functions for database operations that handle null client case
+// Helper functions with better error handling and development fallbacks
 export const dbHelpers = {
   // Products
   async getProducts() {
-    console.log("Attempting to fetch products from Supabase");
-    const client = getSupabaseClient();
-    if (!client) {
-      console.error("Database connection not configured for getProducts");
-      throw new Error('Database connection not configured');
-    }
-    
     try {
+      console.log("Attempting to fetch products from Supabase");
+      const client = getSupabaseClient();
+      
+      if (!client) {
+        console.warn("No Supabase client available - using local storage fallback");
+        // Fallback to localStorage in development
+        try {
+          const localProducts = localStorage.getItem('ROCKETRY_SHOP_PRODUCTS_V7');
+          if (localProducts) {
+            return JSON.parse(localProducts);
+          }
+        } catch (e) {
+          console.error("Error reading from localStorage:", e);
+        }
+        return [];
+      }
+      
       const { data, error } = await client.from('products').select('*');
+      
       if (error) {
         console.error("Error fetching products from Supabase:", error);
         throw error;
@@ -91,7 +113,18 @@ export const dbHelpers = {
       return data || [];
     } catch (err) {
       console.error("Exception in getProducts:", err);
-      throw err;
+      // Fallback to localStorage in case of error
+      try {
+        const localProducts = localStorage.getItem('ROCKETRY_SHOP_PRODUCTS_V7');
+        if (localProducts) {
+          const parsedProducts = JSON.parse(localProducts);
+          console.log("Falling back to local storage products:", parsedProducts.length);
+          return parsedProducts;
+        }
+      } catch (e) {
+        console.error("Error reading from localStorage:", e);
+      }
+      return [];
     }
   },
   

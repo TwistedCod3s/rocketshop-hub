@@ -1,92 +1,85 @@
 
+// Add the new loadProductsFromSupabase and getCartCount to the ShopContextType interface
+
+export interface CartItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  image?: string;
+}
+
 export interface Product {
   id: string;
   name: string;
   description: string;
+  features?: string[];
+  specification?: { [key: string]: string };
   price: number;
-  images: string[];
-  category: string;
-  subcategory?: string;
-  featured: boolean;
-  inStock: boolean;
+  compareAtPrice?: number;
   discount?: number;
+  image?: string;
+  images?: string[];
+  inStock?: boolean;
+  category?: string;
+  subcategory?: string;
+  featured?: boolean;
+  tags?: string[];
+  new?: boolean;
+  relatedProducts?: string[];
   rating?: number;
-  numReviews?: number;
-  fullDescription?: string;
-  specifications?: Array<{name: string, value: string}>;
-  reviews?: Array<{user: string, rating: number, comment: string, date: string}>;
-}
-
-export interface CartItem {
-  id: string;
-  product: Product;
-  quantity: number;
 }
 
 export interface Coupon {
   id: string;
   code: string;
   discount: number;
-  discountPercentage?: number;
+  discountPercentage: number;
   expiryDate: string;
-  active?: boolean;
-  description?: string;
-}
-
-export type CouponCode = Coupon;
-
-export interface CartSummaryProps {
-  cart: CartItem[];
-  subtotal: number;
-  itemCount: number;
+  active: boolean;
+  description: string;
 }
 
 export interface ShopContextType {
   // Products
   products: Product[];
+  getProduct?: (productId: string) => Product | undefined;
+  getRelatedProducts?: (category: string, excludeProductId: string) => Product[];
+  fetchProductsByCategory?: (category: string) => Product[];
+  fetchAllProducts: () => Product[];
   addProduct: (product: Product) => void;
   updateProduct: (product: Product) => void;
   removeProduct: (productId: string) => void;
-  getProduct?: (productId: string) => Product | undefined;
-  fetchAllProducts: () => Product[];
-  fetchProductsByCategory?: (category: string) => Product[];
-  getRelatedProducts?: (category: string, excludeProductId: string) => Product[];
-  reloadProductsFromStorage?: () => void;
-  loadProductsFromSupabase?: () => Promise<boolean>;
-  
-  // Featured products
-  featuredProducts?: Product[];
   updateFeaturedProducts: (productId: string, isFeatured: boolean) => void;
-  fetchFeaturedProducts?: () => Product[];
+  reloadProductsFromStorage: () => void;
+  loadProductsFromSupabase: () => Promise<boolean>;
   
   // Cart
   cart: CartItem[];
-  addToCart: (product: Product, quantity?: number) => void;
+  addToCart: (product: Product) => void;
   removeFromCart: (productId: string) => void;
   updateCartItemQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
   getCartTotal?: () => number;
-  getCartCount?: () => number;
+  getCartCount: () => number;
+  
+  // Featured products
+  featuredProducts?: Product[];
+  fetchFeaturedProducts?: () => Product[];
   
   // Admin
   isAdmin?: boolean;
-  tryAdminLogin: (password: string) => boolean;
-  reloadAllAdminData: (triggerDeploy?: boolean) => Promise<boolean>;
-  
-  // Category data
-  categoryImages?: Record<string, string>;
-  updateCategoryImage?: (categorySlug: string, imageUrl: string) => void;
-  
-  // Subcategories
-  subcategories?: Record<string, string[]>;
-  updateSubcategories?: (category: string, newSubcategories: string[]) => void;
-  
-  // Coupons
+  subcategories?: { [category: string]: string[] };
+  updateSubcategories?: (category: string, subcategories: string[]) => void;
   coupons?: Coupon[];
-  addCoupon?: (coupon: Omit<Coupon, 'id'>) => void;
+  addCoupon?: (coupon: Coupon) => void;
   updateCoupon?: (coupon: Coupon) => void;
   deleteCoupon?: (couponId: string) => void;
   validateCoupon?: (code: string) => Coupon | null;
+  categoryImages?: { [category: string]: string };
+  updateCategoryImage?: (category: string, imageUrl: string) => void;
+  reloadAllAdminData: (autoDeployAfterSync?: boolean) => Promise<boolean>;
+  tryAdminLogin: (password: string) => boolean;
   
   // Deployment
   isDeploying?: boolean;

@@ -1,11 +1,12 @@
 
-import { createContext, useContext, useEffect } from "react";
+import { createContext, useContext, useEffect, ReactNode } from "react";
 import { ShopContextType } from "@/types/shop";
 import { useProducts } from "@/hooks/useProducts";
 import { useCart } from "@/hooks/useCart";
 import { useFeaturedProducts } from "@/hooks/useFeaturedProducts";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useVercelDeployment } from "@/hooks/admin/useVercelDeployment";
+import { useToast } from "@/hooks/use-toast";
 
 // Create context with default values
 const ShopContext = createContext<ShopContextType>({
@@ -24,14 +25,22 @@ const ShopContext = createContext<ShopContextType>({
   reloadAllAdminData: async () => false,
   loadProductsFromSupabase: async () => false,
   reloadProductsFromStorage: () => {},
+  getCartTotal: () => 0,
+  getCartCount: () => 0,
 });
 
 // Hook for using the shop context
 export const useShopContext = () => useContext(ShopContext);
 export const useShop = useShopContext; // Alias for useShopContext
 
-// Provider component
-export const ShopProvider = ({ children }) => {
+// Provider component with proper typing
+interface ShopProviderProps {
+  children: ReactNode;
+}
+
+export const ShopProvider = ({ children }: ShopProviderProps) => {
+  const { toast } = useToast();
+  
   // Use our custom hooks
   const productsHook = useProducts();
   const cartHook = useCart();
@@ -54,19 +63,51 @@ export const ShopProvider = ({ children }) => {
   
   // Wrap triggerDeployment to return Promise<boolean> instead of Promise<void>
   const wrappedTriggerDeployment = async () => {
-    if (deploymentHook.triggerDeployment) {
-      await deploymentHook.triggerDeployment();
-      return true;
+    try {
+      if (deploymentHook.triggerDeployment) {
+        await deploymentHook.triggerDeployment();
+        return true;
+      }
+    } catch (error) {
+      console.error("Deployment error:", error);
+      toast({
+        title: "Deployment failed",
+        description: "There was an error during deployment",
+        variant: "destructive"
+      });
     }
     return false;
   };
   
   // Combine all hooks into a single context value
   const value: ShopContextType = {
-    // Manual spread for proper typing
+    // Products
     products: productsHook.products,
+    getProduct: productsHook.getProduct,
+    getRelatedProducts: productsHook.getRelatedProducts,
+    fetchProductsByCategory: productsHook.fetchProductsByCategory,
+    fetchAllProducts: productsHook.fetchAllProducts,
+    addProduct: productsHook.addProduct,
+    updateProduct: productsHook.updateProduct,
+    removeProduct: productsHook.removeProduct,
+    updateFeaturedProducts: productsHook.updateFeaturedProducts,
+    reloadProductsFromStorage: productsHook.reloadProductsFromStorage,
+    loadProductsFromSupabase: productsHook.loadProductsFromSupabase,
+    
+    // Cart
     cart: cartHook.cart,
+    addToCart: cartHook.addToCart,
+    removeFromCart: cartHook.removeFromCart,
+    updateCartItemQuantity: cartHook.updateCartItemQuantity,
+    clearCart: cartHook.clearCart,
+    getCartTotal: cartHook.getCartTotal,
+    getCartCount: cartHook.getCartCount,
+    
+    // Featured products
     featuredProducts: featuredHook.featuredProducts,
+    fetchFeaturedProducts: featuredHook.fetchFeaturedProducts,
+    
+    // Admin
     isAdmin: adminHook.isAdmin,
     subcategories: adminHook.subcategories,
     updateSubcategories: adminHook.updateSubcategories,
@@ -77,27 +118,16 @@ export const ShopProvider = ({ children }) => {
     validateCoupon: adminHook.validateCoupon,
     categoryImages: adminHook.categoryImages,
     updateCategoryImage: adminHook.updateCategoryImage,
-    getProduct: productsHook.getProduct,
-    getRelatedProducts: productsHook.getRelatedProducts,
-    fetchProductsByCategory: productsHook.fetchProductsByCategory,
-    getCartTotal: cartHook.getCartTotal,
-    getCartCount: cartHook.getCartCount,
     reloadAllAdminData: adminHook.reloadAllAdminData,
+    tryAdminLogin: adminHook.tryAdminLogin,
+    
+    // Deployment
     isDeploying: deploymentHook.isDeploying,
     triggerDeployment: wrappedTriggerDeployment,
     getDeploymentHookUrl: deploymentHook.getDeploymentHookUrl,
     setDeploymentHookUrl: deploymentHook.setDeploymentHookUrl,
     autoDeployEnabled: adminHook.autoDeployEnabled,
     toggleAutoDeploy: adminHook.toggleAutoDeploy,
-    fetchFeaturedProducts: featuredHook.fetchFeaturedProducts,
-    loadProductsFromSupabase: productsHook.loadProductsFromSupabase,
-    reloadProductsFromStorage: productsHook.reloadProductsFromStorage,
-    
-    // Rest of the properties from hooks
-    ...productsHook,
-    ...cartHook,
-    ...featuredHook,
-    ...adminHook,
   };
   
   return (

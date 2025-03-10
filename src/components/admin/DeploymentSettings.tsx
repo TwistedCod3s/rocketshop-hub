@@ -7,8 +7,10 @@ import AutoDeployToggle from "./deployment/AutoDeployToggle";
 import DeploymentActions from "./deployment/DeploymentActions";
 import DeploymentInfo from "./deployment/DeploymentInfo";
 import DataSyncButton from "./deployment/DataSyncButton";
+import DatabaseSettings from "./deployment/DatabaseSettings";
 import { useDeploymentHandler } from "./deployment/useDeploymentHandler";
 import { useToast } from "@/hooks/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const DeploymentSettings = () => {
   const { 
@@ -103,34 +105,45 @@ const DeploymentSettings = () => {
     <div className="bg-white rounded-lg shadow-sm p-6">
       <h3 className="text-lg font-medium mb-6">Deployment Settings</h3>
       
-      <DeploymentStatusAlert deployHookUrl={deployUrl} />
-      
-      <div className="space-y-6 mt-6">
-        <DeploymentUrlInput 
-          deployUrl={deployUrl}
-          setDeployUrl={setDeployUrl}
-          onSave={handleSaveUrl}
-        />
+      <Tabs defaultValue="deployment" className="mb-6">
+        <TabsList>
+          <TabsTrigger value="deployment">Deployment</TabsTrigger>
+          <TabsTrigger value="database">Database</TabsTrigger>
+        </TabsList>
         
-        <AutoDeployToggle 
-          autoDeploy={autoDeploy}
-          onToggle={handleToggleAutoDeploy}
-        />
-        
-        <div className="flex flex-col sm:flex-row gap-4">
-          <DataSyncButton 
-            reloadAllAdminData={reloadAllAdminData}
-            onSyncComplete={handleSyncComplete}
+        <TabsContent value="deployment" className="space-y-6 mt-6">
+          <DeploymentStatusAlert deployHookUrl={deployUrl} />
+          
+          <DeploymentUrlInput 
+            deployUrl={deployUrl}
+            setDeployUrl={setDeployUrl}
+            onSave={handleSaveUrl}
           />
           
-          <DeploymentActions 
-            triggerDeployment={handleDeploy}
-            isDeploying={isDeploying}
+          <AutoDeployToggle 
+            autoDeploy={autoDeploy}
+            onToggle={handleToggleAutoDeploy}
           />
-        </div>
+          
+          <div className="flex flex-col sm:flex-row gap-4">
+            <DataSyncButton 
+              reloadAllAdminData={reloadAllAdminData}
+              onSyncComplete={handleSyncComplete}
+            />
+            
+            <DeploymentActions 
+              triggerDeployment={handleDeploy}
+              isDeploying={isDeploying}
+            />
+          </div>
+          
+          <DeploymentInfo />
+        </TabsContent>
         
-        <DeploymentInfo />
-      </div>
+        <TabsContent value="database" className="mt-6">
+          <DatabaseSettings />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

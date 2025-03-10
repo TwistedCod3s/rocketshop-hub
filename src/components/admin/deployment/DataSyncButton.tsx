@@ -18,48 +18,40 @@ const DataSyncButton = ({
   const [isSyncing, setIsSyncing] = useState(false);
   const [isDbConnected, setIsDbConnected] = useState<boolean | null>(null);
   const [dbError, setDbError] = useState<string | null>(null);
+  const [isChecking, setIsChecking] = useState(false);
   const { toast } = useToast();
   
   const checkDbConnection = async () => {
     try {
+      setIsChecking(true);
       setIsDbConnected(null); 
       setDbError(null);
       
-      // Log complete environment variable values for debugging
+      // Check environment variables
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
       
-      console.log("Checking Supabase connection with URL:", supabaseUrl);
-      if (supabaseAnonKey) {
-        console.log("Anon Key length:", supabaseAnonKey.length);
-        console.log("Anon Key starts with:", supabaseAnonKey.substring(0, 4) + "...");
-      } else {
-        console.log("Anon Key is undefined or empty");
-      }
-      
-      // Validate URL format
-      const isValidUrl = (url: string) => {
-        try {
-          return url.startsWith('https://') && new URL(url).hostname.length > 0;
-        } catch (e) {
-          return false;
-        }
-      };
-      
-      // Check if credentials are valid
       if (!supabaseUrl || !supabaseAnonKey) {
-        const error = `Missing Supabase credentials. URL: ${supabaseUrl ? "✓" : "✗"}, Key: ${supabaseAnonKey ? "✓" : "✗"}`;
+        const missing = [];
+        if (!supabaseUrl) missing.push('VITE_SUPABASE_URL');
+        if (!supabaseAnonKey) missing.push('VITE_SUPABASE_ANON_KEY');
+        
+        const error = `Missing environment variable(s): ${missing.join(', ')}`;
         console.error(error);
+        
         setIsDbConnected(false);
         setDbError(error);
+        setIsChecking(false);
         return;
       }
       
-      if (!isValidUrl(supabaseUrl)) {
+      // Validate URL format
+      if (!supabaseUrl.startsWith('https://')) {
         const error = `Invalid Supabase URL format: ${supabaseUrl}. URL must start with https://`;
         console.error(error);
         setIsDbConnected(false);
         setDbError(error);
+        setIsChecking(false);
         return;
       }
       
@@ -70,32 +62,36 @@ const DataSyncButton = ({
         console.error(error);
         setIsDbConnected(false);
         setDbError(error);
+        setIsChecking(false);
         return;
       }
       
-      console.log("Attempting database ping...");
+      // Test connection with a simple query
+      console.log("Testing database connection...");
       try {
         const { data, error } = await client.from('products').select('count', { count: 'exact', head: true });
         
         if (error) {
-          console.error("Database ping error:", error);
+          console.error("Database connection test failed:", error);
           setIsDbConnected(false);
           setDbError(`Database connection error: ${error.message}`);
         } else {
-          console.log("Database ping successful:", data);
+          console.log("Database connection test successful");
           setIsDbConnected(true);
           setDbError(null);
         }
       } catch (pingError) {
-        console.error("Database ping exception:", pingError);
+        console.error("Database connection test exception:", pingError);
         setIsDbConnected(false);
-        setDbError(`Database ping exception: ${pingError instanceof Error ? pingError.message : String(pingError)}`);
+        setDbError(`Connection test failed: ${pingError instanceof Error ? pingError.message : String(pingError)}`);
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error("Database check error:", errorMessage, error);
+      console.error("Database check error:", errorMessage);
       setIsDbConnected(false);
       setDbError(`Database connection error: ${errorMessage}`);
+    } finally {
+      setIsChecking(false);
     }
   };
   
@@ -104,35 +100,45 @@ const DataSyncButton = ({
   }, []);
   
   const handleSyncData = async () => {
-    if (!isDbConnected) {
-      toast({
-        title: "Database not connected",
-        description: dbError || "Please check your database configuration",
-        variant: "destructive"
-      });
-      return;
-    }
-    
     setIsSyncing(true);
     try {
-      await reloadAllAdminData(false);
-      toast({
-        title: "Data synchronized",
-        description: "All changes have been synchronized across all users"
-      });
-      
-      // Check if there are still pending changes
-      setTimeout(() => {
-        const pendingChanges = localStorage.getItem('ROCKETRY_SHOP_CHANGES_PENDING');
-        if (onSyncComplete) {
-          onSyncComplete();
+      // If database is not connected, try to reconnect first
+      if (!isDbConnected) {
+        await checkDbConnection();
+        if (!isDbConnected) {
+          toast({
+            title: "Database not connected",
+            description: "Will try using local data only. Check your database configuration.",
+            variant: "warning"
+          });
         }
-      }, 1000);
+      }
+      
+      // Attempt to sync data anyway - it will use local fallbacks if needed
+      const success = await reloadAllAdminData(false);
+      
+      if (success) {
+        toast({
+          title: "Data synchronized",
+          description: "All changes have been synchronized successfully"
+        });
+      } else {
+        toast({
+          title: "Sync completed with issues",
+          description: "Used local data only. Database operations may have failed.",
+          variant: "warning"
+        });
+      }
+      
+      // Notify parent component about sync completion
+      if (onSyncComplete) {
+        onSyncComplete();
+      }
     } catch (error) {
       console.error("Error syncing data:", error);
       toast({
         title: "Sync failed",
-        description: "There was a problem synchronizing your data",
+        description: error instanceof Error ? error.message : "Unknown error occurred",
         variant: "destructive"
       });
     } finally {
@@ -140,52 +146,59 @@ const DataSyncButton = ({
     }
   };
   
-  if (isDbConnected === false) {
-    return (
-      <div className="space-y-4">
+  return (
+    <div className="space-y-4">
+      {isDbConnected === false && dbError && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Database Connection Error</AlertTitle>
           <AlertDescription>
-            {dbError || "Database connection error. Please check your configuration."}
+            {dbError}
+            <div className="mt-2 text-sm">
+              Make sure your VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables are set correctly.
+            </div>
           </AlertDescription>
         </Alert>
+      )}
+      
+      <div className="flex gap-2">
         <Button
           variant="outline"
-          onClick={checkDbConnection}
+          onClick={handleSyncData}
+          disabled={isSyncing || isChecking}
           className="w-full sm:w-auto"
         >
-          <RefreshCw className="mr-2 h-4 w-4" />
-          Retry Connection
+          {isSyncing ? (
+            <>
+              <Loader className="mr-2 h-4 w-4 animate-spin" />
+              Syncing...
+            </>
+          ) : isChecking ? (
+            <>
+              <Loader className="mr-2 h-4 w-4 animate-spin" />
+              Checking...
+            </>
+          ) : (
+            <>
+              <Database className="mr-2 h-4 w-4" />
+              {isDbConnected === true ? "Sync Data" : "Sync Local Data"}
+            </>
+          )}
         </Button>
+        
+        {isDbConnected === false && (
+          <Button
+            variant="outline"
+            onClick={checkDbConnection}
+            disabled={isChecking}
+            size="icon"
+            title="Retry connection"
+          >
+            <RefreshCw className={`h-4 w-4 ${isChecking ? 'animate-spin' : ''}`} />
+          </Button>
+        )}
       </div>
-    );
-  }
-  
-  return (
-    <Button
-      variant="outline"
-      onClick={handleSyncData}
-      disabled={isSyncing || isDbConnected === null}
-      className="w-full sm:w-auto"
-    >
-      {isSyncing ? (
-        <>
-          <Loader className="mr-2 h-4 w-4 animate-spin" />
-          Syncing...
-        </>
-      ) : isDbConnected === null ? (
-        <>
-          <Loader className="mr-2 h-4 w-4 animate-spin" />
-          Checking database...
-        </>
-      ) : (
-        <>
-          <Database className="mr-2 h-4 w-4" />
-          Sync Changes
-        </>
-      )}
-    </Button>
+    </div>
   );
 };
 
