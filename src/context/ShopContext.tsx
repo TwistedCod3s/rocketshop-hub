@@ -77,6 +77,7 @@ export const ShopProvider = ({ children }) => {
     setDeploymentHookUrl: deploymentHook.setDeploymentHookUrl,
     autoDeployEnabled: adminHook.autoDeployEnabled,
     toggleAutoDeploy: adminHook.toggleAutoDeploy,
+    fetchFeaturedProducts: featuredHook.fetchFeaturedProducts,
     
     // Rest of the properties from hooks
     ...productsHook,

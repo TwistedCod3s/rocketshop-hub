@@ -1,3 +1,4 @@
+
 export interface Product {
   id: string;
   name: string;
@@ -11,9 +12,13 @@ export interface Product {
   discount?: number;
   rating?: number;
   numReviews?: number;
+  fullDescription?: string;
+  specifications?: Array<{name: string, value: string}>;
+  reviews?: Array<{user: string, rating: number, comment: string, date: string}>;
 }
 
 export interface CartItem {
+  id: string;
   product: Product;
   quantity: number;
 }
@@ -22,7 +27,18 @@ export interface Coupon {
   id: string;
   code: string;
   discount: number;
+  discountPercentage?: number;
   expiryDate: string;
+  active?: boolean;
+  description?: string;
+}
+
+export type CouponCode = Coupon;
+
+export interface CartSummaryProps {
+  cart: CartItem[];
+  subtotal: number;
+  itemCount: number;
 }
 
 export interface ShopContextType {
@@ -40,6 +56,7 @@ export interface ShopContextType {
   // Featured products
   featuredProducts?: Product[];
   updateFeaturedProducts: (productId: string, isFeatured: boolean) => void;
+  fetchFeaturedProducts?: () => Product[];
   
   // Cart
   cart: CartItem[];
