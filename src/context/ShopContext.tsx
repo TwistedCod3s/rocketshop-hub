@@ -21,6 +21,7 @@ const ShopContext = createContext<ShopContextType>({
   clearCart: () => {},
   tryAdminLogin: () => false,
   reloadAllAdminData: async () => false,
+  loadProductsFromSupabase: async () => false,
 });
 
 // Hook for using the shop context
@@ -87,6 +88,8 @@ export const ShopProvider = ({ children }) => {
     autoDeployEnabled: adminHook.autoDeployEnabled,
     toggleAutoDeploy: adminHook.toggleAutoDeploy,
     fetchFeaturedProducts: featuredHook.fetchFeaturedProducts,
+    loadProductsFromSupabase: productsHook.loadProductsFromSupabase,
+    reloadProductsFromStorage: productsHook.reloadProductsFromStorage,
     
     // Rest of the properties from hooks
     ...productsHook,

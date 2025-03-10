@@ -52,6 +52,7 @@ export interface ShopContextType {
   fetchProductsByCategory?: (category: string) => Product[];
   getRelatedProducts?: (category: string, excludeProductId: string) => Product[];
   reloadProductsFromStorage?: () => void;
+  loadProductsFromSupabase?: () => Promise<boolean>;
   
   // Featured products
   featuredProducts?: Product[];
