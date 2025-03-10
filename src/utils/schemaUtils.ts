@@ -37,8 +37,7 @@ export const convertProductToDbSchema = (product: Product): Record<string, any> 
     dbProduct.id = uuidv4();
     console.log(`Converted ${isNumeric ? 'numeric' : 'invalid'} ID "${originalId}" to UUID: ${dbProduct.id}`);
     
-    // Store the original ID to maintain a mapping if needed
-    dbProduct.original_id = originalId;
+    // Don't store the original ID as this field doesn't exist in the database schema
   } else {
     dbProduct.id = product.id;
   }

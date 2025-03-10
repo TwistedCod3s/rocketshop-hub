@@ -37,7 +37,6 @@ export function useAdmin() {
     categoryImagesHook.categoryImages,
     subcategoriesHook.subcategories,
     couponsHook.coupons,
-    false, // No auto-deployment, since we're using a database
     dbSync.reloadAllAdminData
   );
   

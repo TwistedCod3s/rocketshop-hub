@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -159,45 +158,47 @@ const DatabaseInitializer = () => {
       if (err && typeof err === 'object') {
         if ('code' in err && 'message' in err) {
           const dbError = err as { code: string; message: string; hint?: string };
-          
-          if (dbError.code === '42P01') {
-            errorMessage = "Required tables are missing. Please create all necessary tables in your Supabase project.";
-          } else if (dbError.code === '42703') {
-            errorMessage = "Required columns are missing. Please check your table structure.";
-          } else if (dbError.code === 'PGRST204') {
-            // Provide more specific guidance about the missing column
-            if (dbError.message.includes("Could not find the 'fullDescription' column")) {
-              errorMessage = "Your 'products' table is missing the 'fullDescription' column. You can either: 1) Add this column to your database schema, or 2) The app will automatically handle this by storing full descriptions in the 'description' field as a workaround.";
-            } else if (dbError.message.includes("Could not find the 'inStock' column")) {
-              errorMessage = "Your 'products' table is missing the 'inStock' column. Please add this column to your table schema.";
-            } else {
-              errorMessage = `Schema mismatch: ${dbError.message}. Please update your database schema to match what the app expects.`;
-            }
-          } else if (dbError.code === '23502') {
-            errorMessage = "Required fields are missing. Please check your data format.";
-          } else if (dbError.code === '22P02' && dbError.message.includes('invalid input syntax for type uuid')) {
-            errorMessage = "Invalid UUID format. This has been automatically fixed - please try initializing again.";
+        
+        if (dbError.code === '42P01') {
+          errorMessage = "Required tables are missing. Please create all necessary tables in your Supabase project.";
+        } else if (dbError.code === '42703') {
+          errorMessage = "Required columns are missing. Please check your table structure.";
+        } else if (dbError.code === 'PGRST204') {
+          // Provide more specific guidance about the missing column
+          if (dbError.message.includes("Could not find the 'original_id' column")) {
+            errorMessage = "Your database schema is missing the 'original_id' column. This error has been fixed in the code - please try again.";
+          } else if (dbError.message.includes("Could not find the 'fullDescription' column")) {
+            errorMessage = "Your 'products' table is missing the 'fullDescription' column. You can either: 1) Add this column to your database schema, or 2) The app will automatically handle this by storing full descriptions in the 'description' field as a workaround.";
+          } else if (dbError.message.includes("Could not find the 'inStock' column")) {
+            errorMessage = "Your 'products' table is missing the 'inStock' column. Please add this column to your table schema.";
           } else {
-            errorMessage = `Database error (${dbError.code}): ${dbError.message}`;
-            if (dbError.hint) {
-              errorMessage += ` (Hint: ${dbError.hint})`;
-            }
+            errorMessage = `Schema mismatch: ${dbError.message}. Please update your database schema to match what the app expects.`;
           }
-        } else if (err instanceof Error) {
-          errorMessage = err.message;
+        } else if (dbError.code === '23502') {
+          errorMessage = "Required fields are missing. Please check your data format.";
+        } else if (dbError.code === '22P02' && dbError.message.includes('invalid input syntax for type uuid')) {
+          errorMessage = "Invalid UUID format. This has been automatically fixed - please try initializing again.";
+        } else {
+          errorMessage = `Database error (${dbError.code}): ${dbError.message}`;
+          if (dbError.hint) {
+            errorMessage += ` (Hint: ${dbError.hint})`;
+          }
         }
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
       }
-      
-      setError(errorMessage);
-      toast({
-        title: "Database initialization failed",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    } finally {
-      setIsInitializing(false);
     }
-  };
+    
+    setError(errorMessage);
+    toast({
+      title: "Database initialization failed",
+      description: errorMessage,
+      variant: "destructive",
+    });
+  } finally {
+    setIsInitializing(false);
+  }
+};
 
   const handleCheckAgain = async () => {
     setIsChecking(true);
