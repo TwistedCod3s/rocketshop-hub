@@ -109,7 +109,7 @@ const DataSyncButton = ({
           toast({
             title: "Database not connected",
             description: "Will try using local data only. Check your database configuration.",
-            variant: "warning"
+            variant: "destructive"  // Changed from "warning" to "destructive"
           });
         }
       }
@@ -126,7 +126,7 @@ const DataSyncButton = ({
         toast({
           title: "Sync completed with issues",
           description: "Used local data only. Database operations may have failed.",
-          variant: "warning"
+          variant: "destructive"  // Changed from "warning" to "destructive"
         });
       }
       
