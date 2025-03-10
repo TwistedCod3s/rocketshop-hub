@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Product } from "@/types/shop";
+import { useShopContext } from "@/context/ShopContext";
 
 export function useCategoryFilter(displayProducts: Product[], subcategories: string[]) {
   const [searchParams] = useSearchParams();
@@ -12,6 +13,9 @@ export function useCategoryFilter(displayProducts: Product[], subcategories: str
   const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>([]);
   const [filterOpen, setFilterOpen] = useState(false);
   
+  // Get the latest subcategories from context
+  const { subcategories: contextSubcategories } = useShopContext();
+  
   // Update search term from URL parameters
   useEffect(() => {
     const search = searchParams.get("search");
@@ -20,9 +24,21 @@ export function useCategoryFilter(displayProducts: Product[], subcategories: str
     }
   }, [searchParams]);
   
+  // Reset selected subcategories when available subcategories change
+  useEffect(() => {
+    // Clear selected subcategories that no longer exist in the new subcategories list
+    if (subcategories && subcategories.length > 0) {
+      setSelectedSubcategories(prev => 
+        prev.filter(selected => subcategories.includes(selected))
+      );
+    }
+  }, [subcategories]);
+  
   // Apply filters and sorting
   useEffect(() => {
     console.log("Filtering products:", displayProducts);
+    console.log("Using subcategories filter:", selectedSubcategories);
+    
     let result = [...displayProducts];
     
     // Apply search filter
@@ -59,6 +75,7 @@ export function useCategoryFilter(displayProducts: Product[], subcategories: str
   }, [displayProducts, searchTerm, priceRange, sortBy, selectedSubcategories]);
   
   const handleSubcategoryChange = (subcategory: string) => {
+    console.log("Toggling subcategory:", subcategory);
     setSelectedSubcategories(prev => {
       if (prev.includes(subcategory)) {
         return prev.filter(c => c !== subcategory);

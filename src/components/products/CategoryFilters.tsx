@@ -5,6 +5,7 @@ import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Search, X, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useShopContext } from "@/context/ShopContext";
 
 interface CategoryFiltersProps {
   searchTerm: string;
@@ -16,6 +17,7 @@ interface CategoryFiltersProps {
   filterOpen: boolean;
   setFilterOpen: (open: boolean) => void;
   subcategories: string[];
+  categoryName?: string; // Add optional categoryName prop
 }
 
 const CategoryFilters: React.FC<CategoryFiltersProps> = ({
@@ -27,8 +29,17 @@ const CategoryFilters: React.FC<CategoryFiltersProps> = ({
   handleSubcategoryChange,
   filterOpen,
   setFilterOpen,
-  subcategories
+  subcategories,
+  categoryName
 }) => {
+  // Get subcategories from context for dynamic updates
+  const { subcategories: globalSubcategories } = useShopContext();
+  
+  // Use subcategories from context if categoryName is provided
+  const displaySubcategories = categoryName && globalSubcategories?.[categoryName] 
+    ? globalSubcategories[categoryName] 
+    : subcategories;
+
   // Handle min price slider change
   const handleMinPriceChange = (value: number[]) => {
     const newMin = value[0];
@@ -121,12 +132,12 @@ const CategoryFilters: React.FC<CategoryFiltersProps> = ({
               </div>
             </div>
             
-            {/* Subcategories */}
-            {subcategories.length > 0 && (
+            {/* Display Subcategories from context */}
+            {displaySubcategories && displaySubcategories.length > 0 && (
               <div>
                 <h4 className="font-medium mb-2">Subcategories</h4>
                 <div className="space-y-2">
-                  {subcategories.map((sub) => (
+                  {displaySubcategories.map((sub) => (
                     <div key={sub} className="flex items-center space-x-2">
                       <Checkbox 
                         id={`subcategory-${sub}`} 

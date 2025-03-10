@@ -4,13 +4,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 interface CategoryImageDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   categoryName: string;
   currentImageUrl: string;
-  onSaveImage: (imageUrl: string) => void;
+  onSaveImage: (imageUrl: string) => Promise<boolean>;
   handleFileUpload: (file: File) => Promise<string>;
 }
 
@@ -26,10 +27,12 @@ const CategoryImageDialog: React.FC<CategoryImageDialogProps> = ({
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(currentImageUrl);
   const [isSaving, setIsSaving] = useState(false);
+  const { toast } = useToast();
 
   // Reset state when dialog opens with new data
   useEffect(() => {
     if (isOpen) {
+      console.log("Dialog opened with current image URL:", currentImageUrl);
       setImageUrl(currentImageUrl);
       setImagePreview(currentImageUrl);
       setImageFile(null);
@@ -43,24 +46,56 @@ const CategoryImageDialog: React.FC<CategoryImageDialogProps> = ({
     
     setImageFile(file);
     try {
-      const base64 = await handleFileUpload(file);
-      setImagePreview(base64);
+      console.log("Uploading file:", file.name);
+      const uploadedImageUrl = await handleFileUpload(file);
+      console.log("File uploaded, received URL:", uploadedImageUrl);
+      setImagePreview(uploadedImageUrl);
+      setImageUrl(uploadedImageUrl);
     } catch (err) {
-      console.error("Error converting file to base64:", err);
+      console.error("Error uploading file:", err);
+      toast({
+        title: "Upload failed",
+        description: "Failed to upload image. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
   const handleSave = async () => {
+    if (!imagePreview && !imageUrl) {
+      toast({
+        title: "No image selected",
+        description: "Please select or upload an image first.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setIsSaving(true);
     try {
-      await onSaveImage(imagePreview || imageUrl);
-      // Force a small delay to ensure database operations complete
-      setTimeout(() => {
-        onOpenChange(false);
-        setIsSaving(false);
-      }, 500);
+      console.log("Saving image:", imagePreview || imageUrl);
+      const success = await onSaveImage(imagePreview || imageUrl);
+      
+      if (success) {
+        toast({
+          title: "Image updated",
+          description: `Image for ${categoryName} has been updated successfully.`,
+        });
+        // Force a small delay to ensure database operations complete
+        setTimeout(() => {
+          onOpenChange(false);
+          setIsSaving(false);
+        }, 500);
+      } else {
+        throw new Error("Save operation returned false");
+      }
     } catch (error) {
       console.error("Error saving image:", error);
+      toast({
+        title: "Error saving image",
+        description: "Failed to save image. Please try again.",
+        variant: "destructive"
+      });
       setIsSaving(false);
     }
   };
@@ -111,6 +146,7 @@ const CategoryImageDialog: React.FC<CategoryImageDialogProps> = ({
                   alt="Preview" 
                   className="w-full h-full object-cover"
                   onError={(e) => {
+                    console.error("Image preview failed to load:", imagePreview);
                     e.currentTarget.style.display = 'none';
                   }}
                 />

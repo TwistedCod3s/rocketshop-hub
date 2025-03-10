@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Product } from "@/types/shop";
 import { CATEGORY_IMAGES } from "@/components/home/CategorySection";
@@ -20,7 +19,7 @@ const AdminCategories: React.FC<AdminCategoriesProps> = ({ products }) => {
   const [currentCategory, setCurrentCategory] = useState("");
   const [currentCategoryName, setCurrentCategoryName] = useState("");
   
-  const { handleFileUpload, updateCategoryImage, categoryImages, isUpdating, reloadAllAdminData } = useAdmin();
+  const { handleFileUpload, updateCategoryImage, categoryImages, reloadAllAdminData } = useAdmin();
   const { subcategories, updateSubcategories, updateProduct } = useShopContext();
   const { toast } = useToast();
 

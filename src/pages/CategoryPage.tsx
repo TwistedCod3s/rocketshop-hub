@@ -17,7 +17,7 @@ interface CategoryPageProps {
 
 const CategoryPage = ({ categoryName: propCategoryName }: CategoryPageProps) => {
   const { categoryName: paramCategoryName } = useParams();
-  const { products, fetchProductsByCategory } = useShopContext();
+  const { products, fetchProductsByCategory, subcategories: contextSubcategories } = useShopContext();
   const [displayProducts, setDisplayProducts] = useState<Product[]>([]);
   const navigate = useNavigate();
 
@@ -43,15 +43,19 @@ const CategoryPage = ({ categoryName: propCategoryName }: CategoryPageProps) => 
   
   // Use the resolved category name or default to "All Products"
   const categoryTitle = resolvedCategoryName || "All Products";
-  const subcategories = SUBCATEGORIES[categoryTitle] || [];
+  
+  // Get subcategories from context first, fall back to constants
+  const categorySubcategories = contextSubcategories?.[categoryTitle] || SUBCATEGORIES[categoryTitle] || [];
   
   // Debug logs
   useEffect(() => {
     console.log("Category name prop:", propCategoryName);
     console.log("Category name param:", paramCategoryName);
     console.log("Resolved category name:", resolvedCategoryName);
+    console.log("Context subcategories:", contextSubcategories);
+    console.log("Using subcategories:", categorySubcategories);
     console.log("All products from context:", products);
-  }, [propCategoryName, paramCategoryName, resolvedCategoryName, products]);
+  }, [propCategoryName, paramCategoryName, resolvedCategoryName, products, contextSubcategories]);
   
   useEffect(() => {
     // Get products for this specific category
@@ -79,7 +83,7 @@ const CategoryPage = ({ categoryName: propCategoryName }: CategoryPageProps) => 
     handleSubcategoryChange,
     filterOpen,
     setFilterOpen
-  } = useCategoryFilter(displayProducts, subcategories);
+  } = useCategoryFilter(displayProducts, categorySubcategories);
   
   return (
     <MainLayout>
@@ -95,7 +99,7 @@ const CategoryPage = ({ categoryName: propCategoryName }: CategoryPageProps) => 
         
         {/* Subcategory Tabs */}
         <SubcategoryTabs 
-          subcategories={subcategories} 
+          subcategories={categorySubcategories} 
           categoryTitle={categoryTitle} 
         />
         
@@ -110,7 +114,8 @@ const CategoryPage = ({ categoryName: propCategoryName }: CategoryPageProps) => 
             handleSubcategoryChange={handleSubcategoryChange}
             filterOpen={filterOpen}
             setFilterOpen={setFilterOpen}
-            subcategories={subcategories}
+            subcategories={categorySubcategories}
+            categoryName={categoryTitle}  // Pass the category name to filters
           />
           
           {/* Product List */}
