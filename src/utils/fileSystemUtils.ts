@@ -11,11 +11,10 @@ export const writeDataToFile = async (
   try {
     console.log(`Writing data to file: ${path}`);
     
-    // Convert data to JSON string
-    const jsonData = JSON.stringify(data, null, 2);
+    // Convert data to JSON string if it's not already a string
+    const jsonData = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
     
-    // Create a POST request to a special endpoint that can write to the filesystem
-    // This endpoint would need to be set up on your backend/server
+    // Create a POST request to our API endpoint that handles filesystem operations
     const response = await fetch('/api/admin/filesystem', {
       method: 'POST',
       headers: {
@@ -28,7 +27,8 @@ export const writeDataToFile = async (
     });
     
     if (!response.ok) {
-      throw new Error(`Failed to write file: ${response.statusText}`);
+      const errorData = await response.json();
+      throw new Error(`Failed to write file: ${errorData.error || response.statusText}`);
     }
     
     console.log(`Successfully wrote data to ${path}`);
@@ -53,7 +53,8 @@ export const readDataFromFile = async <T>(path: string): Promise<T | null> => {
     });
     
     if (!response.ok) {
-      throw new Error(`Failed to read file: ${response.statusText}`);
+      const errorData = await response.json();
+      throw new Error(`Failed to read file: ${errorData.error || response.statusText}`);
     }
     
     const data = await response.json();
