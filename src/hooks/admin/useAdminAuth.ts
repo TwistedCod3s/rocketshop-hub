@@ -15,9 +15,9 @@ export function useAdminAuth() {
   }, []);
   
   // Admin login function
-  const tryAdminLogin = useCallback((username: string, password: string) => {
+  const tryAdminLogin = useCallback((password: string) => {
     // Simple mock authentication for demo purposes
-    if (username === "admin" && password === "password123") {
+    if (password === "password123") {
       sessionStorage.setItem(ADMIN_STORAGE_KEY, "true");
       setIsAdmin(true);
       console.log("Admin login successful");
