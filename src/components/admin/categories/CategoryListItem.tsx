@@ -2,6 +2,18 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Product } from "@/types/shop";
+import { Trash2 } from "lucide-react";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface CategoryListItemProps {
   slug: string;
@@ -11,6 +23,7 @@ interface CategoryListItemProps {
   subcategoryCount: number;
   onEditImage: (slug: string) => void;
   onEditSubcategories: (slug: string) => void;
+  onDeleteCategory?: (slug: string) => void;
 }
 
 const CategoryListItem: React.FC<CategoryListItemProps> = ({
@@ -20,10 +33,11 @@ const CategoryListItem: React.FC<CategoryListItemProps> = ({
   productCount,
   subcategoryCount,
   onEditImage,
-  onEditSubcategories
+  onEditSubcategories,
+  onDeleteCategory
 }) => {
   return (
-    <div className="flex items-center justify-between p-4">
+    <div className="flex items-center justify-between p-4 border-b last:border-b-0">
       <div className="flex items-center space-x-4">
         <div className="w-12 h-12 rounded-md overflow-hidden bg-gray-100">
           <img 
@@ -44,7 +58,7 @@ const CategoryListItem: React.FC<CategoryListItemProps> = ({
           </div>
         </div>
       </div>
-      <div>
+      <div className="flex items-center">
         <Button 
           variant="outline" 
           size="sm" 
@@ -61,9 +75,35 @@ const CategoryListItem: React.FC<CategoryListItemProps> = ({
         >
           Manage Subcategories
         </Button>
-        <Button variant="ghost" size="sm" className="text-red-500">
-          Delete
-        </Button>
+        
+        {onDeleteCategory && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="ghost" size="sm" className="text-red-500">
+                <Trash2 className="h-4 w-4 mr-1" />
+                Delete
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently delete the {name} category and all associated subcategories.
+                  Products in this category will remain but will no longer be categorized.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction 
+                  onClick={() => onDeleteCategory(slug)}
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
       </div>
     </div>
   );

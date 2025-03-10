@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { X, Plus } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface SubcategoryDialogProps {
   isOpen: boolean;
@@ -22,6 +23,7 @@ const SubcategoryDialog: React.FC<SubcategoryDialogProps> = ({
 }) => {
   const [subcategoryList, setSubcategoryList] = useState<string[]>([]);
   const [newSubcategory, setNewSubcategory] = useState("");
+  const { toast } = useToast();
 
   // Reset state when dialog opens with new data
   useEffect(() => {
@@ -36,16 +38,34 @@ const SubcategoryDialog: React.FC<SubcategoryDialogProps> = ({
     
     if (!subcategoryList.includes(newSubcategory.trim())) {
       setSubcategoryList([...subcategoryList, newSubcategory.trim()]);
+      toast({
+        title: "Subcategory added",
+        description: `${newSubcategory.trim()} has been added to the list.`,
+      });
+    } else {
+      toast({
+        title: "Duplicate subcategory",
+        description: "This subcategory already exists.",
+        variant: "destructive"
+      });
     }
     setNewSubcategory("");
   };
 
   const handleRemoveSubcategory = (subcategory: string) => {
     setSubcategoryList(subcategoryList.filter(sub => sub !== subcategory));
+    toast({
+      title: "Subcategory removed",
+      description: `${subcategory} has been removed from the list.`,
+    });
   };
 
   const handleSave = () => {
     onSaveSubcategories(subcategoryList);
+    toast({
+      title: "Subcategories saved",
+      description: `Subcategories for ${categoryName} have been saved successfully.`,
+    });
     onOpenChange(false);
   };
 

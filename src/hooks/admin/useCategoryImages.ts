@@ -15,6 +15,20 @@ const initialGlobalCategoryImages = loadFromStorage<CategoryImagesMap>(CATEGORY_
 export function useCategoryImages() {
   const [categoryImages, setCategoryImages] = useState<CategoryImagesMap>(initialGlobalCategoryImages);
   
+  // Function to forcibly reload from localStorage
+  const reloadFromStorage = useCallback(() => {
+    try {
+      const storedData = localStorage.getItem(CATEGORY_IMAGES_KEY);
+      if (storedData) {
+        const parsedData = JSON.parse(storedData);
+        setCategoryImages(parsedData);
+        console.log("Manually reloaded category images from localStorage:", parsedData);
+      }
+    } catch (e) {
+      console.error("Error during manual reload of category images:", e);
+    }
+  }, []);
+  
   // Listen for storage and custom events to keep state in sync
   useEffect(() => {
     console.log("Setting up category images event listeners");
@@ -30,6 +44,8 @@ export function useCategoryImages() {
           }
         } catch (error) {
           console.error("Error parsing category images from storage event:", error);
+          // Attempt recovery
+          reloadFromStorage();
         }
       }
     };
@@ -48,23 +64,14 @@ export function useCategoryImages() {
     window.addEventListener(CATEGORY_IMAGES_EVENT, handleCategoryImagesEvent as EventListener);
     
     // Force initial sync
-    const storedData = localStorage.getItem(CATEGORY_IMAGES_KEY);
-    if (storedData) {
-      try {
-        const parsedData = JSON.parse(storedData);
-        setCategoryImages(parsedData);
-        console.log("Initial sync of category images from localStorage:", parsedData);
-      } catch (e) {
-        console.error("Error during initial sync of category images:", e);
-      }
-    }
+    reloadFromStorage();
     
     return () => {
       console.log("Removing category images event listeners");
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener(CATEGORY_IMAGES_EVENT, handleCategoryImagesEvent as EventListener);
     };
-  }, []);
+  }, [reloadFromStorage]);
   
   // Function to handle file uploads and convert to base64
   const handleFileUpload = useCallback((file: File): Promise<string> => {
@@ -82,21 +89,45 @@ export function useCategoryImages() {
   
   // Function to update category image
   const updateCategoryImage = useCallback((categorySlug: string, imageUrl: string) => {
-    // Update local state using functional form to ensure we're working with the latest state
-    setCategoryImages(prevImages => {
-      const updatedImages = { ...prevImages, [categorySlug]: imageUrl };
-      
-      // Save to localStorage and broadcast
-      saveAndBroadcast(CATEGORY_IMAGES_KEY, CATEGORY_IMAGES_EVENT, updatedImages);
-      console.log("Updated category image for:", categorySlug, imageUrl);
-      
-      return updatedImages;
-    });
+    try {
+      // Update local state using functional form to ensure we're working with the latest state
+      setCategoryImages(prevImages => {
+        const updatedImages = { ...prevImages, [categorySlug]: imageUrl };
+        
+        // Save to localStorage and broadcast
+        saveAndBroadcast(CATEGORY_IMAGES_KEY, CATEGORY_IMAGES_EVENT, updatedImages);
+        console.log("Updated category image for:", categorySlug, imageUrl);
+        
+        return updatedImages;
+      });
+    } catch (error) {
+      console.error("Error updating category image:", error);
+    }
+  }, []);
+
+  // Function to delete a category image
+  const deleteCategoryImage = useCallback((categorySlug: string) => {
+    try {
+      setCategoryImages(prevImages => {
+        const updatedImages = { ...prevImages };
+        delete updatedImages[categorySlug];
+        
+        // Save to localStorage and broadcast
+        saveAndBroadcast(CATEGORY_IMAGES_KEY, CATEGORY_IMAGES_EVENT, updatedImages);
+        console.log("Deleted category image for:", categorySlug);
+        
+        return updatedImages;
+      });
+    } catch (error) {
+      console.error("Error deleting category image:", error);
+    }
   }, []);
 
   return {
     categoryImages,
     handleFileUpload,
-    updateCategoryImage
+    updateCategoryImage,
+    deleteCategoryImage,
+    reloadFromStorage
   };
 }

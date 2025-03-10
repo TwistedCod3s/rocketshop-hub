@@ -16,6 +16,20 @@ const initialGlobalSubcategories = loadFromStorage<SubcategoriesMap>(SUBCATEGORI
 export function useSubcategories() {
   const [subcategories, setSubcategories] = useState<SubcategoriesMap>(initialGlobalSubcategories);
   
+  // Function to forcibly reload from localStorage
+  const reloadFromStorage = useCallback(() => {
+    try {
+      const storedData = localStorage.getItem(SUBCATEGORIES_KEY);
+      if (storedData) {
+        const parsedData = JSON.parse(storedData);
+        setSubcategories(parsedData);
+        console.log("Manually reloaded subcategories from localStorage:", parsedData);
+      }
+    } catch (e) {
+      console.error("Error during manual reload of subcategories:", e);
+    }
+  }, []);
+  
   // Listen for storage and custom events to keep state in sync
   useEffect(() => {
     console.log("Setting up subcategories event listeners");
@@ -31,6 +45,8 @@ export function useSubcategories() {
           }
         } catch (error) {
           console.error("Error parsing subcategories from storage event:", error);
+          // Attempt recovery
+          reloadFromStorage();
         }
       }
     };
@@ -49,40 +65,55 @@ export function useSubcategories() {
     window.addEventListener(SUBCATEGORIES_EVENT, handleSubcategoriesEvent as EventListener);
     
     // Force initial sync
-    const storedData = localStorage.getItem(SUBCATEGORIES_KEY);
-    if (storedData) {
-      try {
-        const parsedData = JSON.parse(storedData);
-        setSubcategories(parsedData);
-        console.log("Initial sync of subcategories from localStorage:", parsedData);
-      } catch (e) {
-        console.error("Error during initial sync of subcategories:", e);
-      }
-    }
+    reloadFromStorage();
     
     return () => {
       console.log("Removing subcategories event listeners");
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener(SUBCATEGORIES_EVENT, handleSubcategoriesEvent as EventListener);
     };
-  }, []);
+  }, [reloadFromStorage]);
   
   // Function to update subcategories for a category
   const updateSubcategories = useCallback((category: string, newSubcategories: string[]) => {
-    // Update local state using functional form to ensure we're working with the latest state
-    setSubcategories(prevSubcategories => {
-      const updatedSubcategories = { ...prevSubcategories, [category]: newSubcategories };
-      
-      // Save to localStorage and broadcast
-      saveAndBroadcast(SUBCATEGORIES_KEY, SUBCATEGORIES_EVENT, updatedSubcategories);
-      console.log("Updated subcategories for:", category, newSubcategories);
-      
-      return updatedSubcategories;
-    });
+    try {
+      // Update local state using functional form to ensure we're working with the latest state
+      setSubcategories(prevSubcategories => {
+        const updatedSubcategories = { ...prevSubcategories, [category]: newSubcategories };
+        
+        // Save to localStorage and broadcast
+        saveAndBroadcast(SUBCATEGORIES_KEY, SUBCATEGORIES_EVENT, updatedSubcategories);
+        console.log("Updated subcategories for:", category, newSubcategories);
+        
+        return updatedSubcategories;
+      });
+    } catch (error) {
+      console.error("Error updating subcategories:", error);
+    }
+  }, []);
+
+  // Function to delete subcategories for a category
+  const deleteCategory = useCallback((category: string) => {
+    try {
+      setSubcategories(prevSubcategories => {
+        const updatedSubcategories = { ...prevSubcategories };
+        delete updatedSubcategories[category];
+        
+        // Save to localStorage and broadcast
+        saveAndBroadcast(SUBCATEGORIES_KEY, SUBCATEGORIES_EVENT, updatedSubcategories);
+        console.log("Deleted subcategories for category:", category);
+        
+        return updatedSubcategories;
+      });
+    } catch (error) {
+      console.error("Error deleting subcategories for category:", error);
+    }
   }, []);
 
   return {
     subcategories,
-    updateSubcategories
+    updateSubcategories,
+    deleteCategory,
+    reloadFromStorage
   };
 }

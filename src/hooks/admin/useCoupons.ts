@@ -33,6 +33,20 @@ const initialGlobalCoupons = loadFromStorage<CouponCode[]>(COUPONS_KEY, defaultC
 export function useCoupons() {
   const [coupons, setCoupons] = useState<CouponCode[]>(initialGlobalCoupons);
   
+  // Function to forcibly reload from localStorage
+  const reloadFromStorage = useCallback(() => {
+    try {
+      const storedData = localStorage.getItem(COUPONS_KEY);
+      if (storedData) {
+        const parsedData = JSON.parse(storedData);
+        setCoupons(parsedData);
+        console.log("Manually reloaded coupons from localStorage:", parsedData);
+      }
+    } catch (e) {
+      console.error("Error during manual reload of coupons:", e);
+    }
+  }, []);
+  
   // Listen for storage and custom events to keep state in sync
   useEffect(() => {
     console.log("Setting up coupons event listeners");
@@ -48,6 +62,8 @@ export function useCoupons() {
           }
         } catch (error) {
           console.error("Error parsing coupons from storage event:", error);
+          // Attempt recovery
+          reloadFromStorage();
         }
       }
     };
@@ -66,67 +82,70 @@ export function useCoupons() {
     window.addEventListener(COUPONS_EVENT, handleCouponsEvent as EventListener);
     
     // Force initial sync
-    const storedData = localStorage.getItem(COUPONS_KEY);
-    if (storedData) {
-      try {
-        const parsedData = JSON.parse(storedData);
-        setCoupons(parsedData);
-        console.log("Initial sync of coupons from localStorage:", parsedData);
-      } catch (e) {
-        console.error("Error during initial sync of coupons:", e);
-      }
-    }
+    reloadFromStorage();
     
     return () => {
       console.log("Removing coupons event listeners");
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener(COUPONS_EVENT, handleCouponsEvent as EventListener);
     };
-  }, []);
+  }, [reloadFromStorage]);
 
-  // Coupon management functions
+  // Coupon management functions with improved error handling
   const addCoupon = useCallback((coupon: Omit<CouponCode, 'id'>) => {
-    const newCoupon = {
-      ...coupon,
-      id: uuidv4()
-    };
-    
-    // Update local state using functional form to ensure we're working with the latest state
-    setCoupons(prevCoupons => {
-      const updatedCoupons = [...prevCoupons, newCoupon];
+    try {
+      const newCoupon = {
+        ...coupon,
+        id: uuidv4()
+      };
       
-      // Save to localStorage and broadcast
-      saveAndBroadcast(COUPONS_KEY, COUPONS_EVENT, updatedCoupons);
-      console.log("Added new coupon:", newCoupon.code, newCoupon);
-      
-      return updatedCoupons;
-    });
+      // Update local state using functional form to ensure we're working with the latest state
+      setCoupons(prevCoupons => {
+        const updatedCoupons = [...prevCoupons, newCoupon];
+        
+        // Save to localStorage and broadcast
+        saveAndBroadcast(COUPONS_KEY, COUPONS_EVENT, updatedCoupons);
+        console.log("Added new coupon:", newCoupon.code, newCoupon);
+        
+        return updatedCoupons;
+      });
+    } catch (error) {
+      console.error("Error adding coupon:", error);
+    }
   }, []);
 
   const updateCoupon = useCallback((coupon: CouponCode) => {
-    // Update local state using functional form to ensure we're working with the latest state
-    setCoupons(prevCoupons => {
-      const updatedCoupons = prevCoupons.map(c => c.id === coupon.id ? coupon : c);
-      
-      // Save to localStorage and broadcast
-      saveAndBroadcast(COUPONS_KEY, COUPONS_EVENT, updatedCoupons);
-      console.log("Updated coupon:", coupon.code, coupon);
-      
-      return updatedCoupons;
-    });
+    try {
+      // Update local state using functional form to ensure we're working with the latest state
+      setCoupons(prevCoupons => {
+        const updatedCoupons = prevCoupons.map(c => c.id === coupon.id ? coupon : c);
+        
+        // Save to localStorage and broadcast
+        saveAndBroadcast(COUPONS_KEY, COUPONS_EVENT, updatedCoupons);
+        console.log("Updated coupon:", coupon.code, coupon);
+        
+        return updatedCoupons;
+      });
+    } catch (error) {
+      console.error("Error updating coupon:", error);
+    }
   }, []);
 
   const deleteCoupon = useCallback((couponId: string) => {
-    // Update local state using functional form to ensure we're working with the latest state
-    setCoupons(prevCoupons => {
-      const updatedCoupons = prevCoupons.filter(c => c.id !== couponId);
-      
-      // Save to localStorage and broadcast
-      saveAndBroadcast(COUPONS_KEY, COUPONS_EVENT, updatedCoupons);
-      console.log("Deleted coupon with ID:", couponId);
-      
-      return updatedCoupons;
-    });
+    try {
+      // Update local state using functional form to ensure we're working with the latest state
+      setCoupons(prevCoupons => {
+        const updatedCoupons = prevCoupons.filter(c => c.id !== couponId);
+        
+        // Save to localStorage and broadcast
+        saveAndBroadcast(COUPONS_KEY, COUPONS_EVENT, updatedCoupons);
+        console.log("Deleted coupon with ID:", couponId);
+        
+        return updatedCoupons;
+      });
+    } catch (error) {
+      console.error("Error deleting coupon:", error);
+    }
   }, []);
 
   const validateCoupon = useCallback((code: string) => {
@@ -141,6 +160,7 @@ export function useCoupons() {
     addCoupon,
     updateCoupon,
     deleteCoupon,
-    validateCoupon
+    validateCoupon,
+    reloadFromStorage
   };
 }

@@ -3,7 +3,7 @@ import { useAdminAuth } from "./admin/useAdminAuth";
 import { useCategoryImages } from "./admin/useCategoryImages";
 import { useSubcategories } from "./admin/useSubcategories";
 import { useCoupons } from "./admin/useCoupons";
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 
 export function useAdmin() {
   const auth = useAdminAuth();
@@ -33,6 +33,18 @@ export function useAdmin() {
     console.log("useAdmin: coupons updated", couponsHook.coupons);
   }, [couponsHook.coupons]);
   
+  // Function to force reload all admin data
+  const reloadAllAdminData = useCallback(() => {
+    console.log("Forcing reload of all admin data");
+    categoryImagesHook.reloadFromStorage();
+    subcategoriesHook.reloadFromStorage();
+    couponsHook.reloadFromStorage();
+  }, [
+    categoryImagesHook.reloadFromStorage,
+    subcategoriesHook.reloadFromStorage,
+    couponsHook.reloadFromStorage
+  ]);
+  
   return {
     // Admin authentication
     isAdmin: auth.isAdmin,
@@ -42,16 +54,21 @@ export function useAdmin() {
     categoryImages: categoryImagesHook.categoryImages,
     handleFileUpload: categoryImagesHook.handleFileUpload,
     updateCategoryImage: categoryImagesHook.updateCategoryImage,
+    deleteCategoryImage: categoryImagesHook.deleteCategoryImage,
     
     // Subcategories management
     subcategories: subcategoriesHook.subcategories,
     updateSubcategories: subcategoriesHook.updateSubcategories,
+    deleteCategory: subcategoriesHook.deleteCategory,
     
     // Coupons management
     coupons: couponsHook.coupons,
     addCoupon: couponsHook.addCoupon,
     updateCoupon: couponsHook.updateCoupon,
     deleteCoupon: couponsHook.deleteCoupon,
-    validateCoupon: couponsHook.validateCoupon
+    validateCoupon: couponsHook.validateCoupon,
+    
+    // Global admin functions
+    reloadAllAdminData
   };
 }

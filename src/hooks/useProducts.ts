@@ -4,14 +4,14 @@ import { Product } from "@/types/shop";
 import { initialProducts } from "@/data/initialProducts";
 
 // Define consistent storage key
-const PRODUCTS_STORAGE_KEY = "ROCKETRY_SHOP_PRODUCTS_V3";
+const PRODUCTS_STORAGE_KEY = "ROCKETRY_SHOP_PRODUCTS_V4"; // Bumped version
 
 // Create a global variable for products that all users will share
 // Default to initialProducts but will be overwritten by localStorage if available
 let globalProducts: Product[] = [...initialProducts];
 
-// Use a simple pub/sub mechanism to sync changes across tabs/users
-const eventBusName = "rocketry-product-update";
+// Use a enhanced pub/sub mechanism to sync changes across tabs/users
+const eventBusName = "rocketry-product-update-v2";
 
 // Try to load saved products from localStorage on initial module load
 try {
@@ -33,75 +33,126 @@ try {
 export function useProducts() {
   const [products, setProducts] = useState<Product[]>([...globalProducts]);
   
+  // Function to forcibly reload products from localStorage
+  const reloadProductsFromStorage = useCallback(() => {
+    try {
+      const storedProducts = localStorage.getItem(PRODUCTS_STORAGE_KEY);
+      if (storedProducts) {
+        const parsedProducts = JSON.parse(storedProducts);
+        globalProducts = parsedProducts;
+        setProducts([...globalProducts]);
+        console.log("Manually reloaded products from localStorage:", parsedProducts.length);
+      }
+    } catch (error) {
+      console.error("Error reloading products from localStorage:", error);
+    }
+  }, []);
+  
   // Listen for storage events from other tabs/windows
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === PRODUCTS_STORAGE_KEY) {
+      if (e.key === PRODUCTS_STORAGE_KEY && e.newValue) {
         try {
-          const updatedProducts = JSON.parse(e.newValue || '[]');
+          console.log("Storage event detected for products");
+          const updatedProducts = JSON.parse(e.newValue);
           globalProducts = updatedProducts;
           setProducts([...globalProducts]);
-          console.log("Products updated from another tab/window");
+          console.log("Products updated from storage event:", updatedProducts.length);
         } catch (error) {
           console.error("Error parsing products from storage event:", error);
+          // Attempt recovery by directly reading from localStorage
+          reloadProductsFromStorage();
         }
       }
     };
 
     // Listen for custom events from the same window
-    const handleCustomEvent = (e: CustomEvent) => {
-      globalProducts = e.detail;
-      setProducts([...globalProducts]);
-      console.log("Products updated via custom event");
+    const handleCustomEvent = (e: CustomEvent<Product[]>) => {
+      console.log("Custom event detected for products");
+      if (e.detail) {
+        globalProducts = e.detail;
+        setProducts([...globalProducts]);
+        console.log("Products updated via custom event:", e.detail.length);
+      }
     };
 
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener(eventBusName, handleCustomEvent as EventListener);
     
+    // Initial forced reload
+    reloadProductsFromStorage();
+    
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener(eventBusName, handleCustomEvent as EventListener);
     };
-  }, []);
+  }, [reloadProductsFromStorage]);
   
-  // Sync to localStorage and broadcast changes
+  // Sync to localStorage and broadcast changes with improved error handling
   const syncAndBroadcast = useCallback((updatedProducts: Product[]) => {
     try {
-      localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(updatedProducts));
+      // First make a deep copy to avoid reference issues
+      const productsCopy = JSON.parse(JSON.stringify(updatedProducts));
+      
+      // Update localStorage
+      localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(productsCopy));
+      console.log("Saved products to localStorage:", productsCopy.length);
       
       // Dispatch custom event for same-window communication
-      const event = new CustomEvent(eventBusName, { detail: updatedProducts });
+      const event = new CustomEvent(eventBusName, { detail: productsCopy });
       window.dispatchEvent(event);
+      console.log("Broadcast products via custom event");
       
-      console.log("Saved and broadcast products:", updatedProducts.length);
+      // Manually trigger storage event for cross-window communication
+      // in browsers that don't automatically trigger it
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: PRODUCTS_STORAGE_KEY,
+          newValue: JSON.stringify(productsCopy),
+          storageArea: localStorage
+        }));
+        console.log("Manually triggered storage event");
+      }
     } catch (error) {
-      console.error("Error saving products to localStorage:", error);
+      console.error("Error in syncAndBroadcast for products:", error);
     }
   }, []);
   
-  // Product Management Functions
+  // Product Management Functions with improved error handling
   const addProduct = useCallback((product: Product) => {
-    const updatedProducts = [...globalProducts, product];
-    globalProducts = updatedProducts;
-    setProducts([...globalProducts]);
-    syncAndBroadcast(updatedProducts);
-    console.log("Added product to global store:", product.name);
+    try {
+      const updatedProducts = [...globalProducts, product];
+      globalProducts = updatedProducts;
+      setProducts([...globalProducts]);
+      syncAndBroadcast(updatedProducts);
+      console.log("Added product to global store:", product.name);
+    } catch (error) {
+      console.error("Error adding product:", error);
+    }
   }, [syncAndBroadcast]);
   
   const updateProduct = useCallback((product: Product) => {
-    const updatedProducts = globalProducts.map(p => p.id === product.id ? product : p);
-    globalProducts = updatedProducts;
-    setProducts([...globalProducts]);
-    syncAndBroadcast(updatedProducts);
-    console.log("Updated product in global store:", product.name);
+    try {
+      const updatedProducts = globalProducts.map(p => p.id === product.id ? product : p);
+      globalProducts = updatedProducts;
+      setProducts([...globalProducts]);
+      syncAndBroadcast(updatedProducts);
+      console.log("Updated product in global store:", product.name);
+    } catch (error) {
+      console.error("Error updating product:", error);
+    }
   }, [syncAndBroadcast]);
   
   const removeProduct = useCallback((productId: string) => {
-    const updatedProducts = globalProducts.filter(p => p.id !== productId);
-    globalProducts = updatedProducts;
-    setProducts([...globalProducts]);
-    syncAndBroadcast(updatedProducts);
-    console.log("Removed product from global store:", productId);
+    try {
+      const updatedProducts = globalProducts.filter(p => p.id !== productId);
+      globalProducts = updatedProducts;
+      setProducts([...globalProducts]);
+      syncAndBroadcast(updatedProducts);
+      console.log("Removed product from global store:", productId);
+    } catch (error) {
+      console.error("Error removing product:", error);
+    }
   }, [syncAndBroadcast]);
   
   const getProduct = useCallback((productId: string) => {
@@ -137,13 +188,17 @@ export function useProducts() {
   }, [products]);
   
   const updateFeaturedProducts = useCallback((productId: string, isFeatured: boolean) => {
-    const updatedProducts = globalProducts.map(p => 
-      p.id === productId ? { ...p, featured: isFeatured } : p
-    );
-    globalProducts = updatedProducts;
-    setProducts([...globalProducts]);
-    syncAndBroadcast(updatedProducts);
-    console.log(`${isFeatured ? "Added" : "Removed"} product ${productId} ${isFeatured ? "to" : "from"} featured`);
+    try {
+      const updatedProducts = globalProducts.map(p => 
+        p.id === productId ? { ...p, featured: isFeatured } : p
+      );
+      globalProducts = updatedProducts;
+      setProducts([...globalProducts]);
+      syncAndBroadcast(updatedProducts);
+      console.log(`${isFeatured ? "Added" : "Removed"} product ${productId} ${isFeatured ? "to" : "from"} featured`);
+    } catch (error) {
+      console.error("Error updating featured status:", error);
+    }
   }, [syncAndBroadcast]);
 
   return {
@@ -155,6 +210,7 @@ export function useProducts() {
     fetchAllProducts,
     fetchProductsByCategory,
     getRelatedProducts,
-    updateFeaturedProducts
+    updateFeaturedProducts,
+    reloadProductsFromStorage
   };
 }
