@@ -1,25 +1,27 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-// Environment variables would be set in your deployment platform
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 // Improved debugging for environment variables
-console.log("Supabase URL defined:", !!supabaseUrl);
-console.log("Supabase Anon Key defined:", !!supabaseAnonKey);
+console.log("Supabase URL:", supabaseUrl);
+console.log("Supabase Anon Key starts with:", supabaseAnonKey ? supabaseAnonKey.substring(0, 4) + "..." : "undefined");
 
-// Create a function to get the client that can be called when needed
 export const getSupabaseClient = () => {
   if (!supabaseUrl || !supabaseAnonKey) {
-    console.warn(
-      'Supabase credentials not found. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables.'
-    );
+    console.error('Supabase credentials missing:', {
+      hasUrl: !!supabaseUrl,
+      hasKey: !!supabaseAnonKey
+    });
     return null;
   }
   
   try {
-    return createClient(supabaseUrl, supabaseAnonKey);
+    console.log("Creating Supabase client...");
+    const client = createClient(supabaseUrl, supabaseAnonKey);
+    console.log("Supabase client created successfully");
+    return client;
   } catch (error) {
     console.error("Error creating Supabase client:", error);
     return null;

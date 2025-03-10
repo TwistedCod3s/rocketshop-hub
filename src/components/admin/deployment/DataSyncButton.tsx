@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader, Database, AlertCircle, RefreshCw } from "lucide-react";
@@ -20,49 +19,52 @@ const DataSyncButton = ({
   const [dbError, setDbError] = useState<string | null>(null);
   const { toast } = useToast();
   
-  // Check database connection on mount and add retry capability
   const checkDbConnection = async () => {
     try {
-      setIsDbConnected(null); // Reset to loading state
+      setIsDbConnected(null); 
       
-      // Check if environment variables are set
+      // Log complete environment variable values for debugging
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
       
-      console.log("Checking Supabase connection...");
-      console.log("Supabase URL defined:", !!supabaseUrl);
-      console.log("Supabase Anon Key defined:", !!supabaseAnonKey);
+      console.log("Checking Supabase connection with URL:", supabaseUrl);
+      console.log("Anon Key starts with:", supabaseAnonKey ? supabaseAnonKey.substring(0, 4) + "..." : "undefined");
       
       if (!supabaseUrl || !supabaseAnonKey) {
+        const error = `Missing Supabase credentials. URL: ${supabaseUrl ? "✓" : "✗"}, Key: ${supabaseAnonKey ? "✓" : "✗"}`;
+        console.error(error);
         setIsDbConnected(false);
-        setDbError(`Supabase credentials not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables. URL: ${supabaseUrl ? "defined" : "undefined"}, Key: ${supabaseAnonKey ? "defined" : "undefined"}`);
+        setDbError(error);
         return;
       }
       
       // Try to get a client
       const client = getSupabaseClient();
       if (!client) {
+        const error = "Failed to create Supabase client";
+        console.error(error);
         setIsDbConnected(false);
-        setDbError("Failed to create Supabase client. Check console for more details.");
+        setDbError(error);
         return;
       }
       
-      // Try to ping the database
+      console.log("Attempting database ping...");
       const { data, error } = await client.from('products').select('count', { count: 'exact', head: true });
       
       if (error) {
+        console.error("Database ping error:", error);
         setIsDbConnected(false);
         setDbError(`Database connection error: ${error.message}`);
-        console.error("Database connection error:", error);
       } else {
+        console.log("Database ping successful:", data);
         setIsDbConnected(true);
         setDbError(null);
-        console.log("Successfully connected to Supabase database");
       }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error("Database check error:", errorMessage);
       setIsDbConnected(false);
-      setDbError(`Database connection error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      console.error("Database check error:", error);
+      setDbError(`Database connection error: ${errorMessage}`);
     }
   };
   
