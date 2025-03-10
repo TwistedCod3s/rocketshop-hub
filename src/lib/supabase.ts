@@ -1,12 +1,12 @@
-
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Product, Coupon } from '@/types/shop';
 
 // Declare the global window property correctly
+// The existing declaration likely already defines supabaseClientInstance as 'any'
+// so we'll use 'any' here too to match
 declare global {
   interface Window {
-    // Fix the type declaration to match the existing one
-    supabaseClientInstance: SupabaseClient<any, "public", any> | null;
+    supabaseClientInstance: any;
   }
 }
 
