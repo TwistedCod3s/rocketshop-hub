@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Loader, Database, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { supabase } from "@/lib/supabase";
+import { getSupabaseClient } from "@/lib/supabase";
 
 interface DataSyncButtonProps {
   reloadAllAdminData: (autoDeployAfterSync?: boolean) => Promise<boolean>;
@@ -24,15 +24,16 @@ const DataSyncButton = ({
   useEffect(() => {
     const checkDbConnection = async () => {
       try {
-        // Check if Supabase URL is configured
-        if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+        // Check if Supabase URL is configured - first by trying to get a client
+        const client = getSupabaseClient();
+        if (!client) {
           setIsDbConnected(false);
           setDbError("Supabase credentials not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables.");
           return;
         }
         
         // Try to ping the database
-        const { data, error } = await supabase.from('products').select('count', { count: 'exact', head: true });
+        const { data, error } = await client.from('products').select('count', { count: 'exact', head: true });
         
         if (error) {
           setIsDbConnected(false);
@@ -41,6 +42,7 @@ const DataSyncButton = ({
         } else {
           setIsDbConnected(true);
           setDbError(null);
+          console.log("Successfully connected to Supabase database");
         }
       } catch (error) {
         setIsDbConnected(false);
