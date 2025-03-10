@@ -49,6 +49,15 @@ export const ShopProvider = ({ children }) => {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
   
+  // Wrap triggerDeployment to return Promise<boolean> instead of Promise<void>
+  const wrappedTriggerDeployment = async () => {
+    if (deploymentHook.triggerDeployment) {
+      await deploymentHook.triggerDeployment();
+      return true;
+    }
+    return false;
+  };
+  
   // Combine all hooks into a single context value
   const value: ShopContextType = {
     // Manual spread for proper typing
@@ -72,7 +81,7 @@ export const ShopProvider = ({ children }) => {
     getCartCount: cartHook.getCartCount,
     reloadAllAdminData: adminHook.reloadAllAdminData,
     isDeploying: deploymentHook.isDeploying,
-    triggerDeployment: deploymentHook.triggerDeployment,
+    triggerDeployment: wrappedTriggerDeployment,
     getDeploymentHookUrl: deploymentHook.getDeploymentHookUrl,
     setDeploymentHookUrl: deploymentHook.setDeploymentHookUrl,
     autoDeployEnabled: adminHook.autoDeployEnabled,
@@ -84,7 +93,6 @@ export const ShopProvider = ({ children }) => {
     ...cartHook,
     ...featuredHook,
     ...adminHook,
-    ...deploymentHook,
   };
   
   return (

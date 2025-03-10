@@ -15,8 +15,7 @@ export const initialProducts: Product[] = [
       "/placeholder.svg"
     ],
     inStock: true,
-    isFeatured: true,
-    featured: true, // For backward compatibility
+    featured: true,
     rating: 4.5,
     specifications: [
       { name: "Height", value: "12 inches" },
@@ -53,8 +52,7 @@ export const initialProducts: Product[] = [
       "/placeholder.svg"
     ],
     inStock: true,
-    isFeatured: true,
-    featured: true, // For backward compatibility
+    featured: true,
     rating: 4.8,
     specifications: [
       { name: "Height", value: "24 inches" },
@@ -85,8 +83,7 @@ export const initialProducts: Product[] = [
       "/placeholder.svg"
     ],
     inStock: true,
-    isFeatured: true,
-    featured: true, // For backward compatibility
+    featured: true,
     rating: 4.6,
     specifications: [
       { name: "Engine Type", value: "A8-3" },
@@ -121,8 +118,7 @@ export const initialProducts: Product[] = [
       "/placeholder.svg"
     ],
     inStock: true,
-    isFeatured: false,
-    featured: false, // For backward compatibility
+    featured: false,
     rating: 4.9,
     specifications: [
       { name: "Grade Level", value: "6-12" },
@@ -151,8 +147,7 @@ export const initialProducts: Product[] = [
       "/placeholder.svg"
     ],
     inStock: false,
-    isFeatured: false,
-    featured: false, // For backward compatibility
+    featured: false,
     rating: 4.7,
     specifications: [
       { name: "Cable Length", value: "30 feet" },

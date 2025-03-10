@@ -10,13 +10,12 @@ interface AdminLoginProps {
 }
 
 const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
-  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const { tryAdminLogin } = useShopContext();
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const success = tryAdminLogin(username, password);
+    const success = tryAdminLogin(password);
     onLogin(success);
   };
   
@@ -31,19 +30,6 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <label htmlFor="username" className="text-sm font-medium">
-                Username
-              </label>
-              <Input
-                id="username"
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-              />
-            </div>
-            
             <div className="space-y-2">
               <label htmlFor="password" className="text-sm font-medium">
                 Password

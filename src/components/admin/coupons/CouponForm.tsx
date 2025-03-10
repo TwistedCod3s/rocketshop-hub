@@ -15,12 +15,16 @@ interface CouponFormProps {
   formData: {
     code: string;
     discountPercentage: number;
+    discount: number;
+    expiryDate: string;
     active: boolean;
     description: string;
   };
   setFormData: React.Dispatch<React.SetStateAction<{
     code: string;
     discountPercentage: number;
+    discount: number;
+    expiryDate: string;
     active: boolean;
     description: string;
   }>>;
@@ -55,6 +59,16 @@ const CouponForm: React.FC<CouponFormProps> = ({
           max="100"
           value={formData.discountPercentage}
           onChange={(e) => setFormData({...formData, discountPercentage: parseInt(e.target.value) || 0})}
+        />
+      </div>
+      
+      <div className="space-y-2">
+        <Label htmlFor="expiryDate">Expiry Date</Label>
+        <Input
+          id="expiryDate"
+          type="date"
+          value={formData.expiryDate}
+          onChange={(e) => setFormData({...formData, expiryDate: e.target.value})}
         />
       </div>
       

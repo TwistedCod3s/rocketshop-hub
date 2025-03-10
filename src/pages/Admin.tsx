@@ -128,6 +128,14 @@ const Admin = () => {
     });
   };
   
+  // Wrap triggerDeployment to match the expected type
+  const handleTriggerDeployment = async () => {
+    if (triggerDeployment) {
+      return await triggerDeployment();
+    }
+    return false;
+  };
+  
   if (!isAuthenticated) {
     return <AdminLogin onLogin={handleLogin} />;
   }
@@ -153,7 +161,7 @@ const Admin = () => {
         handleLogout={handleLogout}
         navigate={navigate}
         forceSyncDatabase={forceSyncDatabase}
-        triggerDeployment={triggerDeployment}
+        triggerDeployment={handleTriggerDeployment}
         isDeploying={isDeploying}
         autoDeployEnabled={autoDeployEnabled}
         toggleAutoDeploy={toggleAutoDeploy}

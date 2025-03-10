@@ -16,6 +16,8 @@ const CouponManagement: React.FC = () => {
   const [formData, setFormData] = useState({
     code: "",
     discountPercentage: 0,
+    discount: 0, // Adding the required field
+    expiryDate: new Date().toISOString().split('T')[0], // Adding the required field in ISO format
     active: true,
     description: ""
   });
@@ -24,6 +26,8 @@ const CouponManagement: React.FC = () => {
     setFormData({
       code: "",
       discountPercentage: 0,
+      discount: 0,
+      expiryDate: new Date().toISOString().split('T')[0],
       active: true,
       description: ""
     });
@@ -33,8 +37,10 @@ const CouponManagement: React.FC = () => {
     setEditingCoupon(coupon);
     setFormData({
       code: coupon.code,
-      discountPercentage: coupon.discountPercentage,
-      active: coupon.active,
+      discountPercentage: coupon.discountPercentage || 0,
+      discount: coupon.discount,
+      expiryDate: coupon.expiryDate,
+      active: coupon.active || true,
       description: coupon.description || ""
     });
     setShowForm(true);
@@ -71,11 +77,15 @@ const CouponManagement: React.FC = () => {
       return;
     }
 
+    // Calculate discount amount based on percentage (for backward compatibility)
+    const discountAmount = formData.discountPercentage / 100;
+
     if (editingCoupon) {
       // Update existing coupon
       updateCoupon({
         ...formData,
-        id: editingCoupon.id
+        id: editingCoupon.id,
+        discount: discountAmount
       });
       toast({
         title: "Coupon updated",
@@ -83,7 +93,10 @@ const CouponManagement: React.FC = () => {
       });
     } else {
       // Add new coupon
-      addCoupon(formData);
+      addCoupon({
+        ...formData,
+        discount: discountAmount
+      });
       toast({
         title: "Coupon added",
         description: `Coupon ${formData.code} has been added successfully.`

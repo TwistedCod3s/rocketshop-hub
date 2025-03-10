@@ -15,12 +15,16 @@ interface CouponFormSheetProps {
   formData: {
     code: string;
     discountPercentage: number;
+    discount: number;
+    expiryDate: string;
     active: boolean;
     description: string;
   };
   setFormData: React.Dispatch<React.SetStateAction<{
     code: string;
     discountPercentage: number;
+    discount: number;
+    expiryDate: string;
     active: boolean;
     description: string;
   }>>;

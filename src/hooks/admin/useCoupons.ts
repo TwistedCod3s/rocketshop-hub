@@ -14,14 +14,18 @@ const defaultCoupons: CouponCode[] = [
   {
     id: "coupon-1",
     code: "SCHOOL10",
+    discount: 0.1, // 10% as a decimal
     discountPercentage: 10,
+    expiryDate: "2025-12-31", // Add expiry date in ISO format
     active: true,
     description: "10% discount for schools"
   },
   {
     id: "coupon-2",
     code: "EDUCATION20",
+    discount: 0.2, // 20% as a decimal
     discountPercentage: 20,
+    expiryDate: "2025-12-31", // Add expiry date in ISO format
     active: true,
     description: "20% discount for educational institutions"
   }

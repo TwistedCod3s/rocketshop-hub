@@ -82,14 +82,14 @@ export interface ShopContextType {
   
   // Coupons
   coupons?: Coupon[];
-  addCoupon?: (coupon: Coupon) => void;
+  addCoupon?: (coupon: Omit<Coupon, 'id'> & {discountPercentage?: number}) => void;
   updateCoupon?: (coupon: Coupon) => void;
   deleteCoupon?: (couponId: string) => void;
   validateCoupon?: (code: string) => Coupon | null;
   
   // Deployment
   isDeploying?: boolean;
-  triggerDeployment?: () => Promise<void>;
+  triggerDeployment?: () => Promise<boolean>;
   getDeploymentHookUrl?: () => string;
   setDeploymentHookUrl?: (url: string) => void;
   autoDeployEnabled?: boolean;
