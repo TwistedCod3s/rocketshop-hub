@@ -10,8 +10,5 @@
     "env": {
       "VERCEL_FILESYSTEM_API_ENABLED": "true"
     }
-  },
-  "output": {
-    "clean": true
   }
 }
