@@ -43,6 +43,8 @@ const DatabaseInitializer = () => {
             
             if (testError.code === '42P01') {
               setError("Table 'products' does not exist. Please create the required tables in your Supabase project.");
+            } else if (testError.code === 'PGRST204') {
+              setError("Schema mismatch: The table structure in your Supabase project doesn't match what the app expects. Check the required column names below.");
             } else {
               setError(`Database connection error: ${testError.message}`);
             }

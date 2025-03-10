@@ -101,7 +101,7 @@ const tableSchema = {
 };
 
 // Filter out fields that don't exist in the target schema
-// Fix the typing here to resolve the error
+// Fixed typing to resolve the TypeScript error
 const filterObjectBySchema = <T extends Record<string, any>>(obj: T, schemaFields: string[]): Record<string, any> => {
   const result: Record<string, any> = {};
   Object.keys(obj).forEach(key => {
@@ -169,10 +169,10 @@ export const dbHelpers = {
     }
     
     try {
-      // Simplified approach: Use a non-existent ID to avoid deleting real records
-      // This triggers a "no rows returned" which is not considered an error
+      // Use a simple approach for deleting existing products
       try {
         console.log("Attempting to delete existing products...");
+        // Simple delete approach that should work with most Supabase configurations
         const { error: deleteError } = await client
           .from('products')
           .delete()
@@ -190,12 +190,13 @@ export const dbHelpers = {
       // Filter products to only include fields that exist in the database schema
       const filteredProducts = products.map(product => {
         // Ensure all products have valid UUIDs
-        if (!product.id || product.id === 'placeholder') {
-          product.id = crypto.randomUUID();
+        const productWithId = { ...product };
+        if (!productWithId.id || productWithId.id === 'placeholder') {
+          productWithId.id = crypto.randomUUID();
         }
         
         // Filter out fields that might not exist in the database
-        return filterObjectBySchema(product, tableSchema.products);
+        return filterObjectBySchema(productWithId, tableSchema.products);
       });
       
       console.log('Prepared products for insertion:', filteredProducts.length);
@@ -241,13 +242,15 @@ export const dbHelpers = {
         throw error;
       }
       
-      // Convert array to object format
+      // Convert array to object format with proper type checking
       const categoryImages: Record<string, string> = {};
-      (data || []).forEach(item => {
-        if (item && typeof item === 'object' && 'category_slug' in item && 'image_url' in item) {
-          categoryImages[item.category_slug] = item.image_url;
-        }
-      });
+      if (Array.isArray(data)) {
+        data.forEach(item => {
+          if (item && typeof item === 'object' && 'category_slug' in item && 'image_url' in item) {
+            categoryImages[item.category_slug as string] = item.image_url as string;
+          }
+        });
+      }
       
       console.log(`Successfully fetched ${Object.keys(categoryImages).length} category images from Supabase`);
       return categoryImages;
@@ -327,13 +330,17 @@ export const dbHelpers = {
         throw error;
       }
       
-      // Convert array to object format
+      // Convert array to object format with proper type checking
       const subcategories: Record<string, string[]> = {};
-      (data || []).forEach(item => {
-        if (item && typeof item === 'object' && 'category' in item && 'subcategory_list' in item) {
-          subcategories[item.category] = item.subcategory_list;
-        }
-      });
+      if (Array.isArray(data)) {
+        data.forEach(item => {
+          if (item && typeof item === 'object' && 'category' in item && 'subcategory_list' in item) {
+            subcategories[item.category as string] = Array.isArray(item.subcategory_list) 
+              ? item.subcategory_list 
+              : [];
+          }
+        });
+      }
       
       console.log(`Successfully fetched subcategories for ${Object.keys(subcategories).length} categories from Supabase`);
       return subcategories;
