@@ -94,13 +94,19 @@ export const saveAndBroadcast = <T>(key: string, eventName: string, value: T): v
     window.dispatchEvent(customEvent);
     console.log(`Broadcast ${eventName} custom event`, valueCopy);
     
+    // Also dispatch a global sync event that all windows will listen for
+    const syncEvent = new CustomEvent(SYNC_EVENT, { 
+      detail: { key, timestamp: new Date().toISOString() } 
+    });
+    window.dispatchEvent(syncEvent);
+    
     // Set "dirty" flag to indicate pending changes
     localStorage.setItem('ROCKETRY_SHOP_CHANGES_PENDING', 'true');
     
     // Then dispatch storage event manually for cross-window communication
     try {
       // Use a special sync key to force all clients to reload
-      const syncKey = "ROCKETRY_SHOP_SYNC_TRIGGER_V7";
+      const syncKey = SYNC_KEY;
       const timestamp = new Date().toISOString();
       localStorage.setItem(syncKey, timestamp);
       
@@ -112,13 +118,9 @@ export const saveAndBroadcast = <T>(key: string, eventName: string, value: T): v
       });
       window.dispatchEvent(storageEvent);
       
-      // Also dispatch for the sync key itself
-      const syncEvent = new StorageEvent('storage', {
-        key: syncKey,
-        newValue: timestamp,
-        storageArea: localStorage
-      });
-      window.dispatchEvent(syncEvent);
+      // For cross-window notification - we need a special entry
+      localStorage.setItem('EXTERNAL_SYNC_TRIGGER', timestamp);
+      localStorage.removeItem('EXTERNAL_SYNC_TRIGGER');
       
       console.log(`Manually triggered storage events for ${key} and sync trigger`);
     } catch (e) {
@@ -136,27 +138,48 @@ export const saveAndBroadcast = <T>(key: string, eventName: string, value: T): v
     if (key === PRODUCTS_STORAGE_KEY) {
       console.log(`Trying to sync ${key} to Supabase...`);
       dbHelpers.saveProducts(valueCopy as any[])
-        .then(() => console.log(`Successfully synced ${key} to Supabase`))
+        .then(() => {
+          console.log(`Successfully synced ${key} to Supabase`);
+          // Clear the "dirty" flag if this was the only pending change
+          checkAndClearPendingChanges();
+        })
         .catch(err => console.error(`Error syncing ${key} to Supabase:`, err));
     } else if (key === CATEGORY_IMAGES_KEY) {
       console.log(`Trying to sync ${key} to Supabase...`);
       dbHelpers.saveCategoryImages(valueCopy as Record<string, string>)
-        .then(() => console.log(`Successfully synced ${key} to Supabase`))
+        .then(() => {
+          console.log(`Successfully synced ${key} to Supabase`);
+          checkAndClearPendingChanges();
+        })
         .catch(err => console.error(`Error syncing ${key} to Supabase:`, err));
     } else if (key === SUBCATEGORIES_KEY) {
       console.log(`Trying to sync ${key} to Supabase...`);
       dbHelpers.saveSubcategories(valueCopy as Record<string, string[]>)
-        .then(() => console.log(`Successfully synced ${key} to Supabase`))
+        .then(() => {
+          console.log(`Successfully synced ${key} to Supabase`);
+          checkAndClearPendingChanges();
+        })
         .catch(err => console.error(`Error syncing ${key} to Supabase:`, err));
     } else if (key === COUPONS_KEY) {
       console.log(`Trying to sync ${key} to Supabase...`);
       dbHelpers.saveCoupons(valueCopy as any[])
-        .then(() => console.log(`Successfully synced ${key} to Supabase`))
+        .then(() => {
+          console.log(`Successfully synced ${key} to Supabase`);
+          checkAndClearPendingChanges();
+        })
         .catch(err => console.error(`Error syncing ${key} to Supabase:`, err));
     }
   } catch (error) {
     console.error(`Error in saveAndBroadcast for ${key}:`, error);
   }
+};
+
+// Check if all changes have been synced and clear pending flag if so
+const checkAndClearPendingChanges = () => {
+  // In a real app, we might track which specific changes are pending
+  // For now, we just clear the flag since we know the last change was synced
+  localStorage.setItem('ROCKETRY_SHOP_CHANGES_PENDING', 'false');
+  console.log("Cleared pending changes flag");
 };
 
 // Define consistent storage keys with version suffix

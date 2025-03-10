@@ -15,17 +15,21 @@ const isValidUrl = (url: string) => {
 
 // Improved debugging for environment variables
 console.log("Supabase connection info:", {
-  url: supabaseUrl, 
-  isValidUrl: isValidUrl(supabaseUrl),
+  url: supabaseUrl ? 'URL provided' : 'URL missing', 
+  isValidUrl: supabaseUrl ? isValidUrl(supabaseUrl) : false,
   hasKey: !!supabaseAnonKey,
   keyLength: supabaseAnonKey?.length
 });
 
-if (supabaseAnonKey) {
-  console.log("Anon key preview:", supabaseAnonKey.substring(0, 4) + "..." + supabaseAnonKey.substring(supabaseAnonKey.length - 4));
-}
+// Create a single supabase client instance that will be reused
+let supabaseClientInstance: any = null;
 
 export const getSupabaseClient = () => {
+  // Return the existing instance if already created
+  if (supabaseClientInstance) {
+    return supabaseClientInstance;
+  }
+  
   if (!supabaseUrl || !supabaseAnonKey) {
     console.error('Supabase credentials missing:', {
       hasUrl: !!supabaseUrl,
@@ -42,11 +46,11 @@ export const getSupabaseClient = () => {
   
   try {
     console.log("Creating Supabase client with:", {
-      url: supabaseUrl,
-      keyLength: supabaseAnonKey.length
+      url: supabaseUrl ? 'URL provided' : 'URL missing',
+      keyLength: supabaseAnonKey?.length
     });
     
-    const client = createClient(supabaseUrl, supabaseAnonKey, {
+    supabaseClientInstance = createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
         persistSession: false, // Don't persist auth state in localStorage
         autoRefreshToken: true
@@ -54,7 +58,7 @@ export const getSupabaseClient = () => {
     });
     
     console.log("Supabase client created successfully");
-    return client;
+    return supabaseClientInstance;
   } catch (error) {
     console.error("Error creating Supabase client:", error);
     return null;
@@ -104,7 +108,8 @@ export const dbHelpers = {
       const { error: deleteError } = await client
         .from('products')
         .delete()
-        .neq('id', 'dummy'); // Using neq with dummy to match all rows
+        .is('id', null)
+        .then(() => client.from('products').delete().not('id', null));
         
       if (deleteError) {
         console.error("Error deleting products:", deleteError);
@@ -193,7 +198,8 @@ export const dbHelpers = {
       const { error: deleteError } = await client
         .from('category_images')
         .delete()
-        .neq('id', 'dummy');
+        .is('id', null)
+        .then(() => client.from('category_images').delete().not('id', null));
         
       if (deleteError) {
         console.error("Error deleting category images:", deleteError);
@@ -270,7 +276,8 @@ export const dbHelpers = {
       const { error: deleteError } = await client
         .from('subcategories')
         .delete()
-        .neq('id', 'dummy');
+        .is('id', null)
+        .then(() => client.from('subcategories').delete().not('id', null));
         
       if (deleteError) {
         console.error("Error deleting subcategories:", deleteError);
@@ -343,7 +350,8 @@ export const dbHelpers = {
       const { error: deleteError } = await client
         .from('coupons')
         .delete()
-        .neq('id', 'dummy');
+        .is('id', null)
+        .then(() => client.from('coupons').delete().not('id', null));
         
       if (deleteError) {
         console.error("Error deleting coupons:", deleteError);

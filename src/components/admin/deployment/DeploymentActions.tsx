@@ -1,8 +1,8 @@
-
 import { useShopContext } from "@/context/ShopContext";
 import { Button } from "@/components/ui/button";
 import { Save, Loader } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface DeploymentActionsProps {
   triggerDeployment: () => Promise<boolean>;
@@ -16,8 +16,38 @@ const DeploymentActions = ({
   const [lastDeployTime, setLastDeployTime] = useState<string | null>(
     localStorage.getItem('LAST_DEPLOYMENT_TIME')
   );
+  const [pendingChanges, setPendingChanges] = useState(
+    localStorage.getItem('ROCKETRY_SHOP_CHANGES_PENDING') === 'true'
+  );
+  const { toast } = useToast();
   
-  const pendingChanges = localStorage.getItem('ROCKETRY_SHOP_CHANGES_PENDING') === 'true';
+  // Keep track of pending changes
+  useEffect(() => {
+    const checkPendingChanges = () => {
+      const hasPending = localStorage.getItem('ROCKETRY_SHOP_CHANGES_PENDING') === 'true';
+      setPendingChanges(hasPending);
+    };
+    
+    // Check immediately
+    checkPendingChanges();
+    
+    // Also check when storage changes
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'ROCKETRY_SHOP_CHANGES_PENDING') {
+        checkPendingChanges();
+      }
+    };
+    
+    // Set up an interval to regularly check for pending changes
+    const interval = setInterval(checkPendingChanges, 2000);
+    
+    window.addEventListener('storage', handleStorage);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, []);
   
   const formatDeployTime = (timeString: string) => {
     try {
@@ -35,11 +65,35 @@ const DeploymentActions = ({
   };
   
   const handleDeploy = async () => {
-    const success = await triggerDeployment();
-    if (success) {
-      const newTime = new Date().toISOString();
-      localStorage.setItem('LAST_DEPLOYMENT_TIME', newTime);
-      setLastDeployTime(newTime);
+    try {
+      const success = await triggerDeployment();
+      if (success) {
+        const newTime = new Date().toISOString();
+        localStorage.setItem('LAST_DEPLOYMENT_TIME', newTime);
+        setLastDeployTime(newTime);
+        
+        // Clear the pending changes flag
+        localStorage.setItem('ROCKETRY_SHOP_CHANGES_PENDING', 'false');
+        setPendingChanges(false);
+        
+        toast({
+          title: "Database sync successful",
+          description: "All changes have been saved to the database and will be visible to all users"
+        });
+      } else {
+        toast({
+          title: "Database sync failed",
+          description: "There was a problem syncing your changes to the database",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error("Error during deployment:", error);
+      toast({
+        title: "Database sync error",
+        description: "An unexpected error occurred during synchronization",
+        variant: "destructive"
+      });
     }
   };
   

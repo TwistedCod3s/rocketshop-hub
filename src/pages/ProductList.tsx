@@ -10,7 +10,7 @@ import { useProductFilter } from "@/hooks/useProductFilter";
 import { dbHelpers } from "@/lib/supabase";
 
 const ProductList = () => {
-  const { fetchAllProducts, reloadProductsFromStorage } = useShopContext();
+  const { fetchAllProducts, reloadProductsFromStorage, loadProductsFromSupabase } = useShopContext();
   const [displayProducts, setDisplayProducts] = useState<Product[]>([]);
   const [filterOpen, setFilterOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -23,43 +23,57 @@ const ProductList = () => {
       try {
         // Try loading from Supabase first
         console.log("Attempting to load products from Supabase...");
-        const supabaseProducts = await dbHelpers.getProducts();
+        let loadedFromSupabase = false;
         
-        if (supabaseProducts && supabaseProducts.length > 0) {
-          console.log("Loaded products from Supabase:", supabaseProducts.length);
-          
-          // Update localStorage with the latest from Supabase
-          localStorage.setItem('ROCKETRY_SHOP_PRODUCTS_V7', JSON.stringify(supabaseProducts));
-          
-          // If we have a reload function, use it to refresh the app state
-          if (reloadProductsFromStorage) {
-            reloadProductsFromStorage();
-          }
-          
-          // Set the display products
-          setDisplayProducts(supabaseProducts);
+        if (loadProductsFromSupabase) {
+          loadedFromSupabase = await loadProductsFromSupabase();
         } else {
-          console.log("No products found in Supabase, falling back to localStorage");
+          // Fallback to direct loading from Supabase
+          try {
+            const supabaseProducts = await dbHelpers.getProducts();
+            
+            if (supabaseProducts && supabaseProducts.length > 0) {
+              console.log("Loaded products from Supabase:", supabaseProducts.length);
+              
+              // Update localStorage with the latest from Supabase
+              localStorage.setItem('ROCKETRY_SHOP_PRODUCTS_V7', JSON.stringify(supabaseProducts));
+              
+              // If we have a reload function, use it to refresh the app state
+              if (reloadProductsFromStorage) {
+                reloadProductsFromStorage();
+              }
+              
+              // Set the display products
+              setDisplayProducts(supabaseProducts);
+              loadedFromSupabase = true;
+            }
+          } catch (err) {
+            console.error("Error directly loading from Supabase:", err);
+          }
+        }
+        
+        if (!loadedFromSupabase) {
+          console.log("Falling back to localStorage for products");
           
-          // Fallback to localStorage
+          // Ensure localStorage data is loaded into the state
           if (reloadProductsFromStorage) {
             reloadProductsFromStorage();
           }
           
           const allProducts = fetchAllProducts();
-          console.log("All products from localStorage:", allProducts.length);
+          console.log("Products loaded from localStorage:", allProducts.length);
           setDisplayProducts(allProducts);
         }
       } catch (error) {
-        console.error("Error loading products from Supabase:", error);
+        console.error("Error loading products:", error);
         
-        // Fallback to localStorage
+        // Final fallback to localStorage
         if (reloadProductsFromStorage) {
           reloadProductsFromStorage();
         }
         
         const allProducts = fetchAllProducts();
-        console.log("All products from localStorage (after error):", allProducts.length);
+        console.log("Products loaded from localStorage (after error):", allProducts.length);
         setDisplayProducts(allProducts);
       } finally {
         setIsLoading(false);
@@ -81,7 +95,8 @@ const ProductList = () => {
     window.addEventListener('storage', (e) => {
       if (e.key === "ROCKETRY_SHOP_PRODUCTS_V7" || 
           e.key === "ROCKETRY_SHOP_SYNC_TRIGGER_V7" ||
-          e.key === "ROCKETRY_SHOP_CHANGES_PENDING") {
+          e.key === "ROCKETRY_SHOP_CHANGES_PENDING" ||
+          e.key === "EXTERNAL_SYNC_TRIGGER") {
         console.log(`Storage event detected for ${e.key}, refreshing products`);
         handleProductUpdate();
       }
@@ -99,7 +114,7 @@ const ProductList = () => {
       window.removeEventListener('storage', handleProductUpdate);
       clearInterval(refreshInterval);
     };
-  }, [fetchAllProducts, reloadProductsFromStorage]);
+  }, [fetchAllProducts, reloadProductsFromStorage, loadProductsFromSupabase]);
   
   // Use our custom hook for filtering
   const {

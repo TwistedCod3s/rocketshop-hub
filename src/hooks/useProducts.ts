@@ -1,13 +1,15 @@
+
 import { useState, useCallback, useEffect } from "react";
 import { Product } from "@/types/shop";
 import { initialProducts } from "@/data/initialProducts";
+import { dbHelpers } from "@/lib/supabase";
 
 // Define consistent storage key
 const PRODUCTS_STORAGE_KEY = "ROCKETRY_SHOP_PRODUCTS_V7"; // Bumped version
 const PRODUCTS_EVENT = "rocketry-product-update-v7"; // Bumped version
 
 // Create a global variable for products that all users will share
-// Default to initialProducts but will be overwritten by localStorage if available
+// Default to initialProducts but will be overwritten by localStorage/Supabase if available
 let globalProducts: Product[] = [...initialProducts];
 
 // Try to load saved products from localStorage on initial module load
@@ -45,11 +47,38 @@ export function useProducts() {
     }
   }, []);
   
+  // Function to load products from Supabase
+  const loadProductsFromSupabase = useCallback(async () => {
+    try {
+      console.log("Attempting to load products from Supabase...");
+      const supabaseProducts = await dbHelpers.getProducts();
+      
+      if (supabaseProducts && supabaseProducts.length > 0) {
+        console.log("Successfully loaded products from Supabase:", supabaseProducts.length);
+        
+        // Update localStorage and global state
+        localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(supabaseProducts));
+        globalProducts = supabaseProducts;
+        setProducts([...globalProducts]);
+        
+        return true;
+      } else {
+        console.log("No products found in Supabase, keeping localStorage data");
+        return false;
+      }
+    } catch (error) {
+      console.error("Error loading products from Supabase:", error);
+      return false;
+    }
+  }, []);
+  
   // Listen for storage events from other tabs/windows and sync trigger events
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       // Handle both our specific key and the sync trigger key
-      if ((e.key === PRODUCTS_STORAGE_KEY || e.key === "ROCKETRY_SHOP_SYNC_TRIGGER_V7") && e.newValue) {
+      if ((e.key === PRODUCTS_STORAGE_KEY || 
+           e.key === "ROCKETRY_SHOP_SYNC_TRIGGER_V7" || 
+           e.key === "EXTERNAL_SYNC_TRIGGER") && e.newValue) {
         try {
           console.log(`Storage event detected: ${e.key}`);
           
@@ -84,17 +113,22 @@ export function useProducts() {
     window.addEventListener(PRODUCTS_EVENT, handleCustomEvent as EventListener);
     window.addEventListener("rocketry-sync-trigger-v7", handleSyncEvent);
     
-    // Initial forced reload
-    reloadProductsFromStorage();
+    // Initial load from Supabase, then fall back to localStorage if needed
+    loadProductsFromSupabase().then(success => {
+      if (!success) {
+        // If Supabase load failed, ensure we have the latest from localStorage
+        reloadProductsFromStorage();
+      }
+    });
     
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener(PRODUCTS_EVENT, handleCustomEvent as EventListener);
       window.removeEventListener("rocketry-sync-trigger-v7", handleSyncEvent);
     };
-  }, [reloadProductsFromStorage]);
+  }, [reloadProductsFromStorage, loadProductsFromSupabase]);
   
-  // Sync to localStorage and broadcast changes with improved error handling
+  // Sync to localStorage, Supabase, and broadcast changes with improved error handling
   const syncAndBroadcast = useCallback((updatedProducts: Product[]) => {
     try {
       // First make a deep copy to avoid reference issues
@@ -113,6 +147,23 @@ export function useProducts() {
       const syncKey = "ROCKETRY_SHOP_SYNC_TRIGGER_V7";
       const timestamp = new Date().toISOString();
       localStorage.setItem(syncKey, timestamp);
+      
+      // For cross-window notification - we need a special entry
+      localStorage.setItem('EXTERNAL_SYNC_TRIGGER', timestamp);
+      setTimeout(() => localStorage.removeItem('EXTERNAL_SYNC_TRIGGER'), 100);
+      
+      // Set dirty flag
+      localStorage.setItem('ROCKETRY_SHOP_CHANGES_PENDING', 'true');
+      
+      // Sync to Supabase
+      dbHelpers.saveProducts(productsCopy)
+        .then(() => {
+          console.log("Successfully synced products to Supabase");
+          localStorage.setItem('ROCKETRY_SHOP_CHANGES_PENDING', 'false');
+        })
+        .catch(err => {
+          console.error("Error syncing products to Supabase:", err);
+        });
       
       // Manually trigger storage events 
       try {
@@ -237,6 +288,7 @@ export function useProducts() {
     fetchProductsByCategory,
     getRelatedProducts,
     updateFeaturedProducts,
-    reloadProductsFromStorage
+    reloadProductsFromStorage,
+    loadProductsFromSupabase
   };
 }
