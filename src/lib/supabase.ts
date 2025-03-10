@@ -270,8 +270,8 @@ export const dbHelpers = {
         id: coupon.id,
         code: coupon.code,
         discount: coupon.discount,
-        discountPercentage: coupon.discount_percentage || coupon.discount * 100, // Convert from decimal if needed
-        expiryDate: coupon.expiry_date, // Map expiry_date to expiryDate
+        discountPercentage: coupon.discount_percentage, // Use underscore format from database
+        expiryDate: coupon.expiry_date, // Use underscore format from database
         active: coupon.active,
         description: coupon.description
       }));
