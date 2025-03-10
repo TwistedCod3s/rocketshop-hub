@@ -1,3 +1,4 @@
+
 import { useAdminAuth } from "./admin/useAdminAuth";
 import { useCategoryImages } from "./admin/useCategoryImages";
 import { useSubcategories } from "./admin/useSubcategories";
@@ -44,6 +45,7 @@ export function useAdmin() {
   const toggleAutoDeploy = useCallback((enabled: boolean) => {
     setAutoDeployEnabled(enabled);
     localStorage.setItem('AUTO_DEPLOY_ENABLED', enabled.toString());
+    console.log(`Auto-deploy ${enabled ? 'enabled' : 'disabled'}`);
   }, []);
   
   // Function to force reload all admin data and propagate to all users
@@ -95,6 +97,8 @@ export function useAdmin() {
         localStorage.setItem(SYNC_KEY, timestamp);
         console.log("Used fallback sync mechanism");
       }, 10);
+      
+      throw error; // Re-throw the error for the caller to handle
     }
     
     return true;

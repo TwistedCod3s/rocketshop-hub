@@ -82,7 +82,7 @@ export interface ShopContextType {
   
   // Coupons
   coupons?: Coupon[];
-  addCoupon?: (coupon: Omit<Coupon, 'id'> & {discountPercentage?: number}) => void;
+  addCoupon?: (coupon: Omit<Coupon, 'id'>) => void;
   updateCoupon?: (coupon: Coupon) => void;
   deleteCoupon?: (couponId: string) => void;
   validateCoupon?: (code: string) => Coupon | null;
