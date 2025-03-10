@@ -65,19 +65,129 @@ The location of this setting may vary depending on your Vercel account type and 
 3. Find the "Function Settings" section
 4. Enable "Filesystem Access"
 
-If you still can't find this setting, please contact Vercel support as it may be:
-- Only available on certain pricing plans
-- Has been renamed in a recent dashboard update
-- Requires specific project configuration
+## 6. Alternative Approaches (If You Can't Find Filesystem Access Setting)
 
-## 6. Check API Configuration
+If you can't locate the filesystem access setting in your Vercel dashboard, you have several alternatives:
+
+### Alternative 1: Use vercel.json Configuration
+
+Create a `vercel.json` file in the root of your project with the following contents:
+
+```json
+{
+  "functions": {
+    "api/*.js": {
+      "includeFiles": "**/*"
+    }
+  },
+  "build": {
+    "env": {
+      "VERCEL_FILESYSTEM_API_ENABLED": "true"
+    }
+  }
+}
+```
+
+This configuration enables filesystem access for your API functions and sets the required environment variable.
+
+### Alternative 2: Deploy with Vercel CLI
+
+If you prefer using the command line:
+
+1. Install the Vercel CLI:
+   ```
+   npm install -g vercel
+   ```
+
+2. Log in to your Vercel account:
+   ```
+   vercel login
+   ```
+
+3. Deploy with filesystem access enabled:
+   ```
+   vercel deploy --build-env VERCEL_FILESYSTEM_API_ENABLED=true
+   ```
+
+### Alternative 3: Use a Database Instead of Filesystem
+
+If you still can't get filesystem access working, consider using a database:
+
+1. Create a database using Vercel KV, Vercel Postgres, or another service
+2. Modify your admin panel code to store data in the database instead of files
+3. Update your API endpoints to read/write from the database
+
+This approach requires more code changes but may be more reliable in the long term.
+
+### Alternative 4: Use GitHub API for Changes
+
+Another approach is to use GitHub's API to commit changes directly to your repository:
+
+1. Create a GitHub personal access token with repo permissions
+2. Set up a serverless function that uses the GitHub API to commit changes
+3. Configure Vercel to auto-deploy when changes are pushed to your repository
+
+Example code for GitHub API integration:
+
+```javascript
+// api/github-commit.js
+const { Octokit } = require("@octokit/rest");
+
+module.exports = async (req, res) => {
+  const { path, content, message } = req.body;
+  
+  try {
+    const octokit = new Octokit({
+      auth: process.env.GITHUB_TOKEN
+    });
+    
+    // Get current file (if exists) to get its SHA
+    let fileSha;
+    try {
+      const { data } = await octokit.repos.getContent({
+        owner: process.env.GITHUB_OWNER,
+        repo: process.env.GITHUB_REPO,
+        path
+      });
+      fileSha = data.sha;
+    } catch (e) {
+      // File doesn't exist yet, that's OK
+    }
+    
+    // Create or update file
+    await octokit.repos.createOrUpdateFileContents({
+      owner: process.env.GITHUB_OWNER,
+      repo: process.env.GITHUB_REPO,
+      path,
+      message: message || `Update ${path} via admin panel`,
+      content: Buffer.from(content).toString('base64'),
+      sha: fileSha
+    });
+    
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error("GitHub API error:", error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+};
+```
+
+Required environment variables for this approach:
+- `GITHUB_TOKEN`: Your GitHub personal access token
+- `GITHUB_OWNER`: The owner of the repository (username or organization)
+- `GITHUB_REPO`: The name of the repository
+
+## 7. Check API Configuration
 
 Ensure that your application uses the correct API endpoint path:
 
 1. The `/api/filesystem.js` file should be at the root of your project (not in `src/`)
 2. Your frontend code should make requests to `/api/filesystem` (handled by `src/utils/fileSystemUtils.ts`)
 
-## 7. Deploy Your Project
+## 8. Deploy Your Project
 
 1. Click "Deploy" in your Vercel dashboard
 2. Wait for the build to complete
@@ -101,31 +211,4 @@ If you encounter issues with filesystem access:
 4. **Permissions**: Confirm that "Allow filesystem access" is enabled in Functions settings
 5. **Vercel Plan Limitations**: Some features may only be available on paid plans
 
-## Alternative Approach for Pro/Enterprise Users
-
-If you're on a Pro or Enterprise plan and can't find the filesystem access setting:
-
-1. Use the Vercel CLI to deploy with special configuration:
-   ```
-   vercel deploy --build-env VERCEL_FILESYSTEM_API_ENABLED=true
-   ```
-
-2. Or add this to your `vercel.json` configuration file:
-   ```json
-   {
-     "functions": {
-       "api/*.js": {
-         "includeFiles": "**/*"
-       }
-     }
-   }
-   ```
-
-## Important Notes
-
-- The filesystem API only works in production deployments, not in preview deployments
-- Changes are written to the repository and trigger a new deployment
-- The deployment process might take a few minutes to complete
-
 For more information, see the [Vercel documentation on Serverless Functions](https://vercel.com/docs/functions).
-

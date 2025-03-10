@@ -25,25 +25,57 @@ const DeploymentInfo = () => {
               <li>Set required environment variables including <code className="bg-blue-100 px-1.5 py-0.5 rounded">VERCEL_FILESYSTEM_API_ENABLED=true</code></li>
               <li>Create a deployment webhook</li>
             </ul>
-            <p className="mt-2 text-blue-700">
-              <span className="font-medium">Can't find filesystem access setting?</span> It may be:
-            </p>
-            <ul className="list-disc list-inside mt-1 text-blue-700 space-y-1">
-              <li>Under Project Settings → Functions</li>
-              <li>Under Project Settings → General → Function Settings</li>
-              <li>Under Project Settings → Advanced</li>
-              <li>Only available on certain pricing plans</li>
-            </ul>
-            <p className="mt-2 text-blue-700">
-              <span className="font-medium">Alternative for Pro/Enterprise plans:</span> If you still can't find it, you can:
-            </p>
-            <ul className="list-disc list-inside mt-1 text-blue-700 space-y-1">
-              <li>Use the Vercel CLI with <code className="bg-blue-100 px-1.5 py-0.5 rounded">--build-env VERCEL_FILESYSTEM_API_ENABLED=true</code></li>
-              <li>Add a <code className="bg-blue-100 px-1.5 py-0.5 rounded">vercel.json</code> file with filesystem permissions</li>
-              <li>Contact Vercel support if you're on a paid plan</li>
-            </ul>
-            <p className="mt-2 text-blue-700 font-medium">
-              See the detailed <code className="bg-blue-100 px-1.5 py-0.5 rounded">vercel-setup.md</code> file for step-by-step instructions.
+            
+            <div className="mt-4 border-t border-blue-200 pt-3">
+              <h5 className="font-medium text-blue-800 mb-1">Can't Find Filesystem Access?</h5>
+              <p className="text-blue-700">If you can't locate the filesystem setting, here are alternative approaches:</p>
+              
+              <h6 className="font-medium text-blue-700 mt-3">Option 1: Use vercel.json Configuration</h6>
+              <p className="text-blue-700 mt-1">Add a <code className="bg-blue-100 px-1.5 py-0.5 rounded">vercel.json</code> file to your project root with:</p>
+              <pre className="bg-blue-100 p-2 rounded mt-1 text-xs overflow-x-auto">
+{`{
+  "functions": {
+    "api/*.js": {
+      "includeFiles": "**/*"
+    }
+  },
+  "build": {
+    "env": {
+      "VERCEL_FILESYSTEM_API_ENABLED": "true"
+    }
+  }
+}`}
+              </pre>
+              
+              <h6 className="font-medium text-blue-700 mt-3">Option 2: Use Vercel CLI for Deployment</h6>
+              <p className="text-blue-700 mt-1">Deploy using the Vercel CLI with the filesystem flag:</p>
+              <pre className="bg-blue-100 p-2 rounded mt-1 text-xs overflow-x-auto">
+{`# Install Vercel CLI first
+npm i -g vercel
+
+# Deploy with filesystem enabled
+vercel deploy --build-env VERCEL_FILESYSTEM_API_ENABLED=true`}
+              </pre>
+              
+              <h6 className="font-medium text-blue-700 mt-3">Option 3: Use Serverless Function with DB</h6>
+              <p className="text-blue-700 mt-1">Instead of filesystem access, store data in a database:</p>
+              <ul className="list-disc list-inside mt-1 text-blue-700 space-y-1">
+                <li>Use Vercel KV, Vercel Postgres, or other database services</li>
+                <li>Modify the admin panel to use database storage instead of filesystem</li>
+                <li>This approach may require more extensive code changes</li>
+              </ul>
+              
+              <h6 className="font-medium text-blue-700 mt-3">Option 4: GitHub Integration</h6>
+              <p className="text-blue-700 mt-1">Use GitHub's API to commit changes to your repository:</p>
+              <ul className="list-disc list-inside mt-1 text-blue-700 space-y-1">
+                <li>Create a GitHub token with repo access</li>
+                <li>Set up a serverless function to commit changes via GitHub API</li>
+                <li>Configure Vercel to auto-deploy on GitHub commits</li>
+              </ul>
+            </div>
+            
+            <p className="mt-3 pt-3 border-t border-blue-200 text-blue-700 font-medium">
+              See the detailed <code className="bg-blue-100 px-1.5 py-0.5 rounded">vercel-setup.md</code> file for step-by-step instructions on all approaches.
             </p>
           </div>
         </div>
