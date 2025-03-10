@@ -40,7 +40,8 @@ export function useVercelDeployment() {
       if (products) {
         const parsedProducts = JSON.parse(products);
         dataToSave.products = parsedProducts;
-        await writeDataToFile('products.json', parsedProducts);
+        await writeDataToFile('data/products.json', parsedProducts);
+        console.log("Wrote products data");
       }
       
       // Get category images data
@@ -48,7 +49,8 @@ export function useVercelDeployment() {
       if (categoryImages) {
         const parsedImages = JSON.parse(categoryImages);
         dataToSave.categoryImages = parsedImages;
-        await writeDataToFile('categoryImages.json', parsedImages);
+        await writeDataToFile('data/categoryImages.json', parsedImages);
+        console.log("Wrote category images data");
       }
       
       // Get subcategories data
@@ -56,7 +58,8 @@ export function useVercelDeployment() {
       if (subcategories) {
         const parsedSubcategories = JSON.parse(subcategories);
         dataToSave.subcategories = parsedSubcategories;
-        await writeDataToFile('subcategories.json', parsedSubcategories);
+        await writeDataToFile('data/subcategories.json', parsedSubcategories);
+        console.log("Wrote subcategories data");
       }
       
       // Get coupons data
@@ -64,26 +67,34 @@ export function useVercelDeployment() {
       if (coupons) {
         const parsedCoupons = JSON.parse(coupons);
         dataToSave.coupons = parsedCoupons;
-        await writeDataToFile('coupons.json', parsedCoupons);
+        await writeDataToFile('data/coupons.json', parsedCoupons);
+        console.log("Wrote coupons data");
       }
       
       // Write a combined data file for easy access
-      await writeDataToFile('adminData.json', dataToSave);
+      await writeDataToFile('data/adminData.json', dataToSave);
+      console.log("Wrote combined admin data");
       
       // Also write to the initialProducts data file to make it part of the codebase
+      // This is the only file explicitly included in vercel.json
       if (dataToSave.products) {
-        await writeDataToFile('../data/initialProducts.ts', 
-          `export const initialProducts = ${JSON.stringify(dataToSave.products, null, 2)};`
-        );
+        const tsContent = `export const initialProducts = ${JSON.stringify(dataToSave.products, null, 2)};`;
+        await writeDataToFile('data/initialProducts.ts', tsContent);
+        console.log("Updated initialProducts.ts");
       }
       
-      console.log("Successfully wrote admin data to codebase");
+      console.log("Successfully wrote all admin data to codebase");
       return true;
     } catch (error) {
       console.error("Error writing admin data to codebase:", error);
+      toast({
+        title: "Error writing data",
+        description: error instanceof Error ? error.message : "Failed to write data to codebase",
+        variant: "destructive"
+      });
       return false;
     }
-  }, []);
+  }, [toast]);
 
   // Trigger the Vercel deployment
   const triggerDeployment = useCallback(async (): Promise<boolean> => {

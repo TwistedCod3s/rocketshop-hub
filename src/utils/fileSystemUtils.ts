@@ -26,12 +26,23 @@ export const writeDataToFile = async (
       }),
     });
     
+    // Check if the request was successful
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(`Failed to write file: ${errorData.error || response.statusText}`);
+      let errorMessage = 'Failed to write file';
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error || response.statusText;
+      } catch (e) {
+        // Fallback if we can't parse the error response
+        errorMessage = response.statusText;
+      }
+      
+      console.error(`Error writing file ${path}: ${errorMessage}`);
+      throw new Error(`Failed to write file: ${errorMessage}`);
     }
     
-    console.log(`Successfully wrote data to ${path}`);
+    const result = await response.json();
+    console.log(`Successfully wrote data to ${path}`, result);
     return true;
   } catch (error) {
     console.error(`Error writing to file ${path}:`, error);
@@ -52,12 +63,23 @@ export const readDataFromFile = async <T>(path: string): Promise<T | null> => {
       },
     });
     
+    // Check if the request was successful
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(`Failed to read file: ${errorData.error || response.statusText}`);
+      let errorMessage = 'Failed to read file';
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error || response.statusText;
+      } catch (e) {
+        // Fallback if we can't parse the error response
+        errorMessage = response.statusText;
+      }
+      
+      console.error(`Error reading file ${path}: ${errorMessage}`);
+      throw new Error(`Failed to read file: ${errorMessage}`);
     }
     
     const data = await response.json();
+    console.log(`Successfully read data from ${path}`, data);
     return data as T;
   } catch (error) {
     console.error(`Error reading from file ${path}:`, error);

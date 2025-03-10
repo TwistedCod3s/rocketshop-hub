@@ -1,105 +1,97 @@
 
-// Vercel serverless function for filesystem operations
-const fs = require('fs');
-const path = require('path');
+// Filesystem API endpoint for handling file operations in Vercel
+import { promises as fs } from 'fs';
+import path from 'path';
 
-// Safely resolve paths to prevent directory traversal attacks
-const resolveSafePath = (filePath) => {
-  // Define the root directory for data files
-  const DATA_DIR = path.resolve(process.cwd(), 'src', 'data');
-  
-  // Normalize and join the path
-  const fullPath = path.normalize(path.join(DATA_DIR, filePath));
-  
-  // Ensure the path is within the data directory
-  if (!fullPath.startsWith(DATA_DIR)) {
-    throw new Error('Access denied: Attempted to access a file outside the data directory');
-  }
-  
-  return fullPath;
-};
-
-// Ensure the directory exists
-const ensureDirectoryExists = (filePath) => {
-  const dirname = path.dirname(filePath);
-  if (!fs.existsSync(dirname)) {
-    fs.mkdirSync(dirname, { recursive: true });
-  }
-};
-
-// API handler function
-module.exports = async (req, res) => {
-  // Set appropriate CORS headers
+export default async function handler(req, res) {
+  // Enable CORS
+  res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  
-  // Handle OPTIONS request for CORS preflight
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+  );
+
+  // Handle preflight request
   if (req.method === 'OPTIONS') {
-    return res.status(200).end();
+    res.status(200).end();
+    return;
   }
-  
+
+  // Check if filesystem API is enabled
+  if (process.env.VERCEL_FILESYSTEM_API_ENABLED !== 'true') {
+    return res.status(500).json({
+      error: 'Filesystem API is not enabled. Set VERCEL_FILESYSTEM_API_ENABLED=true in your environment variables.'
+    });
+  }
+
   try {
-    // Handle POST request (write file)
+    // Handle GET request - Read file
+    if (req.method === 'GET') {
+      const filePath = req.query.path;
+      
+      if (!filePath) {
+        return res.status(400).json({ error: 'No file path specified' });
+      }
+
+      // Resolve the absolute path
+      const absolutePath = path.resolve(process.cwd(), 'src', filePath);
+      
+      // For security, ensure the path is within the src directory
+      if (!absolutePath.startsWith(path.resolve(process.cwd(), 'src'))) {
+        return res.status(403).json({ error: 'Access denied: Path outside of allowed directories' });
+      }
+
+      try {
+        const fileData = await fs.readFile(absolutePath, 'utf8');
+        
+        // Try to parse if JSON
+        if (filePath.endsWith('.json')) {
+          const jsonData = JSON.parse(fileData);
+          return res.status(200).json(jsonData);
+        }
+        
+        // Return as string for other file types
+        return res.status(200).json({ content: fileData });
+      } catch (error) {
+        console.error(`Error reading file ${absolutePath}:`, error);
+        return res.status(404).json({ error: `File not found or cannot be read: ${error.message}` });
+      }
+    }
+    
+    // Handle POST request - Write file
     if (req.method === 'POST') {
       const { path: filePath, data } = req.body;
       
-      if (!filePath || data === undefined) {
-        return res.status(400).json({ 
-          success: false, 
-          error: 'Path and data are required' 
-        });
+      if (!filePath || !data) {
+        return res.status(400).json({ error: 'File path and data are required' });
+      }
+
+      // Resolve the absolute path
+      const absolutePath = path.resolve(process.cwd(), 'src', filePath);
+      
+      // For security, ensure the path is within the src directory
+      if (!absolutePath.startsWith(path.resolve(process.cwd(), 'src'))) {
+        return res.status(403).json({ error: 'Access denied: Path outside of allowed directories' });
       }
       
-      const safePath = resolveSafePath(filePath);
-      ensureDirectoryExists(safePath);
+      // Ensure the directory exists
+      const directory = path.dirname(absolutePath);
+      await fs.mkdir(directory, { recursive: true });
       
-      await fs.promises.writeFile(safePath, data, 'utf-8');
-      console.log(`File written successfully: ${safePath}`);
+      // Write the file
+      await fs.writeFile(absolutePath, data, 'utf8');
+      console.log(`Successfully wrote file: ${absolutePath}`);
       
-      return res.status(200).json({ 
-        success: true,
-        message: `File ${filePath} written successfully`
-      });
-    }
-    
-    // Handle GET request (read file)
-    if (req.method === 'GET') {
-      const { path: filePath } = req.query;
-      
-      if (!filePath || Array.isArray(filePath)) {
-        return res.status(400).json({ 
-          success: false, 
-          error: 'A single path parameter is required' 
-        });
-      }
-      
-      const safePath = resolveSafePath(filePath);
-      const data = await fs.promises.readFile(safePath, 'utf-8');
-      
-      // Try to parse as JSON before returning
-      try {
-        const jsonData = JSON.parse(data);
-        return res.status(200).json(jsonData);
-      } catch (e) {
-        // If it's not valid JSON, return as text
-        return res.status(200).json({ 
-          success: true, 
-          data 
-        });
-      }
+      return res.status(200).json({ success: true, path: absolutePath });
     }
     
     // Handle unsupported methods
-    return res.status(405).json({ 
-      success: false, 
-      error: 'Method not allowed' 
-    });
+    return res.status(405).json({ error: 'Method not allowed' });
+    
   } catch (error) {
-    console.error('Error handling filesystem request:', error);
-    return res.status(500).json({ 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Internal server error' 
-    });
+    console.error('Filesystem API error:', error);
+    return res.status(500).json({ error: `Server error: ${error.message}` });
   }
-};
+}
