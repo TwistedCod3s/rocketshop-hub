@@ -149,7 +149,12 @@ const DatabaseInitializer = () => {
           } else if (dbError.code === '42703') {
             errorMessage = "Required columns are missing. Please check your table structure.";
           } else if (dbError.code === 'PGRST204') {
-            errorMessage = "Table schema mismatch: Some columns don't exist in your Supabase tables. Please update your database schema.";
+            // Handle the specific error for missing columns
+            if (dbError.message.includes("Could not find the 'fullDescription' column")) {
+              errorMessage = "Your 'products' table is missing the 'fullDescription' column. Please add it to your database schema.";
+            } else {
+              errorMessage = "Table schema mismatch: The column mentioned in the error message doesn't exist in your Supabase tables. Please update your database schema.";
+            }
           } else if (dbError.code === '23502') {
             errorMessage = "Required fields are missing. Please check your data format.";
           } else {
@@ -280,7 +285,7 @@ const DatabaseInitializer = () => {
               <div className="mt-2 text-sm">
                 <p>Please ensure your Supabase project has the following tables properly set up:</p>
                 <ul className="list-disc ml-5 mt-1">
-                  <li>products (with id, name, description, price, category, images, inStock, featured, rating, specifications, reviews columns)</li>
+                  <li>products (with id, name, description, fullDescription, price, category, images, inStock, featured, rating, specifications, reviews columns)</li>
                   <li>category_images (with id, category_slug, image_url columns)</li>
                   <li>subcategories (with id, category, subcategory_list columns)</li>
                   <li>coupons (with id, code, discount, discountPercentage, expiryDate, active, description columns)</li>
@@ -301,7 +306,7 @@ const DatabaseInitializer = () => {
               <AlertDescription className="text-blue-700">
                 <strong>Before initializing:</strong> Make sure you've created the required tables in your Supabase project:
                 <ul className="list-disc ml-5 mt-1">
-                  <li>products (with id, name, description, price, category, images, inStock, featured, rating, specifications, reviews columns)</li>
+                  <li>products (with id, name, description, fullDescription, price, category, images, inStock, featured, rating, specifications, reviews columns)</li>
                   <li>category_images (with id, category_slug, image_url columns)</li>
                   <li>subcategories (with id, category, subcategory_list columns)</li>
                   <li>coupons (with id, code, discount, discountPercentage, expiryDate, active, description columns)</li>

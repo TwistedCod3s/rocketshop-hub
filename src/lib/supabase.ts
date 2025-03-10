@@ -1,5 +1,6 @@
 
 import { createClient } from '@supabase/supabase-js';
+import { Product, Coupon } from '@/types/shop';
 
 // Get environment variables with fallbacks for dev environments
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
@@ -88,12 +89,21 @@ const tableSchema = {
     'id', 'name', 'description', 'price', 'category', 
     'images', 'inStock', 'featured', 'rating', 'specifications', 'reviews'
   ],
-  // Add other tables as needed
+  category_images: [
+    'id', 'category_slug', 'image_url'
+  ],
+  subcategories: [
+    'id', 'category', 'subcategory_list'
+  ],
+  coupons: [
+    'id', 'code', 'discount', 'discountPercentage', 'expiryDate', 'active', 'description'
+  ]
 };
 
 // Filter out fields that don't exist in the target schema
-const filterObjectBySchema = (obj, schemaFields) => {
-  const result = {};
+// Fix the typing here to resolve the error
+const filterObjectBySchema = <T extends Record<string, any>>(obj: T, schemaFields: string[]): Record<string, any> => {
+  const result: Record<string, any> = {};
   Object.keys(obj).forEach(key => {
     if (schemaFields.includes(key)) {
       result[key] = obj[key];
@@ -150,7 +160,7 @@ export const dbHelpers = {
     }
   },
   
-  async saveProducts(products: any[]) {
+  async saveProducts(products: Product[]) {
     console.log('Attempting to save products to Supabase:', products.length);
     const client = getSupabaseClient();
     if (!client) {
@@ -159,18 +169,17 @@ export const dbHelpers = {
     }
     
     try {
-      // FIX: Completely simplified delete operation to avoid filter syntax issues
+      // Simplified approach: Use a non-existent ID to avoid deleting real records
+      // This triggers a "no rows returned" which is not considered an error
       try {
         console.log("Attempting to delete existing products...");
-        // Simple approach: delete one item we know doesn't exist
-        // This trick makes Supabase execute the delete without any filtering
         const { error: deleteError } = await client
           .from('products')
           .delete()
           .eq('id', 'no-such-id-exists-' + Date.now());
           
         if (deleteError && !deleteError.message.includes('no rows')) {
-          console.error("Error with simplified delete:", deleteError);
+          console.error("Error deleting products:", deleteError);
         } else {
           console.log("Successfully cleared products table");
         }
@@ -235,7 +244,9 @@ export const dbHelpers = {
       // Convert array to object format
       const categoryImages: Record<string, string> = {};
       (data || []).forEach(item => {
-        categoryImages[item.category_slug] = item.image_url;
+        if (item && typeof item === 'object' && 'category_slug' in item && 'image_url' in item) {
+          categoryImages[item.category_slug] = item.image_url;
+        }
       });
       
       console.log(`Successfully fetched ${Object.keys(categoryImages).length} category images from Supabase`);
@@ -255,7 +266,7 @@ export const dbHelpers = {
     }
     
     try {
-      // FIX: Simplified delete operation
+      // Simplified delete operation
       try {
         console.log("Clearing category_images table...");
         const { error: deleteError } = await client
@@ -319,7 +330,9 @@ export const dbHelpers = {
       // Convert array to object format
       const subcategories: Record<string, string[]> = {};
       (data || []).forEach(item => {
-        subcategories[item.category] = item.subcategory_list;
+        if (item && typeof item === 'object' && 'category' in item && 'subcategory_list' in item) {
+          subcategories[item.category] = item.subcategory_list;
+        }
       });
       
       console.log(`Successfully fetched subcategories for ${Object.keys(subcategories).length} categories from Supabase`);
@@ -339,7 +352,7 @@ export const dbHelpers = {
     }
     
     try {
-      // FIX: Simplified delete operation
+      // Simplified delete operation
       try {
         console.log("Clearing subcategories table...");
         const { error: deleteError } = await client
@@ -407,7 +420,7 @@ export const dbHelpers = {
     }
   },
   
-  async saveCoupons(coupons: any[]) {
+  async saveCoupons(coupons: Coupon[]) {
     console.log('Attempting to save coupons to Supabase:', coupons.length);
     const client = getSupabaseClient();
     if (!client) {
@@ -416,7 +429,7 @@ export const dbHelpers = {
     }
     
     try {
-      // FIX: Simplified delete operation
+      // Simplified delete operation
       try {
         console.log("Clearing coupons table...");
         const { error: deleteError } = await client
@@ -444,9 +457,12 @@ export const dbHelpers = {
         
         // Insert one by one to avoid bulk insert issues
         for (const coupon of couponsWithUUIDs) {
+          // Filter the coupon object to only include fields that exist in the schema
+          const filteredCoupon = filterObjectBySchema(coupon, tableSchema.coupons);
+          
           const { error } = await client
             .from('coupons')
-            .insert(coupon);
+            .insert(filteredCoupon);
             
           if (error) {
             console.error(`Error inserting coupon ${coupon.code}:`, error);
