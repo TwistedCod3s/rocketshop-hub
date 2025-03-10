@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { UploadCloud, Link, RefreshCw } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const DeploymentSettings = () => {
   const { 
@@ -14,12 +15,14 @@ const DeploymentSettings = () => {
     getDeploymentHookUrl, 
     setDeploymentHookUrl,
     autoDeployEnabled,
-    toggleAutoDeploy
+    toggleAutoDeploy,
+    reloadAllAdminData
   } = useShopContext();
   
   const [deployUrl, setDeployUrl] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [autoDeploy, setAutoDeploy] = useState(false);
+  const { toast } = useToast();
   
   useEffect(() => {
     if (getDeploymentHookUrl) {
@@ -44,6 +47,24 @@ const DeploymentSettings = () => {
     setAutoDeploy(checked);
     if (toggleAutoDeploy) {
       toggleAutoDeploy(checked);
+    }
+  };
+  
+  const handleDeploy = async () => {
+    // First, ensure all data is properly synchronized
+    try {
+      await reloadAllAdminData(true);
+      // Now deploy
+      if (triggerDeployment) {
+        await triggerDeployment();
+      }
+    } catch (error) {
+      console.error("Error during deployment:", error);
+      toast({
+        title: "Deployment error",
+        description: "Failed to sync data before deployment",
+        variant: "destructive"
+      });
     }
   };
   
@@ -94,7 +115,7 @@ const DeploymentSettings = () => {
         </div>
         
         <Button 
-          onClick={triggerDeployment} 
+          onClick={handleDeploy} 
           disabled={isDeploying || !deployUrl}
           variant="default"
           className="w-full"

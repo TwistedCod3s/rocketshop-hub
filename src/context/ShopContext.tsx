@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect } from "react";
 import { ShopContextType } from "@/types/shop";
 import { useProducts } from "@/hooks/useProducts";
@@ -69,6 +68,7 @@ export const ShopProvider = ({ children }) => {
     updateCoupon: adminHook.updateCoupon,
     deleteCoupon: adminHook.deleteCoupon,
     validateCoupon: adminHook.validateCoupon,
+    categoryImages: adminHook.categoryImages,  // Add this explicitly
     getProduct: productsHook.getProduct,
     getRelatedProducts: productsHook.getRelatedProducts,
     fetchProductsByCategory: productsHook.fetchProductsByCategory,
