@@ -19,26 +19,30 @@ const DeploymentInfo = () => {
             <li>Set up your Vercel deployment webhook URL in the field above</li>
             <li>Make changes to your store (products, categories, etc.)</li>
             <li>Click "Deploy Now" to push these changes to your live site</li>
+            <li>Check deployment status in your Vercel dashboard</li>
           </ol>
         </AlertDescription>
       </Alert>
       
       <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Important: Configure Vercel Environment</AlertTitle>
+        <AlertTitle>Important: Required Vercel Configuration</AlertTitle>
         <AlertDescription className="mt-2">
           <p className="mb-2">
-            You must set <code className="bg-gray-100 px-1 py-0.5 rounded">VERCEL_FILESYSTEM_API_ENABLED=true</code> in your 
-            Vercel project's environment variables for file system access to work.
+            You <strong>must</strong> set <code className="bg-gray-100 px-1 py-0.5 rounded">VERCEL_FILESYSTEM_API_ENABLED=true</code> in your 
+            Vercel project's Environment Variables (not just in vercel.json).
           </p>
           <p className="mb-2">
-            Make sure your Vercel deployment webhook URL has proper permissions to trigger builds.
+            Go to your Vercel project dashboard → Settings → Environment Variables and add:
+            <br />
+            <code className="bg-gray-100 px-1 py-0.5 rounded block mt-1 mb-1">Name: VERCEL_FILESYSTEM_API_ENABLED</code>
+            <code className="bg-gray-100 px-1 py-0.5 rounded block">Value: true</code>
           </p>
           <p className="mb-2">
-            Ensure your Vercel project has the latest vercel.json configuration from the codebase.
+            After adding this environment variable, redeploy your project or create a new deployment.
           </p>
           <p>
-            Check that the build configuration in vercel.json includes the required settings for filesystem access.
+            Ensure your Vercel project Git integration is properly set up if you're using the deployment webhook.
           </p>
         </AlertDescription>
       </Alert>

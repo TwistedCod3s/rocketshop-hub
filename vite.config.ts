@@ -30,24 +30,6 @@ export default defineConfig(({ mode }) => ({
             'react-router-dom',
             '@tanstack/react-query'
           ],
-          ui: [
-            '@radix-ui/react-accordion',
-            '@radix-ui/react-alert-dialog',
-            '@radix-ui/react-aspect-ratio',
-            '@radix-ui/react-avatar',
-            '@radix-ui/react-checkbox',
-            '@radix-ui/react-dialog',
-            '@radix-ui/react-dropdown-menu',
-            '@radix-ui/react-label',
-            '@radix-ui/react-popover',
-            '@radix-ui/react-select',
-            '@radix-ui/react-separator',
-            '@radix-ui/react-slot',
-            '@radix-ui/react-toast',
-            'class-variance-authority',
-            'clsx',
-            'tailwind-merge'
-          ],
           lucide: ['lucide-react']
         }
       }
@@ -56,7 +38,7 @@ export default defineConfig(({ mode }) => ({
     minify: 'terser',
     terserOptions: {
       compress: {
-        drop_console: true,
+        drop_console: false, // Keep console logs for debugging
         drop_debugger: true
       }
     }
