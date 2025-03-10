@@ -48,12 +48,7 @@ export default defineConfig(({ mode }) => ({
             'clsx',
             'tailwind-merge'
           ],
-          lucide: ['lucide-react'],
-          components: [
-            './src/components/ui/',
-            './src/components/layout/'
-          ],
-          admin: ['./src/components/admin/']
+          lucide: ['lucide-react']
         }
       }
     },

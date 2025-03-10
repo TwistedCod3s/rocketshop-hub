@@ -32,10 +32,13 @@ const DeploymentInfo = () => {
             Vercel project's environment variables for file system access to work.
           </p>
           <p className="mb-2">
-            Make sure your Vercel deployment webhook has proper permissions to trigger builds.
+            Make sure your Vercel deployment webhook URL has proper permissions to trigger builds.
+          </p>
+          <p className="mb-2">
+            Ensure your Vercel project has the latest vercel.json configuration from the codebase.
           </p>
           <p>
-            Ensure your Vercel project has the latest vercel.json configuration from the codebase.
+            Check that the build configuration in vercel.json includes the required settings for filesystem access.
           </p>
         </AlertDescription>
       </Alert>
