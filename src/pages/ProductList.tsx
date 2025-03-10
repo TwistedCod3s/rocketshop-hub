@@ -7,23 +7,63 @@ import ProductFilters from "@/components/products/ProductFilters";
 import SortOptions from "@/components/products/SortOptions";
 import ProductGrid from "@/components/products/ProductGrid";
 import { useProductFilter } from "@/hooks/useProductFilter";
+import { dbHelpers } from "@/lib/supabase";
 
 const ProductList = () => {
   const { fetchAllProducts, reloadProductsFromStorage } = useShopContext();
   const [displayProducts, setDisplayProducts] = useState<Product[]>([]);
   const [filterOpen, setFilterOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   // Load products and refresh when products change
   useEffect(() => {
-    const loadProducts = () => {
-      // First reload from storage to ensure we have the latest data
-      if (reloadProductsFromStorage) {
-        reloadProductsFromStorage();
-      }
+    const loadProducts = async () => {
+      setIsLoading(true);
       
-      const allProducts = fetchAllProducts();
-      console.log("All products:", allProducts.length);
-      setDisplayProducts(allProducts);
+      try {
+        // Try loading from Supabase first
+        console.log("Attempting to load products from Supabase...");
+        const supabaseProducts = await dbHelpers.getProducts();
+        
+        if (supabaseProducts && supabaseProducts.length > 0) {
+          console.log("Loaded products from Supabase:", supabaseProducts.length);
+          
+          // Update localStorage with the latest from Supabase
+          localStorage.setItem('ROCKETRY_SHOP_PRODUCTS_V7', JSON.stringify(supabaseProducts));
+          
+          // If we have a reload function, use it to refresh the app state
+          if (reloadProductsFromStorage) {
+            reloadProductsFromStorage();
+          }
+          
+          // Set the display products
+          setDisplayProducts(supabaseProducts);
+        } else {
+          console.log("No products found in Supabase, falling back to localStorage");
+          
+          // Fallback to localStorage
+          if (reloadProductsFromStorage) {
+            reloadProductsFromStorage();
+          }
+          
+          const allProducts = fetchAllProducts();
+          console.log("All products from localStorage:", allProducts.length);
+          setDisplayProducts(allProducts);
+        }
+      } catch (error) {
+        console.error("Error loading products from Supabase:", error);
+        
+        // Fallback to localStorage
+        if (reloadProductsFromStorage) {
+          reloadProductsFromStorage();
+        }
+        
+        const allProducts = fetchAllProducts();
+        console.log("All products from localStorage (after error):", allProducts.length);
+        setDisplayProducts(allProducts);
+      } finally {
+        setIsLoading(false);
+      }
     };
     
     // Initial load
@@ -48,7 +88,10 @@ const ProductList = () => {
     });
     
     // Set up periodic refresh to ensure we're showing the latest data
-    const refreshInterval = setInterval(loadProducts, 10000); // Refresh every 10 seconds
+    const refreshInterval = setInterval(() => {
+      loadProducts();
+      console.log("Periodic refresh of products triggered");
+    }, 30000); // Refresh every 30 seconds
     
     return () => {
       window.removeEventListener('rocketry-product-update-v7', handleProductUpdate);
@@ -104,7 +147,13 @@ const ProductList = () => {
               productCount={filteredProducts.length} 
             />
             
-            <ProductGrid products={filteredProducts} />
+            {isLoading ? (
+              <div className="flex justify-center items-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+              </div>
+            ) : (
+              <ProductGrid products={filteredProducts} />
+            )}
           </div>
         </div>
       </div>

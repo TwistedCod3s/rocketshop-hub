@@ -1,3 +1,6 @@
+
+import { dbHelpers } from "@/lib/supabase";
+
 // Helper function to load from storage with defaults
 export const loadFromStorage = <T>(key: string, defaultValue: T): T => {
   try {
@@ -54,7 +57,7 @@ export const loadFromStorage = <T>(key: string, defaultValue: T): T => {
   return defaultValue;
 };
 
-// Helper function to save state to localStorage and broadcast change
+// Helper function to save state to localStorage, sync to Supabase, and broadcast change
 export const saveAndBroadcast = <T>(key: string, eventName: string, value: T): void => {
   try {
     // Make a deep copy to avoid reference issues
@@ -128,20 +131,44 @@ export const saveAndBroadcast = <T>(key: string, eventName: string, value: T): v
         console.log("Used fallback storage sync mechanism for", key);
       }, 10);
     }
+    
+    // Also save to Supabase when appropriate (based on the key)
+    if (key === PRODUCTS_STORAGE_KEY) {
+      console.log(`Trying to sync ${key} to Supabase...`);
+      dbHelpers.saveProducts(valueCopy as any[])
+        .then(() => console.log(`Successfully synced ${key} to Supabase`))
+        .catch(err => console.error(`Error syncing ${key} to Supabase:`, err));
+    } else if (key === CATEGORY_IMAGES_KEY) {
+      console.log(`Trying to sync ${key} to Supabase...`);
+      dbHelpers.saveCategoryImages(valueCopy as Record<string, string>)
+        .then(() => console.log(`Successfully synced ${key} to Supabase`))
+        .catch(err => console.error(`Error syncing ${key} to Supabase:`, err));
+    } else if (key === SUBCATEGORIES_KEY) {
+      console.log(`Trying to sync ${key} to Supabase...`);
+      dbHelpers.saveSubcategories(valueCopy as Record<string, string[]>)
+        .then(() => console.log(`Successfully synced ${key} to Supabase`))
+        .catch(err => console.error(`Error syncing ${key} to Supabase:`, err));
+    } else if (key === COUPONS_KEY) {
+      console.log(`Trying to sync ${key} to Supabase...`);
+      dbHelpers.saveCoupons(valueCopy as any[])
+        .then(() => console.log(`Successfully synced ${key} to Supabase`))
+        .catch(err => console.error(`Error syncing ${key} to Supabase:`, err));
+    }
   } catch (error) {
     console.error(`Error in saveAndBroadcast for ${key}:`, error);
   }
 };
 
 // Define consistent storage keys with version suffix
-export const ADMIN_STORAGE_KEY = "ROCKETRY_SHOP_ADMIN_V7"; // Bumped version
-export const CATEGORY_IMAGES_KEY = "ROCKETRY_SHOP_CATEGORY_IMAGES_V7"; // Bumped version
-export const SUBCATEGORIES_KEY = "ROCKETRY_SHOP_SUBCATEGORIES_V7"; // Bumped version
-export const COUPONS_KEY = "ROCKETRY_SHOP_COUPONS_V7"; // Bumped version
-export const SYNC_KEY = "ROCKETRY_SHOP_SYNC_TRIGGER_V7"; // New sync key
+export const PRODUCTS_STORAGE_KEY = "ROCKETRY_SHOP_PRODUCTS_V7"; // Added for direct use
+export const ADMIN_STORAGE_KEY = "ROCKETRY_SHOP_ADMIN_V7"; 
+export const CATEGORY_IMAGES_KEY = "ROCKETRY_SHOP_CATEGORY_IMAGES_V7";
+export const SUBCATEGORIES_KEY = "ROCKETRY_SHOP_SUBCATEGORIES_V7";
+export const COUPONS_KEY = "ROCKETRY_SHOP_COUPONS_V7";
+export const SYNC_KEY = "ROCKETRY_SHOP_SYNC_TRIGGER_V7";
 
 // Custom event names for real-time sync
-export const CATEGORY_IMAGES_EVENT = "rocketry-category-images-update-v7"; // Bumped version
-export const SUBCATEGORIES_EVENT = "rocketry-subcategories-update-v7"; // Bumped version
-export const COUPONS_EVENT = "rocketry-coupons-update-v7"; // Bumped version
-export const SYNC_EVENT = "rocketry-sync-trigger-v7"; // New sync event
+export const CATEGORY_IMAGES_EVENT = "rocketry-category-images-update-v7";
+export const SUBCATEGORIES_EVENT = "rocketry-subcategories-update-v7";
+export const COUPONS_EVENT = "rocketry-coupons-update-v7";
+export const SYNC_EVENT = "rocketry-sync-trigger-v7";

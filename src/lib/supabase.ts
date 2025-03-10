@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
@@ -67,22 +68,39 @@ export const supabase = getSupabaseClient();
 export const dbHelpers = {
   // Products
   async getProducts() {
+    console.log("Attempting to fetch products from Supabase");
     const client = getSupabaseClient();
-    if (!client) throw new Error('Database connection not configured');
+    if (!client) {
+      console.error("Database connection not configured for getProducts");
+      throw new Error('Database connection not configured');
+    }
     
-    const { data, error } = await client.from('products').select('*');
-    if (error) throw error;
-    return data || [];
+    try {
+      const { data, error } = await client.from('products').select('*');
+      if (error) {
+        console.error("Error fetching products from Supabase:", error);
+        throw error;
+      }
+      
+      console.log(`Successfully fetched ${data?.length || 0} products from Supabase`);
+      return data || [];
+    } catch (err) {
+      console.error("Exception in getProducts:", err);
+      throw err;
+    }
   },
   
   async saveProducts(products: any[]) {
+    console.log('Attempting to save products to Supabase:', products.length);
     const client = getSupabaseClient();
-    if (!client) throw new Error('Database connection not configured');
-    
-    console.log('Attempting to save products:', products);
+    if (!client) {
+      console.error("Database connection not configured for saveProducts");
+      throw new Error('Database connection not configured');
+    }
     
     try {
       // First delete all existing products
+      console.log("Deleting existing products...");
       const { error: deleteError } = await client
         .from('products')
         .delete()
@@ -101,10 +119,11 @@ export const dbHelpers = {
         return product;
       });
       
-      console.log('Prepared products for insertion:', productsWithUUIDs);
+      console.log('Prepared products for insertion:', productsWithUUIDs.length);
       
       // Insert new products if there are any
       if (productsWithUUIDs.length > 0) {
+        console.log("Inserting products into Supabase...");
         const { error } = await client
           .from('products')
           .insert(productsWithUUIDs);
@@ -115,7 +134,7 @@ export const dbHelpers = {
         }
       }
       
-      console.log('Successfully saved products to database');
+      console.log('Successfully saved products to Supabase database');
       return true;
     } catch (error) {
       console.error('Error in saveProducts:', error);
@@ -125,24 +144,41 @@ export const dbHelpers = {
   
   // Category Images
   async getCategoryImages() {
+    console.log("Attempting to fetch category images from Supabase");
     const client = getSupabaseClient();
-    if (!client) throw new Error('Database connection not configured');
+    if (!client) {
+      console.error("Database connection not configured for getCategoryImages");
+      throw new Error('Database connection not configured');
+    }
     
-    const { data, error } = await client.from('category_images').select('*');
-    if (error) throw error;
-    
-    // Convert array to object format
-    const categoryImages: Record<string, string> = {};
-    (data || []).forEach(item => {
-      categoryImages[item.category_slug] = item.image_url;
-    });
-    
-    return categoryImages;
+    try {
+      const { data, error } = await client.from('category_images').select('*');
+      if (error) {
+        console.error("Error fetching category images from Supabase:", error);
+        throw error;
+      }
+      
+      // Convert array to object format
+      const categoryImages: Record<string, string> = {};
+      (data || []).forEach(item => {
+        categoryImages[item.category_slug] = item.image_url;
+      });
+      
+      console.log(`Successfully fetched ${Object.keys(categoryImages).length} category images from Supabase`);
+      return categoryImages;
+    } catch (err) {
+      console.error("Exception in getCategoryImages:", err);
+      throw err;
+    }
   },
   
   async saveCategoryImages(categoryImages: Record<string, string>) {
+    console.log('Attempting to save category images to Supabase:', Object.keys(categoryImages).length);
     const client = getSupabaseClient();
-    if (!client) throw new Error('Database connection not configured');
+    if (!client) {
+      console.error("Database connection not configured for saveCategoryImages");
+      throw new Error('Database connection not configured');
+    }
     
     try {
       // Convert object to array format for database with proper UUIDs
@@ -152,22 +188,31 @@ export const dbHelpers = {
         image_url
       }));
       
+      console.log("Deleting existing category images...");
       // Delete existing records
       const { error: deleteError } = await client
         .from('category_images')
         .delete()
         .neq('id', 'dummy');
         
-      if (deleteError) throw deleteError;
+      if (deleteError) {
+        console.error("Error deleting category images:", deleteError);
+        throw deleteError;
+      }
       
       if (categoryImageArray.length > 0) {
+        console.log("Inserting category images into Supabase...");
         const { error } = await client
           .from('category_images')
           .insert(categoryImageArray);
           
-        if (error) throw error;
+        if (error) {
+          console.error("Error inserting category images:", error);
+          throw error;
+        }
       }
       
+      console.log('Successfully saved category images to Supabase database');
       return true;
     } catch (error) {
       console.error('Error saving category images:', error);
@@ -177,24 +222,41 @@ export const dbHelpers = {
   
   // Subcategories
   async getSubcategories() {
+    console.log("Attempting to fetch subcategories from Supabase");
     const client = getSupabaseClient();
-    if (!client) throw new Error('Database connection not configured');
+    if (!client) {
+      console.error("Database connection not configured for getSubcategories");
+      throw new Error('Database connection not configured');
+    }
     
-    const { data, error } = await client.from('subcategories').select('*');
-    if (error) throw error;
-    
-    // Convert array to object format
-    const subcategories: Record<string, string[]> = {};
-    (data || []).forEach(item => {
-      subcategories[item.category] = item.subcategory_list;
-    });
-    
-    return subcategories;
+    try {
+      const { data, error } = await client.from('subcategories').select('*');
+      if (error) {
+        console.error("Error fetching subcategories from Supabase:", error);
+        throw error;
+      }
+      
+      // Convert array to object format
+      const subcategories: Record<string, string[]> = {};
+      (data || []).forEach(item => {
+        subcategories[item.category] = item.subcategory_list;
+      });
+      
+      console.log(`Successfully fetched subcategories for ${Object.keys(subcategories).length} categories from Supabase`);
+      return subcategories;
+    } catch (err) {
+      console.error("Exception in getSubcategories:", err);
+      throw err;
+    }
   },
   
   async saveSubcategories(subcategories: Record<string, string[]>) {
+    console.log('Attempting to save subcategories to Supabase:', Object.keys(subcategories).length);
     const client = getSupabaseClient();
-    if (!client) throw new Error('Database connection not configured');
+    if (!client) {
+      console.error("Database connection not configured for saveSubcategories");
+      throw new Error('Database connection not configured');
+    }
     
     try {
       const subcategoryArray = Object.entries(subcategories).map(([category, subcategory_list]) => ({
@@ -203,22 +265,31 @@ export const dbHelpers = {
         subcategory_list
       }));
       
+      console.log("Deleting existing subcategories...");
       // Delete existing records
       const { error: deleteError } = await client
         .from('subcategories')
         .delete()
         .neq('id', 'dummy');
         
-      if (deleteError) throw deleteError;
+      if (deleteError) {
+        console.error("Error deleting subcategories:", deleteError);
+        throw deleteError;
+      }
       
       if (subcategoryArray.length > 0) {
+        console.log("Inserting subcategories into Supabase...");
         const { error } = await client
           .from('subcategories')
           .insert(subcategoryArray);
           
-        if (error) throw error;
+        if (error) {
+          console.error("Error inserting subcategories:", error);
+          throw error;
+        }
       }
       
+      console.log('Successfully saved subcategories to Supabase database');
       return true;
     } catch (error) {
       console.error('Error saving subcategories:', error);
@@ -228,17 +299,35 @@ export const dbHelpers = {
   
   // Coupons
   async getCoupons() {
+    console.log("Attempting to fetch coupons from Supabase");
     const client = getSupabaseClient();
-    if (!client) throw new Error('Database connection not configured');
+    if (!client) {
+      console.error("Database connection not configured for getCoupons");
+      throw new Error('Database connection not configured');
+    }
     
-    const { data, error } = await client.from('coupons').select('*');
-    if (error) throw error;
-    return data || [];
+    try {
+      const { data, error } = await client.from('coupons').select('*');
+      if (error) {
+        console.error("Error fetching coupons from Supabase:", error);
+        throw error;
+      }
+      
+      console.log(`Successfully fetched ${data?.length || 0} coupons from Supabase`);
+      return data || [];
+    } catch (err) {
+      console.error("Exception in getCoupons:", err);
+      throw err;
+    }
   },
   
   async saveCoupons(coupons: any[]) {
+    console.log('Attempting to save coupons to Supabase:', coupons.length);
     const client = getSupabaseClient();
-    if (!client) throw new Error('Database connection not configured');
+    if (!client) {
+      console.error("Database connection not configured for saveCoupons");
+      throw new Error('Database connection not configured');
+    }
     
     try {
       // Ensure all coupons have valid UUIDs
@@ -249,22 +338,31 @@ export const dbHelpers = {
         return coupon;
       });
       
+      console.log("Deleting existing coupons...");
       // Delete existing records
       const { error: deleteError } = await client
         .from('coupons')
         .delete()
         .neq('id', 'dummy');
         
-      if (deleteError) throw deleteError;
+      if (deleteError) {
+        console.error("Error deleting coupons:", deleteError);
+        throw deleteError;
+      }
       
       if (couponsWithUUIDs.length > 0) {
+        console.log("Inserting coupons into Supabase...");
         const { error } = await client
           .from('coupons')
           .insert(couponsWithUUIDs);
           
-        if (error) throw error;
+        if (error) {
+          console.error("Error inserting coupons:", error);
+          throw error;
+        }
       }
       
+      console.log('Successfully saved coupons to Supabase database');
       return true;
     } catch (error) {
       console.error('Error saving coupons:', error);
