@@ -96,6 +96,7 @@ export const dbHelpers = {
           description: product.description || '',
           price: product.price || 0,
           category: product.category || null,
+          subcategory: product.subcategory || null, // Ensure subcategory is included
           images: product.images || [],
           inStock: !!product.inStock,
           featured: !!product.featured,
@@ -110,8 +111,18 @@ export const dbHelpers = {
         if (product.specifications) cleanProduct.specifications = product.specifications;
         if (product.fullDescription) cleanProduct.fullDescription = product.fullDescription;
         
+        // Debug logging for subcategory
+        if (product.subcategory) {
+          console.log(`Product ${product.name} has subcategory: ${product.subcategory}`);
+        }
+        
         return cleanProduct;
       });
+
+      // Log the products we're about to save for debugging
+      console.log("Saving products to database with subcategories:", 
+        cleanedProducts.map(p => ({ id: p.id, name: p.name, subcategory: p.subcategory }))
+      );
 
       const { data, error } = await client
         .from('products')

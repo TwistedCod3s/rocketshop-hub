@@ -28,6 +28,7 @@ export function useCategoryFilter(displayProducts: Product[], subcategories: str
   useEffect(() => {
     // Clear selected subcategories that no longer exist in the new subcategories list
     if (subcategories && subcategories.length > 0) {
+      console.log("Subcategory list changed:", subcategories);
       setSelectedSubcategories(prev => 
         prev.filter(selected => subcategories.includes(selected))
       );
@@ -36,7 +37,7 @@ export function useCategoryFilter(displayProducts: Product[], subcategories: str
   
   // Apply filters and sorting
   useEffect(() => {
-    console.log("Filtering products:", displayProducts);
+    console.log("Filtering products:", displayProducts.length);
     console.log("Using subcategories filter:", selectedSubcategories);
     
     let result = [...displayProducts];
@@ -59,6 +60,9 @@ export function useCategoryFilter(displayProducts: Product[], subcategories: str
       result = result.filter(product => 
         product.subcategory && selectedSubcategories.includes(product.subcategory)
       );
+      console.log("After subcategory filtering:", result.length);
+      // Log each product's subcategory for debugging
+      result.forEach(p => console.log(`Product: ${p.name}, Subcategory: ${p.subcategory}`));
     }
     
     // Apply sorting
@@ -70,7 +74,7 @@ export function useCategoryFilter(displayProducts: Product[], subcategories: str
       result.sort((a, b) => a.name.localeCompare(b.name));
     }
     
-    console.log("Filtered results:", result);
+    console.log("Filtered results:", result.length);
     setFilteredProducts(result);
   }, [displayProducts, searchTerm, priceRange, sortBy, selectedSubcategories]);
   

@@ -42,7 +42,7 @@ export const convertProductToDbSchema = (product: Product): Record<string, any> 
   
   // Safe fields that we know exist in the database
   const safeFields = [
-    'name', 'description', 'price', 'category', 'images', 
+    'name', 'description', 'price', 'category', 'subcategory', 'images', 
     'inStock', 'featured', 'rating', 'reviews'
   ];
   
@@ -99,6 +99,7 @@ export const convertDbToProductSchema = (dbProduct: any): Product => {
   
   // Copy other fields if they exist
   if (dbProduct.category) product.category = dbProduct.category;
+  if (dbProduct.subcategory) product.subcategory = dbProduct.subcategory;
   if (dbProduct.images) product.images = dbProduct.images;
   if (dbProduct.inStock !== undefined) product.inStock = dbProduct.inStock;
   if (dbProduct.featured !== undefined) product.featured = dbProduct.featured;
