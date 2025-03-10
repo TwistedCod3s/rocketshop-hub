@@ -1,53 +1,86 @@
 
-# Vercel Deployment Setup
+# Vercel Deployment Setup Guide
 
-This project uses Vercel Serverless Functions to handle filesystem operations for the admin panel. Follow these steps to set up the project on Vercel:
+This guide provides step-by-step instructions for deploying your admin panel to Vercel with the filesystem API integration.
 
-## 1. Create a new Vercel project
+## 1. Create a New Vercel Project
 
-- Connect your GitHub repository to Vercel
-- Use the default settings for a Vite React project
+1. Go to [Vercel Dashboard](https://vercel.com/dashboard)
+2. Click "Add New" → "Project"
+3. Connect your GitHub repository
+4. Select the repository containing your admin panel application
 
 ## 2. Configure Build Settings
 
-- Build Command: `npm run build` or `vite build`
-- Output Directory: `dist`
-- Install Command: `npm install`
+Set the following build configurations:
+- **Framework Preset**: Vite
+- **Build Command**: `npm run build` or `vite build`
+- **Output Directory**: `dist`
+- **Install Command**: `npm install`
 
 ## 3. Set Up Environment Variables
 
-For the filesystem API to work properly, you'll need to set these environment variables in your Vercel project settings:
+In your Vercel project settings, add these environment variables:
 
-- `VERCEL_FILESYSTEM_API_ENABLED`: Set to `true` to enable filesystem access
-- `VERCEL_DEPLOYMENT_HOOK_URL`: Your Vercel deployment webhook URL (generated in step 4)
+1. Go to Project Settings → Environment Variables
+2. Add the following variables:
+   - **Name**: `VERCEL_FILESYSTEM_API_ENABLED`  
+     **Value**: `true`
+   - **Name**: `VERCEL_DEPLOYMENT_HOOK_URL`  
+     **Value**: (You'll create this in the next step)
 
 ## 4. Create a Deployment Hook
 
-1. Go to your Vercel project settings
-2. Navigate to "Git" tab
-3. Scroll down to "Deploy Hooks" section
-4. Create a new hook with a name like "Admin Panel Trigger"
-5. Copy the generated URL and set it as the `VERCEL_DEPLOYMENT_HOOK_URL` environment variable
+1. Go to Project Settings → Git Integration
+2. Scroll down to "Deploy Hooks" section
+3. Click "Create Hook"
+4. Name it "Admin Panel Trigger"
+5. Select the branch you want to deploy (usually `main` or `master`)
+6. Click "Create"
+7. Copy the generated URL (looks like `https://api.vercel.com/v1/integrations/deploy/...`)
+8. Go back to Environment Variables
+9. Add this URL as the value for `VERCEL_DEPLOYMENT_HOOK_URL`
 
-## 5. Enable Serverless Function Access
+## 5. Enable Filesystem Access for Serverless Functions
 
-For the API functions to work correctly with filesystem access, you may need to:
+1. Go to Project Settings → Functions
+2. Enable "Allow filesystem access to APIs in the /api directory"
+3. Save your changes
 
-1. Go to your Vercel project settings
-2. Navigate to "Functions" tab
-3. Enable the "Allow filesystem access" option
+## 6. Check API Configuration
 
-## 6. Deploy Your Project
+Ensure that your application uses the correct API endpoint path:
 
-After configuring these settings, deploy your project. The admin panel should now be able to write changes directly to the codebase and trigger new deployments.
+1. The `/api/filesystem.js` file should be at the root of your project (not in `src/`)
+2. Your frontend code should make requests to `/api/filesystem` (handled by `src/utils/fileSystemUtils.ts`)
+
+## 7. Deploy Your Project
+
+1. Click "Deploy" in your Vercel dashboard
+2. Wait for the build to complete
+
+## Testing Your Setup
+
+After deployment:
+
+1. Log in to your admin panel
+2. Make a change to your content
+3. Use the "Deploy Now" button
+4. Check the Function Logs in Vercel to debug any issues
 
 ## Troubleshooting
 
-If you encounter issues with the filesystem API:
+If you encounter issues with filesystem access:
 
-1. Check Vercel function logs for specific error messages
-2. Ensure all environment variables are correctly set
-3. Verify that file paths are relative to the project root
-4. Make sure the `api` directory is correctly deployed
+1. **Check Function Logs**: Go to Vercel Dashboard → Functions → Invocations
+2. **Verify Environment Variables**: Ensure `VERCEL_FILESYSTEM_API_ENABLED` is set to `true`
+3. **API Path Issues**: Make sure requests are going to `/api/filesystem` and not `/api/admin/filesystem`
+4. **Permissions**: Confirm that "Allow filesystem access" is enabled in Functions settings
+
+## Important Notes
+
+- The filesystem API only works in production deployments, not in preview deployments
+- Changes are written to the repository and trigger a new deployment
+- The deployment process might take a few minutes to complete
 
 For more information, see the [Vercel documentation on Serverless Functions](https://vercel.com/docs/functions).
