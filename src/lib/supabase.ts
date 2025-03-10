@@ -1,3 +1,4 @@
+
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Product, Coupon } from '@/types/shop';
 
@@ -5,7 +6,7 @@ import { Product, Coupon } from '@/types/shop';
 declare global {
   interface Window {
     // Fix the type declaration to match the existing one
-    supabaseClientInstance: any;
+    supabaseClientInstance: SupabaseClient<any, "public", any> | null;
   }
 }
 
@@ -177,7 +178,7 @@ export const getSupabaseClient = (): SupabaseClient<any, "public", any> | null =
         autoRefreshToken: true,
       },
       global: {
-        fetch: (...args) => {
+        fetch: (...args: Parameters<typeof fetch>) => {
           return fetch(...args);
         },
       },
