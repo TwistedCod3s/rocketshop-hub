@@ -1,9 +1,11 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Product, Coupon } from '@/types/shop';
 
+// Declare the global window property correctly
 declare global {
   interface Window {
-    supabaseClientInstance: SupabaseClient<any, "public", any> | null;
+    // Fix the type declaration to match the existing one
+    supabaseClientInstance: any;
   }
 }
 
