@@ -21,26 +21,33 @@ export function useProductFilter(displayProducts: Product[]) {
   
   // Apply filters and sorting
   useEffect(() => {
+    console.log("Filtering products from:", displayProducts.length);
+    console.log("Current filters - search:", searchTerm, "price:", priceRange, "categories:", selectedCategories);
+    
     let result = [...displayProducts];
     
     // Apply search filter
-    if (searchTerm) {
+    if (searchTerm && searchTerm.trim() !== '') {
+      const lowerSearch = searchTerm.toLowerCase();
       result = result.filter(product => 
-        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.description.toLowerCase().includes(searchTerm.toLowerCase())
+        (product.name && product.name.toLowerCase().includes(lowerSearch)) ||
+        (product.description && product.description.toLowerCase().includes(lowerSearch))
       );
+      console.log("After search filter:", result.length);
     }
     
     // Apply price filter
     result = result.filter(product => 
       product.price >= priceRange[0] && product.price <= priceRange[1]
     );
+    console.log("After price filter:", result.length);
     
     // Apply category filters if any are selected
     if (selectedCategories.length > 0) {
       result = result.filter(product => 
-        selectedCategories.includes(product.category)
+        product.category && selectedCategories.includes(product.category)
       );
+      console.log("After category filter:", result.length);
     }
     
     // Apply sorting
@@ -50,10 +57,17 @@ export function useProductFilter(displayProducts: Product[]) {
       result.sort((a, b) => b.price - a.price);
     } else if (sortBy === "name") {
       result.sort((a, b) => a.name.localeCompare(b.name));
+    } else if (sortBy === "featured") {
+      // Sort featured products first
+      result.sort((a, b) => {
+        if (a.featured && !b.featured) return -1;
+        if (!a.featured && b.featured) return 1;
+        return 0;
+      });
     }
     
+    console.log("Final filtered products:", result.length);
     setFilteredProducts(result);
-    console.log("Filtered products:", result);
   }, [displayProducts, searchTerm, priceRange, sortBy, selectedCategories]);
   
   const handleCategoryChange = (category: string) => {

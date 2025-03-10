@@ -1,20 +1,11 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Search, X, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-// Updated categories constant to match our new structure
-const CATEGORIES = [
-  "Rocket Kits",
-  "Engines",
-  "Tools",
-  "Materials",
-  "UKROC",
-  "Accessories"
-];
+import { useShopContext } from "@/context/ShopContext";
 
 interface ProductFiltersProps {
   searchTerm: string;
@@ -37,6 +28,19 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
   filterOpen,
   setFilterOpen
 }) => {
+  const { products } = useShopContext();
+  const [categories, setCategories] = useState<string[]>([]);
+  
+  // Extract unique categories from products
+  useEffect(() => {
+    if (products && products.length > 0) {
+      const uniqueCategories = Array.from(
+        new Set(products.map(product => product.category).filter(Boolean))
+      ) as string[];
+      setCategories(uniqueCategories);
+    }
+  }, [products]);
+
   // Handle min price slider change
   const handleMinPriceChange = (value: number[]) => {
     const newMin = value[0];
@@ -133,7 +137,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
             <div>
               <h4 className="font-medium mb-2">Categories</h4>
               <div className="space-y-2">
-                {CATEGORIES.map((cat) => (
+                {categories.map((cat) => (
                   <div key={cat} className="flex items-center space-x-2">
                     <Checkbox 
                       id={`category-${cat}`} 

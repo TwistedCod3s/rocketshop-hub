@@ -112,6 +112,17 @@ export function useCategoryImages() {
     const handleSyncEvent = () => {
       console.log("Sync event detected, reloading category images");
       reloadFromStorage();
+      
+      // Also try to load from database directly
+      dbHelpers.getCategoryImages()
+        .then(images => {
+          if (images && Object.keys(images).length > 0) {
+            console.log("Loaded category images directly from database:", images);
+            setCategoryImages(images);
+            localStorage.setItem(CATEGORY_IMAGES_KEY, JSON.stringify(images));
+          }
+        })
+        .catch(err => console.error("Failed to load category images from database:", err));
     };
     
     // Add event listeners
@@ -121,6 +132,17 @@ export function useCategoryImages() {
     
     // Force initial sync
     reloadFromStorage();
+    
+    // Also try to load from database directly on mount
+    dbHelpers.getCategoryImages()
+      .then(images => {
+        if (images && Object.keys(images).length > 0) {
+          console.log("Initial load of category images from database:", images);
+          setCategoryImages(images);
+          localStorage.setItem(CATEGORY_IMAGES_KEY, JSON.stringify(images));
+        }
+      })
+      .catch(err => console.error("Failed to load category images from database on mount:", err));
     
     return () => {
       console.log("Removing category images event listeners");

@@ -2,7 +2,7 @@
 import { Link } from "react-router-dom";
 import { CATEGORY_MAP } from "@/constants/categories";
 import { useAdmin } from "@/hooks/useAdmin";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 // Define image paths for each category
 export const CATEGORY_IMAGES = {
@@ -16,35 +16,35 @@ export const CATEGORY_IMAGES = {
 
 const CategorySection = () => {
   const { categoryImages } = useAdmin();
+  const [loadedImages, setLoadedImages] = useState<Record<string, string>>({});
   
   // Debug logging for category images
   useEffect(() => {
     console.log("CategorySection - Custom images from useAdmin:", categoryImages);
     console.log("CategorySection - Fallback images:", CATEGORY_IMAGES);
+    
+    // When categoryImages changes, update our local state
+    if (categoryImages) {
+      setLoadedImages(categoryImages);
+    }
   }, [categoryImages]);
   
   // Function to get the correct image URL for a category
   const getCategoryImage = (slug: string) => {
-    // First try to get from custom images
-    if (categoryImages && categoryImages[slug]) {
-      console.log(`Found custom image for ${slug}: ${categoryImages[slug].substring(0, 50)}...`);
-      return categoryImages[slug];
+    // First try to get from loaded images
+    if (loadedImages && loadedImages[slug]) {
+      return loadedImages[slug];
     }
     
     // Fallback to default images
     const fallbackImage = CATEGORY_IMAGES[slug as keyof typeof CATEGORY_IMAGES];
     if (fallbackImage) {
-      console.log(`Using fallback image for ${slug}: ${fallbackImage}`);
       return fallbackImage;
     }
     
     console.log(`No image found for ${slug}`);
     return "";
   };
-  
-  // Add console logging to help debug
-  console.log("CategorySection rendering with categories:", CATEGORY_MAP);
-  console.log("Custom category images:", categoryImages);
   
   return (
     <section className="py-12 bg-gray-50">
@@ -57,7 +57,6 @@ const CategorySection = () => {
           {Object.entries(CATEGORY_MAP).map(([slug, name]) => {
             const categoryPath = `/category/${slug}`;
             const imagePath = getCategoryImage(slug);
-            console.log(`Creating link for category: ${name} with path: ${categoryPath}, image: ${imagePath ? (imagePath.substring(0, 30) + "...") : "none"}`);
             
             return (
               <Link 
