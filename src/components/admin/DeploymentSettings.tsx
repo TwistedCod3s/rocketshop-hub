@@ -7,6 +7,8 @@ import DeploymentUrlInput from "./deployment/DeploymentUrlInput";
 import AutoDeployToggle from "./deployment/AutoDeployToggle";
 import DeploymentActions from "./deployment/DeploymentActions";
 import DeploymentInfo from "./deployment/DeploymentInfo";
+import { Button } from "@/components/ui/button";
+import { Loader } from "lucide-react";
 
 const DeploymentSettings = () => {
   const { 
@@ -173,13 +175,9 @@ const DeploymentSettings = () => {
     <div className="bg-white rounded-lg shadow-sm p-6">
       <h3 className="text-lg font-medium mb-6">Deployment Settings</h3>
       
-      <DeploymentStatusAlert 
-        hasPendingChanges={hasPendingChanges}
-        lastDeploymentTime={lastDeploymentTime}
-        formatLastDeploymentTime={formatLastDeploymentTime}
-      />
+      <DeploymentStatusAlert deployHookUrl={deployUrl} />
       
-      <div className="space-y-6">
+      <div className="space-y-6 mt-6">
         <DeploymentUrlInput 
           deployUrl={deployUrl}
           setDeployUrl={setDeployUrl}
@@ -191,14 +189,28 @@ const DeploymentSettings = () => {
           onToggle={handleToggleAutoDeploy}
         />
         
-        <DeploymentActions 
-          isSyncing={isSyncing}
-          isDeploying={isDeploying}
-          hasPendingChanges={hasPendingChanges}
-          deployUrl={deployUrl}
-          onSync={handleSyncData}
-          onDeploy={handleDeploy}
-        />
+        <div className="flex flex-col sm:flex-row gap-4">
+          <Button
+            variant="outline"
+            onClick={handleSyncData}
+            disabled={isSyncing}
+            className="w-full sm:w-auto"
+          >
+            {isSyncing ? (
+              <>
+                <Loader className="mr-2 h-4 w-4 animate-spin" />
+                Syncing...
+              </>
+            ) : (
+              <>Sync Changes</>
+            )}
+          </Button>
+          
+          <DeploymentActions 
+            triggerDeployment={handleDeploy}
+            isDeploying={isDeploying}
+          />
+        </div>
         
         <DeploymentInfo />
       </div>

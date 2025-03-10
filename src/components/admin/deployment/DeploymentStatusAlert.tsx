@@ -55,7 +55,7 @@ const DeploymentStatusAlert = ({ deployHookUrl }: DeploymentStatusAlertProps) =>
   
   if (pendingChanges) {
     return (
-      <Alert variant="warning" className="border-amber-200 bg-amber-50">
+      <Alert className="border-amber-200 bg-amber-50">
         <AlertCircle className="h-4 w-4 text-amber-600" />
         <AlertTitle className="text-amber-800">Unsaved Changes</AlertTitle>
         <AlertDescription className="text-amber-700">
