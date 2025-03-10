@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,13 +25,15 @@ const CategoryImageDialog: React.FC<CategoryImageDialogProps> = ({
   const [imageUrl, setImageUrl] = useState(currentImageUrl);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(currentImageUrl);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Reset state when dialog opens with new data
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen) {
       setImageUrl(currentImageUrl);
       setImagePreview(currentImageUrl);
       setImageFile(null);
+      setIsSaving(false);
     }
   }, [isOpen, currentImageUrl]);
 
@@ -48,9 +50,19 @@ const CategoryImageDialog: React.FC<CategoryImageDialogProps> = ({
     }
   };
 
-  const handleSave = () => {
-    onSaveImage(imagePreview || imageUrl);
-    onOpenChange(false);
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await onSaveImage(imagePreview || imageUrl);
+      // Force a small delay to ensure database operations complete
+      setTimeout(() => {
+        onOpenChange(false);
+        setIsSaving(false);
+      }, 500);
+    } catch (error) {
+      console.error("Error saving image:", error);
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -108,8 +120,10 @@ const CategoryImageDialog: React.FC<CategoryImageDialogProps> = ({
         </div>
         
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleSave}>Save Changes</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>Cancel</Button>
+          <Button onClick={handleSave} disabled={isSaving}>
+            {isSaving ? "Saving..." : "Save Changes"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

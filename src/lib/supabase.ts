@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -136,6 +137,7 @@ export const dbHelpers = {
       const client = getSupabaseClient();
       if (!client) return {};
 
+      console.log("Fetching category images from database...");
       const { data, error } = await client
         .from('category_images')
         .select('*');
@@ -149,12 +151,13 @@ export const dbHelpers = {
       const categoryImages: Record<string, string> = {};
       if (data && Array.isArray(data)) {
         data.forEach((item: any) => {
-          // Use the correct column name based on your schema
-          const categorySlug = item.category_slug || '';
-          const imageUrl = item.image_url || '';
+          // Check all possible column names
+          const categorySlug = item.category_slug || item.slug || item.category || '';
+          const imageUrl = item.image_url || item.url || item.image || '';
           
           if (categorySlug) {
             categoryImages[categorySlug] = imageUrl;
+            console.log(`Loaded image for ${categorySlug}, length: ${imageUrl.length}`);
           }
         });
         console.log("Successfully loaded category images from DB:", Object.keys(categoryImages).length);
@@ -177,27 +180,38 @@ export const dbHelpers = {
       // Log the data we're about to save
       console.log("Preparing to save category images:", Object.keys(categoryImages).length);
       
+      // First, delete all existing records
+      console.log("Clearing existing category_images table...");
+      const { error: deleteError } = await client
+        .from('category_images')
+        .delete()
+        .gte('id', '0'); // Delete all rows
+      
+      if (deleteError) {
+        console.error("Error clearing category images table:", deleteError);
+        
+        // Don't return false here, try to insert anyway
+        console.log("Continuing with insert despite delete error");
+      } else {
+        console.log("Successfully cleared category_images table");
+      }
+      
       // Convert the single object to an array of objects with the correct column names
       const categoryImagesArray = Object.entries(categoryImages).map(([category_slug, image_url]) => {
-        // Log each item we're preparing
-        console.log(`Preparing category image for slug: ${category_slug}, image length: ${image_url.length}`);
-        
         return {
-          id: uuidv4(), // Always generate a new UUID for consistency
+          id: uuidv4(), // Always generate a new UUID
           category_slug,
           image_url
         };
       });
 
-      // Use update if conflict since these might already exist
-      const { error } = await client
+      // Insert all records
+      const { error: insertError } = await client
         .from('category_images')
-        .upsert(categoryImagesArray, {
-          onConflict: 'category_slug'
-        });
+        .insert(categoryImagesArray);
 
-      if (error) {
-        console.error("Error saving category images:", error);
+      if (insertError) {
+        console.error("Error inserting category images:", insertError);
         return false;
       }
 

@@ -15,7 +15,7 @@ export const CATEGORY_IMAGES = {
 };
 
 const CategorySection = () => {
-  const { categoryImages } = useAdmin();
+  const { categoryImages, reloadAllAdminData } = useAdmin();
   const [loadedImages, setLoadedImages] = useState<Record<string, string>>({});
   
   // Debug logging for category images
@@ -23,22 +23,27 @@ const CategorySection = () => {
     console.log("CategorySection - Custom images from useAdmin:", categoryImages);
     console.log("CategorySection - Fallback images:", CATEGORY_IMAGES);
     
+    // Trigger initial data reload from database to ensure we have the latest images
+    reloadAllAdminData?.();
+    
     // When categoryImages changes, update our local state
     if (categoryImages) {
       setLoadedImages(categoryImages);
     }
-  }, [categoryImages]);
+  }, [categoryImages, reloadAllAdminData]);
   
   // Function to get the correct image URL for a category
   const getCategoryImage = (slug: string) => {
     // First try to get from loaded images
     if (loadedImages && loadedImages[slug]) {
+      console.log(`Using custom image for ${slug}:`, loadedImages[slug].substring(0, 50) + "...");
       return loadedImages[slug];
     }
     
     // Fallback to default images
     const fallbackImage = CATEGORY_IMAGES[slug as keyof typeof CATEGORY_IMAGES];
     if (fallbackImage) {
+      console.log(`Using fallback image for ${slug}:`, fallbackImage);
       return fallbackImage;
     }
     
@@ -72,6 +77,7 @@ const CategorySection = () => {
                       className="w-full h-full object-cover"
                       onError={(e) => {
                         // Fallback to displaying first letter if image fails to load
+                        console.error(`Image load error for ${slug}:`, e);
                         e.currentTarget.style.display = 'none';
                         const parentElement = e.currentTarget.parentElement;
                         if (parentElement) {

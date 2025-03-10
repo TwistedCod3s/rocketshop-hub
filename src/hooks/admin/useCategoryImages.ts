@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from "react";
 import { 
   loadFromStorage, 
@@ -7,6 +6,7 @@ import {
   CATEGORY_IMAGES_EVENT 
 } from "./adminUtils";
 import { dbHelpers } from "@/lib/supabase";
+import { useToast } from "@/hooks/use-toast";
 
 // Define types
 type CategoryImagesMap = Record<string, string>;
@@ -16,6 +16,8 @@ const initialGlobalCategoryImages = loadFromStorage<CategoryImagesMap>(CATEGORY_
 
 export function useCategoryImages() {
   const [categoryImages, setCategoryImages] = useState<CategoryImagesMap>(initialGlobalCategoryImages);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const { toast } = useToast();
   
   // Function to forcibly reload from localStorage
   const reloadFromStorage = useCallback(() => {
@@ -26,15 +28,6 @@ export function useCategoryImages() {
           const parsedData = JSON.parse(storedData);
           setCategoryImages(parsedData);
           console.log("Manually reloaded category images from localStorage:", parsedData);
-          
-          // After loading from localStorage, sync to Supabase
-          dbHelpers.saveCategoryImages(parsedData)
-            .then(success => {
-              if (success) {
-                console.log("Auto-synced category images to Supabase after reload");
-              }
-            })
-            .catch(err => console.error("Failed to auto-sync category images:", err));
         } catch (parseError) {
           console.error("Error parsing category images:", parseError);
           
@@ -92,10 +85,6 @@ export function useCategoryImages() {
           // Attempt recovery
           reloadFromStorage();
         }
-      } else if (e.key === "ROCKETRY_SHOP_SYNC_TRIGGER_V7") {
-        // General sync trigger - reload to be safe
-        console.log("Sync trigger detected, reloading category images");
-        reloadFromStorage();
       }
     };
     
@@ -111,18 +100,7 @@ export function useCategoryImages() {
     // Generic sync event handler
     const handleSyncEvent = () => {
       console.log("Sync event detected, reloading category images");
-      reloadFromStorage();
-      
-      // Also try to load from database directly
-      dbHelpers.getCategoryImages()
-        .then(images => {
-          if (images && Object.keys(images).length > 0) {
-            console.log("Loaded category images directly from database:", images);
-            setCategoryImages(images);
-            localStorage.setItem(CATEGORY_IMAGES_KEY, JSON.stringify(images));
-          }
-        })
-        .catch(err => console.error("Failed to load category images from database:", err));
+      loadDataFromDatabase();
     };
     
     // Add event listeners
@@ -130,19 +108,8 @@ export function useCategoryImages() {
     window.addEventListener(CATEGORY_IMAGES_EVENT, handleCategoryImagesEvent as EventListener);
     window.addEventListener('rocketry-sync-trigger-v7', handleSyncEvent);
     
-    // Force initial sync
-    reloadFromStorage();
-    
-    // Also try to load from database directly on mount
-    dbHelpers.getCategoryImages()
-      .then(images => {
-        if (images && Object.keys(images).length > 0) {
-          console.log("Initial load of category images from database:", images);
-          setCategoryImages(images);
-          localStorage.setItem(CATEGORY_IMAGES_KEY, JSON.stringify(images));
-        }
-      })
-      .catch(err => console.error("Failed to load category images from database on mount:", err));
+    // Initial data load
+    loadDataFromDatabase();
     
     return () => {
       console.log("Removing category images event listeners");
@@ -151,6 +118,28 @@ export function useCategoryImages() {
       window.removeEventListener('rocketry-sync-trigger-v7', handleSyncEvent);
     };
   }, [reloadFromStorage]);
+  
+  // Function to load data directly from the database
+  const loadDataFromDatabase = async () => {
+    try {
+      console.log("Loading category images from database...");
+      const images = await dbHelpers.getCategoryImages();
+      
+      if (images && Object.keys(images).length > 0) {
+        console.log("Loaded category images from database:", images);
+        setCategoryImages(images);
+        
+        // Also update localStorage to stay in sync
+        localStorage.setItem(CATEGORY_IMAGES_KEY, JSON.stringify(images));
+      } else {
+        // If no data in database, fall back to localStorage
+        reloadFromStorage();
+      }
+    } catch (err) {
+      console.error("Failed to load category images from database:", err);
+      reloadFromStorage();
+    }
+  };
   
   // Function to handle file uploads and convert to base64
   const handleFileUpload = useCallback((file: File): Promise<string> => {
@@ -167,92 +156,122 @@ export function useCategoryImages() {
   }, []);
   
   // Function to update category image
-  const updateCategoryImage = useCallback((categorySlug: string, imageUrl: string) => {
+  const updateCategoryImage = useCallback(async (categorySlug: string, imageUrl: string) => {
     try {
-      // For debug - check the size of the image
+      setIsUpdating(true);
       console.log(`Updating image for category slug ${categorySlug}, image size: ${imageUrl.length} chars`);
       
       // Update local state using functional form to ensure we're working with the latest state
       setCategoryImages(prevImages => {
         const updatedImages = { ...prevImages, [categorySlug]: imageUrl };
         
-        // Save to localStorage and broadcast with more aggressive synchronization
-        saveAndBroadcast(CATEGORY_IMAGES_KEY, CATEGORY_IMAGES_EVENT, updatedImages);
-        
-        console.log("Updated category image for:", categorySlug, "Data size:", imageUrl.length);
-        
-        // Direct sync to Supabase (in addition to the sync in saveAndBroadcast)
-        setTimeout(() => {
-          dbHelpers.saveCategoryImages(updatedImages)
-            .then(success => {
-              if (success) {
-                console.log("Direct sync of category images to Supabase succeeded");
-              } else {
-                console.warn("Direct sync of category images to Supabase returned false");
-              }
-            })
-            .catch(err => console.error("Error during direct sync to Supabase:", err));
-        }, 100);
+        // First sync to database directly
+        dbHelpers.saveCategoryImages(updatedImages)
+          .then(success => {
+            if (success) {
+              console.log("Successfully synced category images to database");
+              // Only update localStorage and broadcast if database sync was successful
+              saveAndBroadcast(CATEGORY_IMAGES_KEY, CATEGORY_IMAGES_EVENT, updatedImages);
+              toast({
+                title: "Category image updated",
+                description: "Image has been saved to the database",
+              });
+            } else {
+              console.error("Failed to sync category images to database");
+              toast({
+                title: "Error updating image",
+                description: "Could not save to database. Please try again.",
+                variant: "destructive"
+              });
+            }
+            setIsUpdating(false);
+          })
+          .catch(err => {
+            console.error("Error during sync to database:", err);
+            toast({
+              title: "Error updating image",
+              description: "Database error. Please try again.",
+              variant: "destructive"
+            });
+            setIsUpdating(false);
+          });
         
         return updatedImages;
       });
       
-      // Set pending changes flag directly
-      localStorage.setItem('ROCKETRY_SHOP_CHANGES_PENDING', 'true');
     } catch (error) {
       console.error("Error updating category image:", error);
+      setIsUpdating(false);
       
-      // Try recovery update if the first attempt failed
-      try {
-        const currentImages = { ...categoryImages, [categorySlug]: imageUrl };
-        localStorage.setItem(CATEGORY_IMAGES_KEY, JSON.stringify(currentImages));
-        localStorage.setItem('ROCKETRY_SHOP_CHANGES_PENDING', 'true');
-        console.log("Used recovery path to save category image");
-      } catch (recoveryError) {
-        console.error("Recovery save also failed:", recoveryError);
-      }
+      toast({
+        title: "Error updating image",
+        description: "An unexpected error occurred",
+        variant: "destructive"
+      });
     }
-  }, [categoryImages]);
+  }, [toast]);
 
   // Function to delete a category image
-  const deleteCategoryImage = useCallback((categorySlug: string) => {
+  const deleteCategoryImage = useCallback(async (categorySlug: string) => {
     try {
+      setIsUpdating(true);
+      
       setCategoryImages(prevImages => {
         const updatedImages = { ...prevImages };
         delete updatedImages[categorySlug];
         
-        // Save to localStorage and broadcast
-        saveAndBroadcast(CATEGORY_IMAGES_KEY, CATEGORY_IMAGES_EVENT, updatedImages);
-        console.log("Deleted category image for:", categorySlug);
-        
-        // Direct sync to Supabase
-        setTimeout(() => {
-          dbHelpers.saveCategoryImages(updatedImages)
-            .then(success => {
-              if (success) {
-                console.log("Direct sync of category images to Supabase after deletion succeeded");
-              } else {
-                console.warn("Direct sync of category images to Supabase after deletion returned false");
-              }
-            })
-            .catch(err => console.error("Error during direct sync to Supabase after deletion:", err));
-        }, 100);
-        
-        // Set pending changes flag
-        localStorage.setItem('ROCKETRY_SHOP_CHANGES_PENDING', 'true');
+        // First sync to database directly
+        dbHelpers.saveCategoryImages(updatedImages)
+          .then(success => {
+            if (success) {
+              console.log("Successfully deleted category image from database");
+              // Only update localStorage and broadcast if database sync was successful
+              saveAndBroadcast(CATEGORY_IMAGES_KEY, CATEGORY_IMAGES_EVENT, updatedImages);
+              toast({
+                title: "Category image deleted",
+                description: "Image has been removed from the database",
+              });
+            } else {
+              console.error("Failed to delete category image from database");
+              toast({
+                title: "Error deleting image",
+                description: "Could not remove from database. Please try again.",
+                variant: "destructive"
+              });
+            }
+            setIsUpdating(false);
+          })
+          .catch(err => {
+            console.error("Error during deletion from database:", err);
+            toast({
+              title: "Error deleting image",
+              description: "Database error. Please try again.",
+              variant: "destructive"
+            });
+            setIsUpdating(false);
+          });
         
         return updatedImages;
       });
+      
     } catch (error) {
       console.error("Error deleting category image:", error);
+      setIsUpdating(false);
+      
+      toast({
+        title: "Error deleting image",
+        description: "An unexpected error occurred",
+        variant: "destructive"
+      });
     }
-  }, []);
+  }, [toast]);
 
   return {
     categoryImages,
     handleFileUpload,
     updateCategoryImage,
     deleteCategoryImage,
-    reloadFromStorage
+    reloadFromStorage,
+    isUpdating
   };
 }

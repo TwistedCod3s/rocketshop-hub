@@ -20,7 +20,7 @@ const AdminCategories: React.FC<AdminCategoriesProps> = ({ products }) => {
   const [currentCategory, setCurrentCategory] = useState("");
   const [currentCategoryName, setCurrentCategoryName] = useState("");
   
-  const { handleFileUpload, updateCategoryImage, categoryImages } = useAdmin();
+  const { handleFileUpload, updateCategoryImage, categoryImages, isUpdating, reloadAllAdminData } = useAdmin();
   const { subcategories, updateSubcategories, updateProduct } = useShopContext();
   const { toast } = useToast();
 
@@ -38,16 +38,39 @@ const AdminCategories: React.FC<AdminCategoriesProps> = ({ products }) => {
     setIsSubcategoryDialogOpen(true);
   };
 
-  const handleSaveImage = (newImagePath: string) => {
-    // Update the category image
-    updateCategoryImage(currentCategory, newImagePath);
-    
-    console.log(`Updated image for ${currentCategory} to: ${newImagePath}`);
-    
-    toast({
-      title: "Image updated",
-      description: `Image for ${CATEGORY_MAP[currentCategory]} has been updated successfully`,
-    });
+  const handleSaveImage = async (newImagePath: string) => {
+    try {
+      // Update the category image
+      await updateCategoryImage(currentCategory, newImagePath);
+      
+      console.log(`Updated image for ${currentCategory} to: ${newImagePath.substring(0, 50)}...`);
+      
+      // Trigger a global data sync after saving
+      setTimeout(() => {
+        if (reloadAllAdminData) {
+          reloadAllAdminData(true).then(() => {
+            console.log("Completed full admin data reload after image update");
+          });
+        }
+      }, 1000);
+      
+      toast({
+        title: "Image updated",
+        description: `Image for ${CATEGORY_MAP[currentCategory]} has been updated successfully`,
+      });
+      
+      return true;
+    } catch (error) {
+      console.error("Error in handleSaveImage:", error);
+      
+      toast({
+        title: "Error saving image",
+        description: "Failed to update image. Please try again.",
+        variant: "destructive"
+      });
+      
+      return false;
+    }
   };
 
   const handleSaveSubcategories = (newSubcategoryList: string[]) => {
@@ -80,14 +103,18 @@ const AdminCategories: React.FC<AdminCategoriesProps> = ({ products }) => {
 
   // Get the appropriate image URL for a category
   const getCategoryImage = (slug: string) => {
-    return categoryImages[slug] || 
-           CATEGORY_IMAGES[slug as keyof typeof CATEGORY_IMAGES] || "";
+    if (categoryImages && categoryImages[slug]) {
+      return categoryImages[slug];
+    }
+    return CATEGORY_IMAGES[slug as keyof typeof CATEGORY_IMAGES] || "";
   };
 
   // Get the current image for the selected category
   const getCurrentImageUrl = () => {
-    return categoryImages[currentCategory] || 
-           CATEGORY_IMAGES[currentCategory as keyof typeof CATEGORY_IMAGES] || "";
+    if (categoryImages && categoryImages[currentCategory]) {
+      return categoryImages[currentCategory];
+    }
+    return CATEGORY_IMAGES[currentCategory as keyof typeof CATEGORY_IMAGES] || "";
   };
 
   return (

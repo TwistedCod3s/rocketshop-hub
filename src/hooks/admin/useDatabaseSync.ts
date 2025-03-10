@@ -57,6 +57,12 @@ export function useDatabaseSync(
       subcategoriesReload();
       couponsReload();
       productsReload();
+
+      // Trigger a window refresh to ensure all components reload with the new data
+      const syncEvent = new CustomEvent("rocketry-sync-trigger-v7", { 
+        detail: { action: "full-sync-complete", timestamp: new Date().toISOString() } 
+      });
+      window.dispatchEvent(syncEvent);
       
       return true;
     } catch (error) {
@@ -86,7 +92,7 @@ export function useDatabaseSync(
       
       // Dispatch a custom sync event
       window.dispatchEvent(new CustomEvent("rocketry-sync-trigger-v7", { 
-        detail: { timestamp } 
+        detail: { timestamp, action: "admin-reload" } 
       }));
       
       // Also dispatch a storage event for cross-window communication
@@ -123,7 +129,7 @@ export function useDatabaseSync(
         const timestamp = new Date().toISOString();
         localStorage.setItem(SYNC_KEY, timestamp);
         window.dispatchEvent(new CustomEvent("rocketry-sync-trigger-v7", { 
-          detail: { timestamp } 
+          detail: { timestamp, action: "fallback-reload" } 
         }));
         
         toast({

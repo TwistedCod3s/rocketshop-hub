@@ -12,28 +12,51 @@ const ProductImages = ({ images, name }: ProductImagesProps) => {
   
   // Validate images on mount and when images prop changes
   useEffect(() => {
+    console.log("ProductImages - Received images:", images);
+    
     if (!images || images.length === 0) {
+      console.log("ProductImages - No images provided");
       setValidImages([]);
       return;
     }
     
-    const validatedImages = images.filter(img => img && typeof img === 'string');
+    const validatedImages = images.filter(img => img && typeof img === 'string' && img.trim() !== '');
+    console.log("ProductImages - Valid images:", validatedImages);
     setValidImages(validatedImages);
     
     // Reset selected image if out of bounds
     if (selectedImage >= validatedImages.length) {
       setSelectedImage(0);
     }
-  }, [images]);
+  }, [images, selectedImage]);
   
   // If no valid images, show placeholder
   if (!validImages || validImages.length === 0) {
+    console.log("ProductImages - Showing placeholder for:", name);
     return (
       <div className="rounded-lg overflow-hidden mb-4 bg-gray-100 flex items-center justify-center h-[400px]">
         <div className="text-4xl text-gray-400">{name.charAt(0)}</div>
       </div>
     );
   }
+  
+  const handleImageError = (index: number) => {
+    console.error(`Error loading image at index ${index}:`, validImages[index]);
+    
+    // Remove the invalid image from the array
+    setValidImages(prev => {
+      const newImages = [...prev];
+      newImages.splice(index, 1);
+      return newImages;
+    });
+    
+    // Update selected image if needed
+    if (selectedImage >= validImages.length - 1) {
+      setSelectedImage(Math.max(0, validImages.length - 2));
+    } else if (index === selectedImage) {
+      setSelectedImage(0);
+    }
+  };
   
   return (
     <div>
@@ -42,10 +65,7 @@ const ProductImages = ({ images, name }: ProductImagesProps) => {
           src={validImages[selectedImage]} 
           alt={name} 
           className="w-full h-[400px] object-contain"
-          onError={(e) => {
-            // Handle image load error
-            e.currentTarget.src = 'https://images.unsplash.com/photo-1581093196277-9f5123652f14?auto=format&fit=crop&w=400&h=400';
-          }}
+          onError={() => handleImageError(selectedImage)}
         />
       </div>
       
@@ -64,10 +84,7 @@ const ProductImages = ({ images, name }: ProductImagesProps) => {
                 src={image} 
                 alt={`${name} ${index + 1}`}
                 className="w-16 h-16 object-cover"
-                onError={(e) => {
-                  // Handle thumbnail load error
-                  e.currentTarget.src = 'https://images.unsplash.com/photo-1581093196277-9f5123652f14?auto=format&fit=crop&w=100&h=100';
-                }}
+                onError={() => handleImageError(index)}
               />
             </div>
           ))}
