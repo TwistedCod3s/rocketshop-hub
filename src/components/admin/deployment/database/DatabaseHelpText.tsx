@@ -26,7 +26,6 @@ const DatabaseHelpText = () => {
               <li>reviews (json, optional)</li>
               <li>specifications (json, optional)</li>
               <li>fullDescription (text, optional)</li>
-              <li><span className="line-through">last_updated (timestamp)</span> - <span className="italic text-gray-600">Created automatically by Supabase</span></li>
             </ul>
           </li>
           <li><strong>category_images</strong>
@@ -39,8 +38,8 @@ const DatabaseHelpText = () => {
           <li><strong>subcategories</strong>
             <ul className="list-disc ml-5 text-xs space-y-0.5 mt-1">
               <li>id (uuid, primary key)</li>
-              <li>category_slug (text, unique)</li>
-              <li>subcategories (json array)</li>
+              <li>category (text, unique)</li>
+              <li>subcategory_list (json array)</li>
             </ul>
           </li>
           <li><strong>coupons</strong>
@@ -48,15 +47,22 @@ const DatabaseHelpText = () => {
               <li>id (uuid, primary key)</li>
               <li>code (text)</li>
               <li>discount (numeric)</li>
+              <li>discount_percentage (numeric, optional)</li>
+              <li>expiry_date (date)</li>
               <li>active (boolean)</li>
               <li>description (text)</li>
-              <li>expiryDate (date)</li>
-              <li>discountPercentage (numeric, optional)</li>
             </ul>
           </li>
         </ul>
-        <p className="text-xs italic">Note: Each table should have id as primary key and unique constraints on slug fields.</p>
-        <p className="text-xs italic">Timestamps (created_at, updated_at) are automatically added by Supabase.</p>
+
+        <div className="bg-yellow-50 p-3 rounded border border-yellow-200 mt-3">
+          <p className="font-semibold text-yellow-800 mb-1">Important:</p>
+          <p className="text-xs text-yellow-800">Make sure to enable Row Level Security (RLS) and create an "INSERT" and "SELECT" policy for each table that allows public access:</p>
+          <pre className="bg-yellow-100 p-2 rounded text-xs my-1 overflow-x-auto">
+            CREATE POLICY "Allow public access" ON "public"."products" FOR ALL USING (true) WITH CHECK (true);
+          </pre>
+          <p className="text-xs text-yellow-800 mt-1">Repeat this policy for each table (products, category_images, subcategories, coupons).</p>
+        </div>
       </AlertDescription>
     </Alert>
   );

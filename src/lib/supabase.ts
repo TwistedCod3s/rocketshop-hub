@@ -1,4 +1,6 @@
+
 import { createClient } from '@supabase/supabase-js';
+import { v4 as uuidv4 } from 'uuid';
 
 // Create a global variable to store the client instance
 let supabaseClientInstance: any = null;
@@ -34,6 +36,20 @@ export const resetSupabaseClient = () => {
   supabaseClientInstance = null;
 };
 
+// Helper to ensure valid UUID
+const ensureValidUUID = (id: string | number): string => {
+  // Check if already a valid UUID
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  
+  if (typeof id === 'string' && uuidRegex.test(id)) {
+    return id;
+  }
+  
+  // For numeric IDs or invalid format, generate a new UUID
+  console.log(`Converting non-UUID ID "${id}" to valid UUID`);
+  return uuidv4();
+};
+
 // Database helper functions
 export const dbHelpers = {
   getProducts: async () => {
@@ -62,10 +78,29 @@ export const dbHelpers = {
       const client = getSupabaseClient();
       if (!client) return false;
 
-      // Remove any fields that might not exist in the database schema
+      // Fix product IDs to ensure they are valid UUIDs
       const cleanedProducts = products.map(product => {
-        const { last_updated, ...rest } = product;
-        return rest;
+        // Create a cleaned product object with only fields that exist in the database
+        const cleanProduct: any = {
+          name: product.name || '',
+          description: product.description || '',
+          price: product.price || 0,
+          category: product.category || null,
+          images: product.images || [],
+          inStock: !!product.inStock,
+          featured: !!product.featured,
+        };
+        
+        // Ensure ID is a valid UUID
+        cleanProduct.id = ensureValidUUID(product.id);
+        
+        // Add optional fields only if they exist
+        if (product.rating !== undefined) cleanProduct.rating = product.rating;
+        if (product.reviews) cleanProduct.reviews = product.reviews;
+        if (product.specifications) cleanProduct.specifications = product.specifications;
+        if (product.fullDescription) cleanProduct.fullDescription = product.fullDescription;
+        
+        return cleanProduct;
       });
 
       const { data, error } = await client
@@ -105,8 +140,8 @@ export const dbHelpers = {
       const categoryImages: Record<string, string> = {};
       data.forEach((item: any) => {
         // Use the correct column name based on your schema
-        const categorySlug = item.category_slug || item.category || '';
-        const imageUrl = item.image_url || item.imageUrl || '';
+        const categorySlug = item.category_slug || '';
+        const imageUrl = item.image_url || '';
         
         if (categorySlug) {
           categoryImages[categorySlug] = imageUrl;
@@ -125,34 +160,12 @@ export const dbHelpers = {
       const client = getSupabaseClient();
       if (!client) return false;
 
-      // First check if the table has id column required
-      let needsId = false;
-      try {
-        const { data: tableInfo, error: tableError } = await client
-          .from('category_images')
-          .select('id')
-          .limit(1);
-
-        needsId = !tableError;
-      } catch (e) {
-        console.log("Couldn't determine if id column is needed, will include it");
-        needsId = true;
-      }
-
-      // Convert the single object to an array of objects
-      const categoryImagesArray = Object.entries(categoryImages).map(([category_slug, image_url]) => {
-        const entry: any = {
-          category_slug,
-          image_url
-        };
-        
-        // Add ID if needed
-        if (needsId) {
-          entry.id = crypto.randomUUID();
-        }
-        
-        return entry;
-      });
+      // Convert the single object to an array of objects with the correct column names
+      const categoryImagesArray = Object.entries(categoryImages).map(([category_slug, image_url]) => ({
+        id: uuidv4(), // Always generate a new UUID for consistency
+        category_slug,
+        image_url
+      }));
 
       // Use update if conflict since these might already exist
       const { data, error } = await client
@@ -192,8 +205,8 @@ export const dbHelpers = {
       const subcategories: Record<string, string[]> = {};
       data.forEach((item: any) => {
         // Try different possible column names
-        const categorySlug = item.category_slug || item.category || '';
-        const subcategoryList = item.subcategories || item.subcategory_list || [];
+        const categorySlug = item.category || '';
+        const subcategoryList = item.subcategory_list || [];
         
         if (categorySlug) {
           subcategories[categorySlug] = subcategoryList;
@@ -212,61 +225,17 @@ export const dbHelpers = {
       const client = getSupabaseClient();
       if (!client) return false;
 
-      // Determine the correct column names by testing the table structure
-      let categorySlugField = 'category_slug';
-      let subcategoriesField = 'subcategories';
-      
-      try {
-        // Try to get one record to see the column structure
-        const { data: sampleData, error: sampleError } = await client
-          .from('subcategories')
-          .select('*')
-          .limit(1);
-        
-        if (sampleError && sampleError.message.includes("category_slug")) {
-          categorySlugField = 'category'; // Fallback column name
-        }
-        
-        if (sampleError && sampleError.message.includes("subcategories")) {
-          subcategoriesField = 'subcategory_list'; // Fallback column name
-        }
-      } catch (e) {
-        console.log("Error checking subcategories table structure:", e);
-        // Keep the default column names
-      }
-
-      // Check if the table has id column
-      let needsId = false;
-      try {
-        const { data: tableInfo, error: tableError } = await client
-          .from('subcategories')
-          .select('id')
-          .limit(1);
-
-        needsId = !tableError;
-      } catch (e) {
-        console.log("Couldn't determine if id column is needed, will include it");
-        needsId = true;
-      }
-
-      // Convert the single object to an array of objects
-      const subcategoriesArray = Object.entries(subcategories).map(([category, subcategoryList]) => {
-        const entry: any = {};
-        entry[categorySlugField] = category;
-        entry[subcategoriesField] = subcategoryList;
-        
-        // Add ID if needed
-        if (needsId) {
-          entry.id = crypto.randomUUID();
-        }
-        
-        return entry;
-      });
+      // Convert the single object to an array of objects with the correct column names
+      const subcategoriesArray = Object.entries(subcategories).map(([category, subcategoryList]) => ({
+        id: uuidv4(), // Always generate a new UUID for consistency
+        category, // Using 'category' instead of 'category_slug'
+        subcategory_list: subcategoryList // Using 'subcategory_list' instead of 'subcategories'
+      }));
 
       const { data, error } = await client
         .from('subcategories')
         .upsert(subcategoriesArray, {
-          onConflict: categorySlugField
+          onConflict: 'category'
         });
 
       if (error) {
@@ -296,7 +265,18 @@ export const dbHelpers = {
         return [];
       }
 
-      return data || [];
+      // Convert database format to app format
+      const coupons = data.map((coupon: any) => ({
+        id: coupon.id,
+        code: coupon.code,
+        discount: coupon.discount,
+        discountPercentage: coupon.discount_percentage || coupon.discount * 100, // Convert from decimal if needed
+        expiryDate: coupon.expiry_date, // Map expiry_date to expiryDate
+        active: coupon.active,
+        description: coupon.description
+      }));
+
+      return coupons || [];
     } catch (e) {
       console.error("Error in getCoupons:", e);
       return [];
@@ -308,12 +288,15 @@ export const dbHelpers = {
       const client = getSupabaseClient();
       if (!client) return false;
 
-      // Convert expiryDate to expiry_date for database compatibility
+      // Convert app format to database format
       const formattedCoupons = coupons.map(coupon => ({
-        ...coupon,
-        expiry_date: coupon.expiryDate,
-        // Remove the original field to avoid conflicts
-        expiryDate: undefined
+        id: ensureValidUUID(coupon.id),
+        code: coupon.code,
+        discount: coupon.discount,
+        discount_percentage: coupon.discountPercentage, // Use underscore format for database
+        expiry_date: coupon.expiryDate, // Use underscore format for database
+        active: coupon.active,
+        description: coupon.description,
       }));
 
       const { data, error } = await client
@@ -340,22 +323,7 @@ export const dbHelpers = {
       const client = getSupabaseClient();
       if (!client) return null;
       
-      // Try to get the latest updated product - check if last_updated exists
-      try {
-        const { data, error } = await client
-          .from('products')
-          .select('last_updated')
-          .order('last_updated', { ascending: false })
-          .limit(1);
-        
-        if (!error && data && data.length > 0 && data[0].last_updated) {
-          return data[0].last_updated || null;
-        }
-      } catch (e) {
-        console.log("last_updated column doesn't exist, using created_at instead");
-      }
-      
-      // Fallback to created_at if last_updated doesn't exist
+      // Try to get the latest updated product using created_at or updated_at 
       try {
         const { data, error } = await client
           .from('products')
@@ -367,7 +335,7 @@ export const dbHelpers = {
           return data[0].created_at || null;
         }
       } catch (e) {
-        console.log("created_at column doesn't exist either, returning null");
+        console.log("Error getting timestamp from created_at:", e);
       }
       
       return null;
