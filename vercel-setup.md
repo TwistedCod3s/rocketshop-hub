@@ -14,7 +14,7 @@ The simplest way to enable filesystem access is by adding a `vercel.json` config
 {
   "functions": {
     "api/*.js": {
-      "includeFiles": "**/*"
+      "includeFiles": "src/data/**/*.{json,js,ts}"
     }
   },
   "build": {
@@ -28,7 +28,7 @@ The simplest way to enable filesystem access is by adding a `vercel.json` config
 3. Commit and push this file to your repository
 4. Redeploy your project on Vercel
 
-This configuration enables filesystem access for your API functions and sets the required environment variable automatically. This approach works for all Vercel plans and doesn't require finding the filesystem setting in the dashboard.
+This configuration enables filesystem access for your API functions but only includes necessary data files. This approach works for all Vercel plans and helps avoid the serverless function size limit of 250 MB.
 
 ## 2. Create a Deployment Hook
 
@@ -45,52 +45,38 @@ Next, you need to create a deployment hook in Vercel:
 9. Go to your admin panel's Deployment Settings
 10. Paste this URL into the "Deployment URL" field and save it
 
-## 3. Set Up Environment Variables (Optional)
+## 3. Troubleshooting Size Limits
 
-If you want to set additional environment variables:
+If you're still encountering the 250 MB serverless function size limit:
 
-1. Go to Project Settings → Environment Variables
-2. Add any other environment variables your application needs
+1. Be more specific with the `includeFiles` pattern in `vercel.json` to only include necessary files
+2. Consider removing large dependencies from your API routes
+3. Use dynamic imports to reduce the initial bundle size
+4. Add output configuration in `vercel.json`:
+
+```json
+{
+  "functions": {
+    "api/*.js": {
+      "includeFiles": "src/data/**/*.{json,js,ts}"
+    }
+  },
+  "build": {
+    "env": {
+      "VERCEL_FILESYSTEM_API_ENABLED": "true"
+    }
+  },
+  "output": {
+    "clean": true
+  }
+}
+```
 
 ## 4. Alternative Approaches
 
 If the vercel.json approach doesn't work for your specific setup, here are alternative methods:
 
-### Alternative 1: Find the Filesystem Access Setting in Vercel Dashboard
-
-The location of this setting varies depending on your Vercel account type and UI version:
-
-**Option A: Project Settings → Functions**
-1. Look for a toggle labeled "Allow filesystem access to APIs in the /api directory"
-
-**Option B: Project Settings → General**
-1. Scroll down to find "Serverless Function Settings" or "Function Settings"
-2. Look for "Filesystem Access" and enable it
-
-**Option C: Project Settings → Advanced**
-1. Find the "Function Settings" section
-2. Enable "Filesystem Access"
-
-### Alternative 2: Deploy with Vercel CLI
-
-If you prefer using the command line:
-
-1. Install the Vercel CLI:
-   ```
-   npm install -g vercel
-   ```
-
-2. Log in to your Vercel account:
-   ```
-   vercel login
-   ```
-
-3. Deploy with filesystem access enabled:
-   ```
-   vercel deploy --build-env VERCEL_FILESYSTEM_API_ENABLED=true
-   ```
-
-### Alternative 3: Use a Database Instead of Filesystem
+### Alternative 1: Use a Database Instead of Filesystem
 
 If you still can't get filesystem access working, consider using a database:
 
@@ -100,7 +86,7 @@ If you still can't get filesystem access working, consider using a database:
 
 This approach requires more code changes but may be more reliable in the long term.
 
-### Alternative 4: Use GitHub API for Changes
+### Alternative 2: Use GitHub API for Changes
 
 Another approach is to use GitHub's API to commit changes directly to your repository:
 
@@ -169,15 +155,5 @@ After deployment:
 2. Make a change to your content
 3. Use the "Deploy Now" button
 4. Check the Function Logs in Vercel to debug any issues
-
-## Troubleshooting
-
-If you encounter issues with filesystem access:
-
-1. **Check Function Logs**: Go to Vercel Dashboard → Functions → Invocations
-2. **Verify Environment Variables**: Ensure `VERCEL_FILESYSTEM_API_ENABLED` is set to `true`
-3. **API Path Issues**: Make sure requests are going to `/api/filesystem` and not `/api/admin/filesystem`
-4. **Permissions**: Confirm that your configuration is correct
-5. **Vercel Plan Limitations**: Some features may have different requirements based on your plan
 
 For more information, see the [Vercel documentation on Serverless Functions](https://vercel.com/docs/functions).

@@ -33,7 +33,7 @@ const DeploymentInfo = () => {
 {`{
   "functions": {
     "api/*.js": {
-      "includeFiles": "**/*"
+      "includeFiles": "src/data/**/*.{json,js,ts}"
     }
   },
   "build": {
