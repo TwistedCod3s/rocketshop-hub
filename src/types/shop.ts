@@ -1,132 +1,78 @@
-
-import { CATEGORY_MAP } from "@/constants/categories";
-
-// Define the Category type based on the values in CATEGORY_MAP
-export type Category = typeof CATEGORY_MAP[keyof typeof CATEGORY_MAP];
-
 export interface Product {
   id: string;
   name: string;
   description: string;
-  fullDescription?: string;
   price: number;
-  imageUrl?: string; // For backward compatibility
   images: string[];
-  category: Category;
+  category: string;
   subcategory?: string;
-  isFeatured: boolean;
-  featured?: boolean; // For backward compatibility with existing code
+  featured: boolean;
   inStock: boolean;
-  quantity?: number;
+  discount?: number;
   rating?: number;
-  specifications?: Array<{ name: string; value: string }>;
-  reviews?: Array<{ user: string; rating: number; comment: string; date: string }>;
+  numReviews?: number;
 }
 
 export interface CartItem {
-  id: string;
   product: Product;
   quantity: number;
 }
 
-export interface Customer {
-  id: string;
-  name: string;
-  email: string;
-  address: string;
-  phone: string;
-  orders: Order[];
-}
-
-export interface Order {
-  id: string;
-  customer: Customer;
-  items: CartItem[];
-  total: number;
-  date: Date;
-}
-
-export interface ShippingAddress {
-  name: string;
-  address: string;
-  city: string;
-  state: string;
-  zip: string;
-}
-
-export interface PaymentInfo {
-  cardName: string;
-  cardNumber: string;
-  expMonth: string;
-  expYear: string;
-  cvv: string;
-}
-
-export interface CouponCode {
+export interface Coupon {
   id: string;
   code: string;
-  discountPercentage: number;
-  active: boolean;
-  description: string;
+  discount: number;
+  expiryDate: string;
 }
 
-export interface CartSummaryProps {
-  cart: CartItem[];
-  subtotal: number;
-  itemCount: number;
-  couponCode?: CouponCode;
-  showCheckoutButton?: boolean;
-}
-
-// Define the type for the shop context
 export interface ShopContextType {
+  // Products
   products: Product[];
-  featuredProducts?: Product[];
-  cart: CartItem[];
-  shippingAddress?: ShippingAddress | null;
-  paymentInfo?: PaymentInfo | null;
-  coupon?: CouponCode | null;
-  coupons?: CouponCode[];
-  subcategories?: Record<string, string[]>;
-  
-  // Product management
   addProduct: (product: Product) => void;
   updateProduct: (product: Product) => void;
-  removeProduct: (id: string) => void;
-  getProduct?: (id: string) => Product | undefined;
+  removeProduct: (productId: string) => void;
+  getProduct?: (productId: string) => Product | undefined;
   fetchAllProducts: () => Product[];
   fetchProductsByCategory?: (category: string) => Product[];
-  fetchFeaturedProducts?: () => Product[];
   getRelatedProducts?: (category: string, excludeProductId: string) => Product[];
+  reloadProductsFromStorage?: () => void;
+  
+  // Featured products
+  featuredProducts?: Product[];
   updateFeaturedProducts: (productId: string, isFeatured: boolean) => void;
   
-  // Cart management
+  // Cart
+  cart: CartItem[];
   addToCart: (product: Product, quantity?: number) => void;
-  removeFromCart: (id: string) => void;
-  updateCartItemQuantity: (id: string, quantity: number) => void;
+  removeFromCart: (productId: string) => void;
+  updateCartItemQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
   getCartTotal?: () => number;
   getCartCount?: () => number;
   
-  // Coupon management
-  addCoupon?: (coupon: Omit<CouponCode, 'id'>) => void;
-  updateCoupon?: (coupon: CouponCode) => void;
-  deleteCoupon?: (id: string) => void;
-  validateCoupon?: (code: string) => CouponCode | undefined;
-  applyCoupon?: (code: string) => void;
-  removeCoupon?: () => void;
-  
-  // Subcategory management
-  updateSubcategories?: (category: string, newSubcategories: string[]) => void;
-  
-  // Admin-related properties
+  // Admin
   isAdmin?: boolean;
-  tryAdminLogin: (username: string, password: string) => boolean;
+  tryAdminLogin: (password: string) => boolean;
   reloadAllAdminData: (triggerDeploy?: boolean) => Promise<boolean>;
   
-  // Vercel deployment properties
+  // Category data
+  categoryImages?: Record<string, string>;
+  updateCategoryImage?: (categorySlug: string, imageUrl: string) => void;
+  
+  // Subcategories
+  subcategories?: Record<string, string[]>;
+  updateSubcategories?: (category: string, newSubcategories: string[]) => void;
+  
+  // Coupons
+  coupons?: Coupon[];
+  addCoupon?: (coupon: Coupon) => void;
+  updateCoupon?: (coupon: Coupon) => void;
+  deleteCoupon?: (couponId: string) => void;
+  validateCoupon?: (code: string) => Coupon | null;
+  
+  // Deployment
   isDeploying?: boolean;
-  triggerDeployment?: () => Promise<boolean>;
+  triggerDeployment?: () => Promise<void>;
   getDeploymentHookUrl?: () => string;
   setDeploymentHookUrl?: (url: string) => void;
   autoDeployEnabled?: boolean;

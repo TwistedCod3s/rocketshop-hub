@@ -51,11 +51,6 @@ export const ShopProvider = ({ children }) => {
   
   // Combine all hooks into a single context value
   const value: ShopContextType = {
-    ...productsHook,
-    ...cartHook,
-    ...featuredHook,
-    ...adminHook,
-    ...deploymentHook,
     // Manual spread for proper typing
     products: productsHook.products,
     cart: cartHook.cart,
@@ -68,7 +63,8 @@ export const ShopProvider = ({ children }) => {
     updateCoupon: adminHook.updateCoupon,
     deleteCoupon: adminHook.deleteCoupon,
     validateCoupon: adminHook.validateCoupon,
-    categoryImages: adminHook.categoryImages,  // Add this explicitly
+    categoryImages: adminHook.categoryImages,
+    updateCategoryImage: adminHook.updateCategoryImage,
     getProduct: productsHook.getProduct,
     getRelatedProducts: productsHook.getRelatedProducts,
     fetchProductsByCategory: productsHook.fetchProductsByCategory,
@@ -81,6 +77,13 @@ export const ShopProvider = ({ children }) => {
     setDeploymentHookUrl: deploymentHook.setDeploymentHookUrl,
     autoDeployEnabled: adminHook.autoDeployEnabled,
     toggleAutoDeploy: adminHook.toggleAutoDeploy,
+    
+    // Rest of the properties from hooks
+    ...productsHook,
+    ...cartHook,
+    ...featuredHook,
+    ...adminHook,
+    ...deploymentHook,
   };
   
   return (
