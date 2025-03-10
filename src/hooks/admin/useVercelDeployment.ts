@@ -38,49 +38,70 @@ export function useVercelDeployment() {
       // Get products data
       const products = localStorage.getItem('ROCKETRY_SHOP_PRODUCTS_V7');
       if (products) {
-        const parsedProducts = JSON.parse(products);
-        dataToSave.products = parsedProducts;
-        await writeDataToFile('data/products.json', parsedProducts);
-        console.log("Wrote products data");
+        try {
+          const parsedProducts = JSON.parse(products);
+          dataToSave.products = parsedProducts;
+          const productsResult = await writeDataToFile('data/products.json', parsedProducts);
+          console.log("Wrote products data:", productsResult);
+        } catch (e) {
+          console.error("Error parsing products data:", e);
+          toast({
+            title: "Error writing products data",
+            description: "Could not parse products data from localStorage",
+            variant: "destructive"
+          });
+        }
       }
       
       // Get category images data
       const categoryImages = localStorage.getItem('ROCKETRY_SHOP_CATEGORY_IMAGES_V7');
       if (categoryImages) {
-        const parsedImages = JSON.parse(categoryImages);
-        dataToSave.categoryImages = parsedImages;
-        await writeDataToFile('data/categoryImages.json', parsedImages);
-        console.log("Wrote category images data");
+        try {
+          const parsedImages = JSON.parse(categoryImages);
+          dataToSave.categoryImages = parsedImages;
+          const imagesResult = await writeDataToFile('data/categoryImages.json', parsedImages);
+          console.log("Wrote category images data:", imagesResult);
+        } catch (e) {
+          console.error("Error parsing category images data:", e);
+        }
       }
       
       // Get subcategories data
       const subcategories = localStorage.getItem('ROCKETRY_SHOP_SUBCATEGORIES_V7');
       if (subcategories) {
-        const parsedSubcategories = JSON.parse(subcategories);
-        dataToSave.subcategories = parsedSubcategories;
-        await writeDataToFile('data/subcategories.json', parsedSubcategories);
-        console.log("Wrote subcategories data");
+        try {
+          const parsedSubcategories = JSON.parse(subcategories);
+          dataToSave.subcategories = parsedSubcategories;
+          const subcategoriesResult = await writeDataToFile('data/subcategories.json', parsedSubcategories);
+          console.log("Wrote subcategories data:", subcategoriesResult);
+        } catch (e) {
+          console.error("Error parsing subcategories data:", e);
+        }
       }
       
       // Get coupons data
       const coupons = localStorage.getItem('ROCKETRY_SHOP_COUPONS_V7');
       if (coupons) {
-        const parsedCoupons = JSON.parse(coupons);
-        dataToSave.coupons = parsedCoupons;
-        await writeDataToFile('data/coupons.json', parsedCoupons);
-        console.log("Wrote coupons data");
+        try {
+          const parsedCoupons = JSON.parse(coupons);
+          dataToSave.coupons = parsedCoupons;
+          const couponsResult = await writeDataToFile('data/coupons.json', parsedCoupons);
+          console.log("Wrote coupons data:", couponsResult);
+        } catch (e) {
+          console.error("Error parsing coupons data:", e);
+        }
       }
       
       // Write a combined data file for easy access
-      await writeDataToFile('data/adminData.json', dataToSave);
-      console.log("Wrote combined admin data");
+      const combinedResult = await writeDataToFile('data/adminData.json', dataToSave);
+      console.log("Wrote combined admin data:", combinedResult);
       
       // Also write to the initialProducts data file to make it part of the codebase
       // This is the only file explicitly included in vercel.json
       if (dataToSave.products) {
         const tsContent = `export const initialProducts = ${JSON.stringify(dataToSave.products, null, 2)};`;
-        await writeDataToFile('data/initialProducts.ts', tsContent);
-        console.log("Updated initialProducts.ts");
+        const initProductsResult = await writeDataToFile('src/data/initialProducts.ts', tsContent);
+        console.log("Updated initialProducts.ts:", initProductsResult);
       }
       
       console.log("Successfully wrote all admin data to codebase");
@@ -142,6 +163,10 @@ export function useVercelDeployment() {
         })
       });
       
+      // Log the response for debugging
+      const responseText = await response.text();
+      console.log(`Deployment response: ${response.status} ${responseText}`);
+      
       if (response.ok) {
         console.log("Deployment successfully triggered with code updates");
         toast({
@@ -161,8 +186,8 @@ export function useVercelDeployment() {
         
         return true;
       } else {
-        const errorData = await response.text();
-        console.error("Deployment error response:", errorData);
+        console.error("Deployment error response:", responseText);
+        
         toast({
           title: "Deployment failed",
           description: `Error: ${response.status} ${response.statusText}`,

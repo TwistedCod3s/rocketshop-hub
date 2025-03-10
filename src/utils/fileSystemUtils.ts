@@ -26,23 +26,26 @@ export const writeDataToFile = async (
       }),
     });
     
+    // Log the response for debugging
+    const responseText = await response.text();
+    console.log(`Response from filesystem API: ${response.status} ${responseText}`);
+    
+    let responseData;
+    try {
+      responseData = JSON.parse(responseText);
+    } catch (e) {
+      console.error("Failed to parse response:", e);
+      responseData = { error: "Invalid JSON response" };
+    }
+    
     // Check if the request was successful
     if (!response.ok) {
-      let errorMessage = 'Failed to write file';
-      try {
-        const errorData = await response.json();
-        errorMessage = errorData.error || response.statusText;
-      } catch (e) {
-        // Fallback if we can't parse the error response
-        errorMessage = response.statusText;
-      }
-      
+      let errorMessage = responseData.error || 'Failed to write file';
       console.error(`Error writing file ${path}: ${errorMessage}`);
       throw new Error(`Failed to write file: ${errorMessage}`);
     }
     
-    const result = await response.json();
-    console.log(`Successfully wrote data to ${path}`, result);
+    console.log(`Successfully wrote data to ${path}`, responseData);
     return true;
   } catch (error) {
     console.error(`Error writing to file ${path}:`, error);
@@ -63,24 +66,26 @@ export const readDataFromFile = async <T>(path: string): Promise<T | null> => {
       },
     });
     
+    // Log the response for debugging
+    const responseText = await response.text();
+    console.log(`Response from filesystem API: ${response.status} ${responseText}`);
+    
+    let responseData;
+    try {
+      responseData = JSON.parse(responseText);
+    } catch (e) {
+      console.error("Failed to parse response:", e);
+      responseData = { error: "Invalid JSON response" };
+    }
+    
     // Check if the request was successful
     if (!response.ok) {
-      let errorMessage = 'Failed to read file';
-      try {
-        const errorData = await response.json();
-        errorMessage = errorData.error || response.statusText;
-      } catch (e) {
-        // Fallback if we can't parse the error response
-        errorMessage = response.statusText;
-      }
-      
+      let errorMessage = responseData.error || 'Failed to read file';
       console.error(`Error reading file ${path}: ${errorMessage}`);
       throw new Error(`Failed to read file: ${errorMessage}`);
     }
     
-    const data = await response.json();
-    console.log(`Successfully read data from ${path}`, data);
-    return data as T;
+    return responseData as T;
   } catch (error) {
     console.error(`Error reading from file ${path}:`, error);
     return null;

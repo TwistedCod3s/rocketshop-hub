@@ -1,8 +1,9 @@
 
 {
   "functions": {
-    "api/*.js": {
-      "includeFiles": "src/data/initialProducts.ts"
+    "api/filesystem.js": {
+      "memory": 1024,
+      "maxDuration": 10
     }
   },
   "build": {

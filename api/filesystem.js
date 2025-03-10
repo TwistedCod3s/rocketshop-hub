@@ -19,14 +19,17 @@ export default async function handler(req, res) {
     return;
   }
 
-  // Check if filesystem API is enabled
-  if (process.env.VERCEL_FILESYSTEM_API_ENABLED !== 'true') {
+  // Check if filesystem API is enabled (required for production)
+  if (process.env.VERCEL_FILESYSTEM_API_ENABLED !== 'true' && process.env.NODE_ENV === 'production') {
+    console.error('Filesystem API is not enabled. Set VERCEL_FILESYSTEM_API_ENABLED=true in environment variables.');
     return res.status(500).json({
       error: 'Filesystem API is not enabled. Set VERCEL_FILESYSTEM_API_ENABLED=true in your environment variables.'
     });
   }
 
   try {
+    console.log(`Filesystem API: ${req.method} request to ${req.method === 'GET' ? req.query.path : req.body?.path}`);
+    
     // Handle GET request - Read file
     if (req.method === 'GET') {
       const filePath = req.query.path;
@@ -35,15 +38,16 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'No file path specified' });
       }
 
-      // Resolve the absolute path
-      const absolutePath = path.resolve(process.cwd(), 'src', filePath);
+      // Resolve the absolute path - use data directory instead of src
+      const absolutePath = path.resolve(process.cwd(), filePath);
       
-      // For security, ensure the path is within the src directory
-      if (!absolutePath.startsWith(path.resolve(process.cwd(), 'src'))) {
+      // For security, verify this is within the project directory
+      if (!absolutePath.startsWith(process.cwd())) {
         return res.status(403).json({ error: 'Access denied: Path outside of allowed directories' });
       }
 
       try {
+        console.log(`Reading file from: ${absolutePath}`);
         const fileData = await fs.readFile(absolutePath, 'utf8');
         
         // Try to parse if JSON
@@ -68,11 +72,11 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'File path and data are required' });
       }
 
-      // Resolve the absolute path
-      const absolutePath = path.resolve(process.cwd(), 'src', filePath);
+      // Resolve the absolute path - use data directory instead of src
+      const absolutePath = path.resolve(process.cwd(), filePath);
       
-      // For security, ensure the path is within the src directory
-      if (!absolutePath.startsWith(path.resolve(process.cwd(), 'src'))) {
+      // For security, verify this is within the project directory
+      if (!absolutePath.startsWith(process.cwd())) {
         return res.status(403).json({ error: 'Access denied: Path outside of allowed directories' });
       }
       
@@ -80,11 +84,16 @@ export default async function handler(req, res) {
       const directory = path.dirname(absolutePath);
       await fs.mkdir(directory, { recursive: true });
       
+      console.log(`Writing to file: ${absolutePath}`);
+      
       // Write the file
       await fs.writeFile(absolutePath, data, 'utf8');
-      console.log(`Successfully wrote file: ${absolutePath}`);
       
-      return res.status(200).json({ success: true, path: absolutePath });
+      return res.status(200).json({ 
+        success: true, 
+        path: absolutePath,
+        message: `File ${filePath} successfully written`
+      });
     }
     
     // Handle unsupported methods
