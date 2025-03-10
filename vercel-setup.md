@@ -43,9 +43,32 @@ In your Vercel project settings, add these environment variables:
 
 ## 5. Enable Filesystem Access for Serverless Functions
 
-1. Go to Project Settings → Functions
-2. Enable "Allow filesystem access to APIs in the /api directory"
-3. Save your changes
+### Finding the Filesystem Access Setting
+
+The location of this setting may vary depending on your Vercel account type and UI version:
+
+**Option A: Project Settings → Functions**
+1. Go to Project Settings
+2. Select "Functions" from the left sidebar
+3. Look for a toggle labeled "Allow filesystem access to APIs in the /api directory"
+4. Enable this setting
+
+**Option B: Project Settings → General**
+1. Go to Project Settings
+2. Look under the "General" section
+3. Scroll down to find "Serverless Function Settings" or "Function Settings"
+4. Look for "Filesystem Access" and enable it
+
+**Option C: Project Settings → Advanced**
+1. Go to Project Settings
+2. Select "Advanced" from the sidebar
+3. Find the "Function Settings" section
+4. Enable "Filesystem Access"
+
+If you still can't find this setting, please contact Vercel support as it may be:
+- Only available on certain pricing plans
+- Has been renamed in a recent dashboard update
+- Requires specific project configuration
 
 ## 6. Check API Configuration
 
@@ -76,6 +99,27 @@ If you encounter issues with filesystem access:
 2. **Verify Environment Variables**: Ensure `VERCEL_FILESYSTEM_API_ENABLED` is set to `true`
 3. **API Path Issues**: Make sure requests are going to `/api/filesystem` and not `/api/admin/filesystem`
 4. **Permissions**: Confirm that "Allow filesystem access" is enabled in Functions settings
+5. **Vercel Plan Limitations**: Some features may only be available on paid plans
+
+## Alternative Approach for Pro/Enterprise Users
+
+If you're on a Pro or Enterprise plan and can't find the filesystem access setting:
+
+1. Use the Vercel CLI to deploy with special configuration:
+   ```
+   vercel deploy --build-env VERCEL_FILESYSTEM_API_ENABLED=true
+   ```
+
+2. Or add this to your `vercel.json` configuration file:
+   ```json
+   {
+     "functions": {
+       "api/*.js": {
+         "includeFiles": "**/*"
+       }
+     }
+   }
+   ```
 
 ## Important Notes
 
@@ -84,3 +128,4 @@ If you encounter issues with filesystem access:
 - The deployment process might take a few minutes to complete
 
 For more information, see the [Vercel documentation on Serverless Functions](https://vercel.com/docs/functions).
+

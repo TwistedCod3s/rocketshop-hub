@@ -21,9 +21,18 @@ const DeploymentInfo = () => {
               For the deployment feature to work, you must configure specific settings in your Vercel project:
             </p>
             <ul className="list-disc list-inside mt-1 text-blue-700 space-y-1">
-              <li>Enable filesystem access for API functions</li>
-              <li>Set required environment variables</li>
+              <li>Enable filesystem access for API functions (may be in different locations based on your plan)</li>
+              <li>Set required environment variables including <code className="bg-blue-100 px-1.5 py-0.5 rounded">VERCEL_FILESYSTEM_API_ENABLED=true</code></li>
               <li>Create a deployment webhook</li>
+            </ul>
+            <p className="mt-2 text-blue-700">
+              <span className="font-medium">Can't find filesystem access setting?</span> It may be:
+            </p>
+            <ul className="list-disc list-inside mt-1 text-blue-700 space-y-1">
+              <li>Under Project Settings → Functions</li>
+              <li>Under Project Settings → General → Function Settings</li>
+              <li>Under Project Settings → Advanced</li>
+              <li>Only available on certain pricing plans</li>
             </ul>
             <p className="mt-2 text-blue-700 font-medium">
               See the detailed <code className="bg-blue-100 px-1.5 py-0.5 rounded">vercel-setup.md</code> file for step-by-step instructions.
