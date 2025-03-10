@@ -148,6 +148,8 @@ const DatabaseInitializer = () => {
             errorMessage = "Required tables are missing. Please create all necessary tables in your Supabase project.";
           } else if (dbError.code === '42703') {
             errorMessage = "Required columns are missing. Please check your table structure.";
+          } else if (dbError.code === 'PGRST204') {
+            errorMessage = "Table schema mismatch: Some columns don't exist in your Supabase tables. Please update your database schema.";
           } else if (dbError.code === '23502') {
             errorMessage = "Required fields are missing. Please check your data format.";
           } else {
@@ -278,12 +280,12 @@ const DatabaseInitializer = () => {
               <div className="mt-2 text-sm">
                 <p>Please ensure your Supabase project has the following tables properly set up:</p>
                 <ul className="list-disc ml-5 mt-1">
-                  <li>products (with id column as UUID primary key)</li>
-                  <li>category_images (with id column as UUID primary key)</li>
-                  <li>subcategories (with id column as UUID primary key)</li>
-                  <li>coupons (with id column as UUID primary key)</li>
+                  <li>products (with id, name, description, price, category, images, inStock, featured, rating, specifications, reviews columns)</li>
+                  <li>category_images (with id, category_slug, image_url columns)</li>
+                  <li>subcategories (with id, category, subcategory_list columns)</li>
+                  <li>coupons (with id, code, discount, discountPercentage, expiryDate, active, description columns)</li>
                 </ul>
-                <p className="mt-2">Each table must have an ID column of type UUID that is the primary key and set to auto-generate.</p>
+                <p className="mt-2">Each table must have an ID column of type UUID that is the primary key.</p>
               </div>
             </AlertDescription>
           </Alert>
@@ -299,10 +301,10 @@ const DatabaseInitializer = () => {
               <AlertDescription className="text-blue-700">
                 <strong>Before initializing:</strong> Make sure you've created the required tables in your Supabase project:
                 <ul className="list-disc ml-5 mt-1">
-                  <li>products (with id column as UUID primary key)</li>
-                  <li>category_images (with id column as UUID primary key)</li>
-                  <li>subcategories (with id column as UUID primary key)</li>
-                  <li>coupons (with id column as UUID primary key)</li>
+                  <li>products (with id, name, description, price, category, images, inStock, featured, rating, specifications, reviews columns)</li>
+                  <li>category_images (with id, category_slug, image_url columns)</li>
+                  <li>subcategories (with id, category, subcategory_list columns)</li>
+                  <li>coupons (with id, code, discount, discountPercentage, expiryDate, active, description columns)</li>
                 </ul>
               </AlertDescription>
             </Alert>

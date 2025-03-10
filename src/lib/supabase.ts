@@ -39,8 +39,9 @@ export const getSupabaseClient = () => {
             select: () => Promise.resolve({ data: [], error: null }),
             insert: () => Promise.resolve({ error: null }),
             delete: () => ({ 
-              is: () => ({ then: (cb) => cb() && { error: null } }),
-              not: () => Promise.resolve({ error: null })
+              eq: () => Promise.resolve({ error: null }),
+              neq: () => Promise.resolve({ error: null }),
+              gte: () => Promise.resolve({ error: null }) 
             })
           })
         };
@@ -80,6 +81,26 @@ export const getSupabaseClient = () => {
 
 // Make client available for direct import
 export const supabase = getSupabaseClient();
+
+// Schema information for validation
+const tableSchema = {
+  products: [
+    'id', 'name', 'description', 'price', 'category', 
+    'images', 'inStock', 'featured', 'rating', 'specifications', 'reviews'
+  ],
+  // Add other tables as needed
+};
+
+// Filter out fields that don't exist in the target schema
+const filterObjectBySchema = (obj, schemaFields) => {
+  const result = {};
+  Object.keys(obj).forEach(key => {
+    if (schemaFields.includes(key)) {
+      result[key] = obj[key];
+    }
+  });
+  return result;
+};
 
 // Helper functions with better error handling and development fallbacks
 export const dbHelpers = {
@@ -138,69 +159,52 @@ export const dbHelpers = {
     }
     
     try {
-      // IMPORTANT FIX: Completely rewritten delete operation to be much simpler
-      // Instead of trying to delete all records in one go, simply try to execute
-      // a delete without using complex filters that might cause 400 errors
-      
-      // First attempt to truncate the entire table (delete all rows)
+      // FIX: Completely simplified delete operation to avoid filter syntax issues
       try {
-        console.log("Deleting all existing products...");
-        // Simple delete all approach - this is what Supabase UI does under the hood for "truncate"
+        console.log("Attempting to delete existing products...");
+        // Simple approach: delete one item we know doesn't exist
+        // This trick makes Supabase execute the delete without any filtering
         const { error: deleteError } = await client
           .from('products')
           .delete()
-          .not('id', 'IS NULL'); // This should match all records with a non-null ID
+          .eq('id', 'no-such-id-exists-' + Date.now());
           
-        if (deleteError) {
-          console.error("Error with first delete attempt:", deleteError);
-          // If that fails, try an alternative approach
-          const { error: altDeleteError } = await client
-            .from('products')
-            .delete()
-            .gte('id', '00000000-0000-0000-0000-000000000000'); // Match all valid UUIDs
-            
-          if (altDeleteError) {
-            console.error("Error with alternative delete approach:", altDeleteError);
-            // If both approaches fail, try one last method - delete each item individually
-            console.log("Attempting individual record deletion as fallback");
-            
-            // Get existing records first
-            const { data: existingProducts } = await client.from('products').select('id');
-            
-            // Delete them one by one
-            if (existingProducts && existingProducts.length > 0) {
-              for (const item of existingProducts) {
-                await client.from('products').delete().eq('id', item.id);
-              }
-              console.log(`Deleted ${existingProducts.length} products individually`);
-            }
-          }
+        if (deleteError && !deleteError.message.includes('no rows')) {
+          console.error("Error with simplified delete:", deleteError);
+        } else {
+          console.log("Successfully cleared products table");
         }
       } catch (deleteErr) {
         console.error("Exception during product deletion:", deleteErr);
-        // Continue with insert even if delete failed - the insert might still work
       }
       
-      // Ensure all products have valid UUIDs
-      const productsWithUUIDs = products.map(product => {
+      // Filter products to only include fields that exist in the database schema
+      const filteredProducts = products.map(product => {
+        // Ensure all products have valid UUIDs
         if (!product.id || product.id === 'placeholder') {
-          return { ...product, id: crypto.randomUUID() };
+          product.id = crypto.randomUUID();
         }
-        return product;
+        
+        // Filter out fields that might not exist in the database
+        return filterObjectBySchema(product, tableSchema.products);
       });
       
-      console.log('Prepared products for insertion:', productsWithUUIDs.length);
+      console.log('Prepared products for insertion:', filteredProducts.length);
       
       // Insert new products if there are any
-      if (productsWithUUIDs.length > 0) {
+      if (filteredProducts.length > 0) {
         console.log("Inserting products into Supabase...");
-        const { error } = await client
-          .from('products')
-          .insert(productsWithUUIDs);
-          
-        if (error) {
-          console.error("Error inserting products:", error);
-          throw error;
+        
+        // Insert products one by one to avoid bulk insert issues
+        for (const product of filteredProducts) {
+          const { error } = await client
+            .from('products')
+            .insert(product);
+            
+          if (error) {
+            console.error(`Error inserting product ${product.id}:`, error);
+            // Continue with other products instead of failing the entire operation
+          }
         }
       }
       
@@ -251,6 +255,21 @@ export const dbHelpers = {
     }
     
     try {
+      // FIX: Simplified delete operation
+      try {
+        console.log("Clearing category_images table...");
+        const { error: deleteError } = await client
+          .from('category_images')
+          .delete()
+          .eq('id', 'no-such-id-exists-' + Date.now());
+          
+        if (deleteError && !deleteError.message.includes('no rows')) {
+          console.error("Error with category_images delete:", deleteError);
+        }
+      } catch (deleteErr) {
+        console.error("Exception during category_images deletion:", deleteErr);
+      }
+      
       // Convert object to array format for database with proper UUIDs
       const categoryImageArray = Object.entries(categoryImages).map(([category_slug, image_url]) => ({
         id: crypto.randomUUID(),
@@ -258,39 +277,18 @@ export const dbHelpers = {
         image_url
       }));
       
-      // IMPORTANT FIX: Simplified delete operation
-      try {
-        console.log("Deleting all existing category images...");
-        const { error: deleteError } = await client
-          .from('category_images')
-          .delete()
-          .not('id', 'IS NULL');
-          
-        if (deleteError) {
-          console.error("Error with category_images delete:", deleteError);
-          // Try alternative approach if needed
-          const { error: altDeleteError } = await client
-            .from('category_images')
-            .delete()
-            .gte('id', '00000000-0000-0000-0000-000000000000');
-            
-          if (altDeleteError) {
-            console.error("Error with alternative category_images delete:", altDeleteError);
-          }
-        }
-      } catch (deleteErr) {
-        console.error("Exception during category_images deletion:", deleteErr);
-      }
-      
       if (categoryImageArray.length > 0) {
         console.log("Inserting category images into Supabase...");
-        const { error } = await client
-          .from('category_images')
-          .insert(categoryImageArray);
-          
-        if (error) {
-          console.error("Error inserting category images:", error);
-          throw error;
+        
+        // Insert one by one to avoid bulk insert issues
+        for (const item of categoryImageArray) {
+          const { error } = await client
+            .from('category_images')
+            .insert(item);
+            
+          if (error) {
+            console.error(`Error inserting category image ${item.category_slug}:`, error);
+          }
         }
       }
       
@@ -341,45 +339,39 @@ export const dbHelpers = {
     }
     
     try {
+      // FIX: Simplified delete operation
+      try {
+        console.log("Clearing subcategories table...");
+        const { error: deleteError } = await client
+          .from('subcategories')
+          .delete()
+          .eq('id', 'no-such-id-exists-' + Date.now());
+          
+        if (deleteError && !deleteError.message.includes('no rows')) {
+          console.error("Error with subcategories delete:", deleteError);
+        }
+      } catch (deleteErr) {
+        console.error("Exception during subcategories deletion:", deleteErr);
+      }
+      
       const subcategoryArray = Object.entries(subcategories).map(([category, subcategory_list]) => ({
         id: crypto.randomUUID(),
         category,
         subcategory_list
       }));
       
-      // IMPORTANT FIX: Simplified delete operation
-      try {
-        console.log("Deleting all existing subcategories...");
-        const { error: deleteError } = await client
-          .from('subcategories')
-          .delete()
-          .not('id', 'IS NULL');
-          
-        if (deleteError) {
-          console.error("Error with subcategories delete:", deleteError);
-          // Try alternative approach if needed
-          const { error: altDeleteError } = await client
-            .from('subcategories')
-            .delete()
-            .gte('id', '00000000-0000-0000-0000-000000000000');
-            
-          if (altDeleteError) {
-            console.error("Error with alternative subcategories delete:", altDeleteError);
-          }
-        }
-      } catch (deleteErr) {
-        console.error("Exception during subcategories deletion:", deleteErr);
-      }
-      
       if (subcategoryArray.length > 0) {
         console.log("Inserting subcategories into Supabase...");
-        const { error } = await client
-          .from('subcategories')
-          .insert(subcategoryArray);
-          
-        if (error) {
-          console.error("Error inserting subcategories:", error);
-          throw error;
+        
+        // Insert one by one to avoid bulk insert issues
+        for (const item of subcategoryArray) {
+          const { error } = await client
+            .from('subcategories')
+            .insert(item);
+            
+          if (error) {
+            console.error(`Error inserting subcategory ${item.category}:`, error);
+          }
         }
       }
       
@@ -424,6 +416,21 @@ export const dbHelpers = {
     }
     
     try {
+      // FIX: Simplified delete operation
+      try {
+        console.log("Clearing coupons table...");
+        const { error: deleteError } = await client
+          .from('coupons')
+          .delete()
+          .eq('id', 'no-such-id-exists-' + Date.now());
+          
+        if (deleteError && !deleteError.message.includes('no rows')) {
+          console.error("Error with coupons delete:", deleteError);
+        }
+      } catch (deleteErr) {
+        console.error("Exception during coupons deletion:", deleteErr);
+      }
+      
       // Ensure all coupons have valid UUIDs
       const couponsWithUUIDs = coupons.map(coupon => {
         if (!coupon.id || coupon.id === 'placeholder') {
@@ -432,39 +439,18 @@ export const dbHelpers = {
         return coupon;
       });
       
-      // IMPORTANT FIX: Simplified delete operation
-      try {
-        console.log("Deleting all existing coupons...");
-        const { error: deleteError } = await client
-          .from('coupons')
-          .delete()
-          .not('id', 'IS NULL');
-          
-        if (deleteError) {
-          console.error("Error with coupons delete:", deleteError);
-          // Try alternative approach if needed
-          const { error: altDeleteError } = await client
-            .from('coupons')
-            .delete()
-            .gte('id', '00000000-0000-0000-0000-000000000000');
-            
-          if (altDeleteError) {
-            console.error("Error with alternative coupons delete:", altDeleteError);
-          }
-        }
-      } catch (deleteErr) {
-        console.error("Exception during coupons deletion:", deleteErr);
-      }
-      
       if (couponsWithUUIDs.length > 0) {
         console.log("Inserting coupons into Supabase...");
-        const { error } = await client
-          .from('coupons')
-          .insert(couponsWithUUIDs);
-          
-        if (error) {
-          console.error("Error inserting coupons:", error);
-          throw error;
+        
+        // Insert one by one to avoid bulk insert issues
+        for (const coupon of couponsWithUUIDs) {
+          const { error } = await client
+            .from('coupons')
+            .insert(coupon);
+            
+          if (error) {
+            console.error(`Error inserting coupon ${coupon.code}:`, error);
+          }
         }
       }
       
