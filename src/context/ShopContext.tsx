@@ -34,6 +34,7 @@ const ShopContext = createContext<ShopContextType>({
   updateCoupon: () => {},
   deleteCoupon: () => {},
   validateCoupon: () => undefined,
+  reloadAllAdminData: () => {},
 });
 
 // Hook for using the shop context
@@ -79,6 +80,7 @@ export const ShopProvider = ({ children }) => {
     updateCoupon: adminHook.updateCoupon,
     deleteCoupon: adminHook.deleteCoupon,
     validateCoupon: adminHook.validateCoupon,
+    reloadAllAdminData: adminHook.reloadAllAdminData,
   };
   
   return (

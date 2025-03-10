@@ -73,6 +73,7 @@ export interface ShopContextType {
   updateCoupon: (coupon: CouponCode) => void;
   deleteCoupon: (couponId: string) => void;
   validateCoupon: (code: string) => CouponCode | undefined;
+  reloadAllAdminData: () => void;
 }
 
 export interface Category {
