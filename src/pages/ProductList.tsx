@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { useShopContext } from "@/context/ShopContext";
@@ -8,13 +9,18 @@ import ProductGrid from "@/components/products/ProductGrid";
 import { useProductFilter } from "@/hooks/useProductFilter";
 
 const ProductList = () => {
-  const { fetchAllProducts } = useShopContext();
+  const { fetchAllProducts, reloadProductsFromStorage } = useShopContext();
   const [displayProducts, setDisplayProducts] = useState<Product[]>([]);
   const [filterOpen, setFilterOpen] = useState(false);
   
   // Load products and refresh when products change
   useEffect(() => {
     const loadProducts = () => {
+      // First reload from storage to ensure we have the latest data
+      if (reloadProductsFromStorage) {
+        reloadProductsFromStorage();
+      }
+      
       const allProducts = fetchAllProducts();
       console.log("All products:", allProducts.length);
       setDisplayProducts(allProducts);
@@ -34,18 +40,23 @@ const ProductList = () => {
     window.addEventListener('rocketry-sync-trigger-v7', handleProductUpdate);
     window.addEventListener('storage', (e) => {
       if (e.key === "ROCKETRY_SHOP_PRODUCTS_V7" || 
-          e.key === "ROCKETRY_SHOP_SYNC_TRIGGER_V7") {
+          e.key === "ROCKETRY_SHOP_SYNC_TRIGGER_V7" ||
+          e.key === "ROCKETRY_SHOP_CHANGES_PENDING") {
         console.log(`Storage event detected for ${e.key}, refreshing products`);
         handleProductUpdate();
       }
     });
     
+    // Set up periodic refresh to ensure we're showing the latest data
+    const refreshInterval = setInterval(loadProducts, 10000); // Refresh every 10 seconds
+    
     return () => {
       window.removeEventListener('rocketry-product-update-v7', handleProductUpdate);
       window.removeEventListener('rocketry-sync-trigger-v7', handleProductUpdate);
       window.removeEventListener('storage', handleProductUpdate);
+      clearInterval(refreshInterval);
     };
-  }, [fetchAllProducts]);
+  }, [fetchAllProducts, reloadProductsFromStorage]);
   
   // Use our custom hook for filtering
   const {

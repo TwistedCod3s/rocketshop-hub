@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { UploadCloud, Link, RefreshCw, Save, AlertTriangle } from "lucide-react";
+import { UploadCloud, Link, RefreshCw, Save, AlertTriangle, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 
 const DeploymentSettings = () => {
   const { 
@@ -25,6 +26,9 @@ const DeploymentSettings = () => {
   const [autoDeploy, setAutoDeploy] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [hasPendingChanges, setHasPendingChanges] = useState(false);
+  const [lastDeploymentTime, setLastDeploymentTime] = useState<string | null>(
+    localStorage.getItem('LAST_DEPLOYMENT_TIME')
+  );
   const { toast } = useToast();
   
   useEffect(() => {
@@ -130,6 +134,11 @@ const DeploymentSettings = () => {
       if (triggerDeployment) {
         const success = await triggerDeployment();
         if (success) {
+          // Set last deployment time
+          const now = new Date().toISOString();
+          localStorage.setItem('LAST_DEPLOYMENT_TIME', now);
+          setLastDeploymentTime(now);
+          
           toast({
             title: "Deployment successful",
             description: "Your changes are being deployed and will be visible to all users shortly"
@@ -157,6 +166,17 @@ const DeploymentSettings = () => {
     }
   };
   
+  const formatLastDeploymentTime = () => {
+    if (!lastDeploymentTime) return "Never deployed";
+    
+    try {
+      const date = new Date(lastDeploymentTime);
+      return date.toLocaleString();
+    } catch (e) {
+      return "Unknown";
+    }
+  };
+  
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
       <h3 className="text-lg font-medium mb-6">Deployment Settings</h3>
@@ -166,6 +186,18 @@ const DeploymentSettings = () => {
           <AlertTriangle className="h-4 w-4 text-amber-500" />
           <AlertDescription className="text-amber-800">
             You have undeployed changes that won't be visible to users until you deploy.
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      {lastDeploymentTime && !hasPendingChanges && (
+        <Alert className="mb-6 border-green-200 bg-green-50">
+          <Check className="h-4 w-4 text-green-500" />
+          <AlertDescription className="text-green-800 flex items-center justify-between">
+            <span>All changes are deployed. Your site is up to date.</span>
+            <Badge variant="outline" className="ml-2">
+              Last deployed: {formatLastDeploymentTime()}
+            </Badge>
           </AlertDescription>
         </Alert>
       )}

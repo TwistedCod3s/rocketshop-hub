@@ -33,33 +33,52 @@ export function useVercelDeployment() {
     console.log("Starting Vercel deployment with hook URL:", deployHookUrl);
     
     try {
-      // First, ensure localStorage data is properly persisted to the server
-      const timestamp = Date.now();
+      // Create a complete snapshot of all localStorage data
+      const storageSnapshot: Record<string, string> = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key) {
+          const value = localStorage.getItem(key);
+          if (value) {
+            storageSnapshot[key] = value;
+          }
+        }
+      }
+      
+      console.log("Created localStorage snapshot for deployment:", Object.keys(storageSnapshot).length, "items");
       
       // Add a timestamp parameter to bust any caching
+      const timestamp = Date.now();
       const urlWithTimestamp = `${deployHookUrl}${deployHookUrl.includes('?') ? '&' : '?'}timestamp=${timestamp}`;
       
-      // Call the Vercel deployment hook with explicit data synchronization flags
+      // Call the Vercel deployment hook with explicit data
       const response = await fetch(urlWithTimestamp, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          force: true,  // Force a deployment even if no changes detected
-          syncFromStorage: true,  // Custom flag we can use in build scripts if needed
-          timestamp: timestamp,   // Include timestamp to ensure uniqueness
-          trigger: 'admin-panel', // Identify source of deployment
-          includeData: true       // Flag to explicitly include data from localStorage
+          force: true,             // Force a deployment even if no changes detected
+          timestamp: timestamp,    // Include timestamp to ensure uniqueness
+          trigger: 'admin-panel',  // Identify source of deployment
+          storageData: storageSnapshot, // Include ALL localStorage data in the deployment payload
+          // Explicitly include critical keys
+          categoryImages: localStorage.getItem('ROCKETRY_SHOP_CATEGORY_IMAGES_V7'),
+          subcategories: localStorage.getItem('ROCKETRY_SHOP_SUBCATEGORIES_V7'),
+          coupons: localStorage.getItem('ROCKETRY_SHOP_COUPONS_V7'),
+          products: localStorage.getItem('ROCKETRY_SHOP_PRODUCTS_V7')
         })
       });
       
       if (response.ok) {
-        console.log("Deployment successfully triggered with data sync");
+        console.log("Deployment successfully triggered with complete data snapshot");
         toast({
           title: "Deployment triggered",
           description: "All changes are being deployed to Vercel. This may take a few minutes.",
         });
+        
+        // Clear pending changes flag after successful deployment
+        localStorage.setItem('ROCKETRY_SHOP_CHANGES_PENDING', 'false');
         
         // Wait 2 seconds to allow the deployment to start
         await new Promise(resolve => setTimeout(resolve, 2000));

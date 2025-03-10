@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from "react";
 import { 
   loadFromStorage, 
@@ -21,9 +20,43 @@ export function useCategoryImages() {
     try {
       const storedData = localStorage.getItem(CATEGORY_IMAGES_KEY);
       if (storedData) {
-        const parsedData = JSON.parse(storedData);
-        setCategoryImages(parsedData);
-        console.log("Manually reloaded category images from localStorage:", parsedData);
+        try {
+          const parsedData = JSON.parse(storedData);
+          setCategoryImages(parsedData);
+          console.log("Manually reloaded category images from localStorage:", parsedData);
+        } catch (parseError) {
+          console.error("Error parsing category images:", parseError);
+          
+          // Try to recover from backup
+          let recovered = false;
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith(`${CATEGORY_IMAGES_KEY}_BACKUP_`)) {
+              try {
+                const backupData = localStorage.getItem(key);
+                if (backupData) {
+                  const parsedBackup = JSON.parse(backupData);
+                  setCategoryImages(parsedBackup);
+                  console.log("Recovered category images from backup:", key, parsedBackup);
+                  
+                  // Restore the main entry
+                  localStorage.setItem(CATEGORY_IMAGES_KEY, backupData);
+                  recovered = true;
+                  break;
+                }
+              } catch (backupError) {
+                console.error(`Failed to recover from backup ${key}:`, backupError);
+              }
+            }
+          }
+          
+          if (!recovered) {
+            console.error("Could not recover category images from any backup");
+          }
+        }
+      } else {
+        console.log("No category images found in localStorage");
+        setCategoryImages({});
       }
     } catch (e) {
       console.error("Error during manual reload of category images:", e);
@@ -48,6 +81,10 @@ export function useCategoryImages() {
           // Attempt recovery
           reloadFromStorage();
         }
+      } else if (e.key === "ROCKETRY_SHOP_SYNC_TRIGGER_V7") {
+        // General sync trigger - reload to be safe
+        console.log("Sync trigger detected, reloading category images");
+        reloadFromStorage();
       }
     };
     
@@ -60,9 +97,16 @@ export function useCategoryImages() {
       }
     };
     
+    // Generic sync event handler
+    const handleSyncEvent = () => {
+      console.log("Sync event detected, reloading category images");
+      reloadFromStorage();
+    };
+    
     // Add event listeners
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener(CATEGORY_IMAGES_EVENT, handleCategoryImagesEvent as EventListener);
+    window.addEventListener('rocketry-sync-trigger-v7', handleSyncEvent);
     
     // Force initial sync
     reloadFromStorage();
@@ -71,6 +115,7 @@ export function useCategoryImages() {
       console.log("Removing category images event listeners");
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener(CATEGORY_IMAGES_EVENT, handleCategoryImagesEvent as EventListener);
+      window.removeEventListener('rocketry-sync-trigger-v7', handleSyncEvent);
     };
   }, [reloadFromStorage]);
   
@@ -98,19 +143,27 @@ export function useCategoryImages() {
         // Save to localStorage and broadcast with more aggressive synchronization
         saveAndBroadcast(CATEGORY_IMAGES_KEY, CATEGORY_IMAGES_EVENT, updatedImages);
         
-        // Also create a backup copy with timestamp to ensure persistence
-        const backupKey = `${CATEGORY_IMAGES_KEY}_BACKUP_${Date.now()}`;
-        localStorage.setItem(backupKey, JSON.stringify(updatedImages));
-        
-        console.log("Updated category image for:", categorySlug, imageUrl);
-        console.log("Created backup copy at:", backupKey);
+        console.log("Updated category image for:", categorySlug, "Data size:", imageUrl.length);
         
         return updatedImages;
       });
+      
+      // Set pending changes flag directly
+      localStorage.setItem('ROCKETRY_SHOP_CHANGES_PENDING', 'true');
     } catch (error) {
       console.error("Error updating category image:", error);
+      
+      // Try recovery update if the first attempt failed
+      try {
+        const currentImages = { ...categoryImages, [categorySlug]: imageUrl };
+        localStorage.setItem(CATEGORY_IMAGES_KEY, JSON.stringify(currentImages));
+        localStorage.setItem('ROCKETRY_SHOP_CHANGES_PENDING', 'true');
+        console.log("Used recovery path to save category image");
+      } catch (recoveryError) {
+        console.error("Recovery save also failed:", recoveryError);
+      }
     }
-  }, []);
+  }, [categoryImages]);
 
   // Function to delete a category image
   const deleteCategoryImage = useCallback((categorySlug: string) => {
@@ -122,6 +175,9 @@ export function useCategoryImages() {
         // Save to localStorage and broadcast
         saveAndBroadcast(CATEGORY_IMAGES_KEY, CATEGORY_IMAGES_EVENT, updatedImages);
         console.log("Deleted category image for:", categorySlug);
+        
+        // Set pending changes flag
+        localStorage.setItem('ROCKETRY_SHOP_CHANGES_PENDING', 'true');
         
         return updatedImages;
       });
