@@ -46,6 +46,20 @@ const DeploymentInfo = () => {
           </p>
         </AlertDescription>
       </Alert>
+      
+      <Alert>
+        <HelpCircle className="h-4 w-4" />
+        <AlertTitle>Troubleshooting</AlertTitle>
+        <AlertDescription className="mt-2 text-sm text-muted-foreground">
+          <p className="mb-2">If you're experiencing issues with deployments:</p>
+          <ol className="list-decimal pl-5 space-y-1">
+            <li>Verify the <code className="bg-gray-100 px-1 py-0.5 rounded">VERCEL_FILESYSTEM_API_ENABLED</code> variable is set</li>
+            <li>Check your deployment logs in the Vercel dashboard for specific errors</li>
+            <li>Ensure your Vercel project is configured to use the Node.js 18.x runtime or later</li>
+            <li>Try manually deploying from the Vercel dashboard first before using the webhook</li>
+          </ol>
+        </AlertDescription>
+      </Alert>
     </div>
   );
 };

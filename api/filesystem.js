@@ -1,106 +1,101 @@
 
-// Filesystem API endpoint for handling file operations in Vercel
-import { promises as fs } from 'fs';
-import path from 'path';
+const fs = require('fs');
+const path = require('path');
 
-export default async function handler(req, res) {
-  // Enable CORS
-  res.setHeader('Access-Control-Allow-Credentials', true);
+module.exports = async (req, res) => {
+  // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
-  );
-
-  // Handle preflight request
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  
+  // Handle preflight OPTIONS request
   if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+    return res.status(200).end();
   }
-
-  // Check if filesystem API is enabled (required for production)
-  if (process.env.VERCEL_FILESYSTEM_API_ENABLED !== 'true' && process.env.NODE_ENV === 'production') {
-    console.error('Filesystem API is not enabled. Set VERCEL_FILESYSTEM_API_ENABLED=true in environment variables.');
-    return res.status(500).json({
-      error: 'Filesystem API is not enabled. Set VERCEL_FILESYSTEM_API_ENABLED=true in your environment variables.'
-    });
-  }
-
+  
   try {
-    console.log(`Filesystem API: ${req.method} request to ${req.method === 'GET' ? req.query.path : req.body?.path}`);
+    // Check if Vercel Filesystem API is enabled
+    if (process.env.VERCEL_FILESYSTEM_API_ENABLED !== 'true') {
+      console.error('Filesystem API is not enabled. Set VERCEL_FILESYSTEM_API_ENABLED=true in your environment variables.');
+      return res.status(500).json({ 
+        error: 'Filesystem API is not enabled. Please configure your Vercel project correctly.' 
+      });
+    }
     
-    // Handle GET request - Read file
+    console.log(`Received ${req.method} request for path: ${req.query.path || 'N/A'}`);
+    
+    // Handle GET request - read file
     if (req.method === 'GET') {
       const filePath = req.query.path;
       
       if (!filePath) {
-        return res.status(400).json({ error: 'No file path specified' });
+        return res.status(400).json({ error: 'Missing path parameter' });
       }
-
-      // Resolve the absolute path - use data directory instead of src
-      const absolutePath = path.resolve(process.cwd(), filePath);
       
-      // For security, verify this is within the project directory
-      if (!absolutePath.startsWith(process.cwd())) {
-        return res.status(403).json({ error: 'Access denied: Path outside of allowed directories' });
-      }
-
+      const resolvedPath = path.join(process.cwd(), filePath);
+      console.log(`Reading file from: ${resolvedPath}`);
+      
       try {
-        console.log(`Reading file from: ${absolutePath}`);
-        const fileData = await fs.readFile(absolutePath, 'utf8');
+        const data = fs.readFileSync(resolvedPath, 'utf8');
         
-        // Try to parse if JSON
-        if (filePath.endsWith('.json')) {
-          const jsonData = JSON.parse(fileData);
-          return res.status(200).json(jsonData);
+        // Try to parse as JSON if it looks like JSON
+        if (data.trim().startsWith('{') || data.trim().startsWith('[')) {
+          try {
+            const jsonData = JSON.parse(data);
+            return res.status(200).json(jsonData);
+          } catch (parseError) {
+            console.warn(`File is not valid JSON: ${parseError.message}`);
+            // If it fails to parse, just return as text
+            return res.status(200).json({ content: data });
+          }
+        } else {
+          return res.status(200).json({ content: data });
+        }
+      } catch (readError) {
+        console.error(`Error reading file: ${readError.message}`);
+        
+        // Check if file doesn't exist
+        if (readError.code === 'ENOENT') {
+          return res.status(404).json({ error: `File not found: ${filePath}` });
         }
         
-        // Return as string for other file types
-        return res.status(200).json({ content: fileData });
-      } catch (error) {
-        console.error(`Error reading file ${absolutePath}:`, error);
-        return res.status(404).json({ error: `File not found or cannot be read: ${error.message}` });
+        return res.status(500).json({ error: `Failed to read file: ${readError.message}` });
       }
     }
     
-    // Handle POST request - Write file
+    // Handle POST request - write file
     if (req.method === 'POST') {
       const { path: filePath, data } = req.body;
       
-      if (!filePath || !data) {
-        return res.status(400).json({ error: 'File path and data are required' });
-      }
-
-      // Resolve the absolute path - use data directory instead of src
-      const absolutePath = path.resolve(process.cwd(), filePath);
-      
-      // For security, verify this is within the project directory
-      if (!absolutePath.startsWith(process.cwd())) {
-        return res.status(403).json({ error: 'Access denied: Path outside of allowed directories' });
+      if (!filePath || data === undefined) {
+        return res.status(400).json({ error: 'Missing path or data parameter' });
       }
       
-      // Ensure the directory exists
-      const directory = path.dirname(absolutePath);
-      await fs.mkdir(directory, { recursive: true });
+      const resolvedPath = path.join(process.cwd(), filePath);
+      console.log(`Writing file to: ${resolvedPath}`);
       
-      console.log(`Writing to file: ${absolutePath}`);
+      // Ensure directory exists
+      const dirPath = path.dirname(resolvedPath);
+      if (!fs.existsSync(dirPath)) {
+        fs.mkdirSync(dirPath, { recursive: true });
+        console.log(`Created directory: ${dirPath}`);
+      }
       
-      // Write the file
-      await fs.writeFile(absolutePath, data, 'utf8');
-      
-      return res.status(200).json({ 
-        success: true, 
-        path: absolutePath,
-        message: `File ${filePath} successfully written`
-      });
+      try {
+        fs.writeFileSync(resolvedPath, data, 'utf8');
+        console.log(`Successfully wrote data to: ${resolvedPath}`);
+        return res.status(200).json({ success: true, path: filePath });
+      } catch (writeError) {
+        console.error(`Error writing file: ${writeError.message}`);
+        return res.status(500).json({ error: `Failed to write file: ${writeError.message}` });
+      }
     }
     
-    // Handle unsupported methods
+    // If method is not supported
     return res.status(405).json({ error: 'Method not allowed' });
     
   } catch (error) {
-    console.error('Filesystem API error:', error);
-    return res.status(500).json({ error: `Server error: ${error.message}` });
+    console.error(`Unhandled error: ${error.message}`);
+    res.status(500).json({ error: error.message || 'Internal server error' });
   }
-}
+};
