@@ -80,9 +80,12 @@ export const dbHelpers = {
     const client = getSupabaseClient();
     if (!client) throw new Error('Database connection not configured');
     
-    // First delete all products
-    const { error: deleteError } = await client.from('products').delete().neq('id', 'placeholder');
-    if (deleteError) throw deleteError;
+    // First delete all products - FIXED: Remove the neq filter that was causing the UUID error
+    const { error: deleteError } = await client.from('products').delete().is('id', null).not('id', 'is', null);
+    if (deleteError) {
+      console.error("Error deleting products:", deleteError);
+      throw deleteError;
+    }
     
     // Then insert new products
     if (products.length > 0) {
@@ -119,9 +122,12 @@ export const dbHelpers = {
       image_url
     }));
     
-    // Delete all existing category images
-    const { error: deleteError } = await client.from('category_images').delete().neq('id', 'placeholder');
-    if (deleteError) throw deleteError;
+    // Delete all existing category images - FIXED: Remove the neq filter that was causing the UUID error
+    const { error: deleteError } = await client.from('category_images').delete().is('id', null).not('id', 'is', null);
+    if (deleteError) {
+      console.error("Error deleting category images:", deleteError);
+      throw deleteError;
+    }
     
     // Insert new category images
     if (categoryImageArray.length > 0) {
@@ -159,9 +165,12 @@ export const dbHelpers = {
       subcategory_list
     }));
     
-    // Delete all existing subcategories
-    const { error: deleteError } = await client.from('subcategories').delete().neq('id', 'placeholder');
-    if (deleteError) throw deleteError;
+    // Delete all existing subcategories - FIXED: Remove the neq filter that was causing the UUID error
+    const { error: deleteError } = await client.from('subcategories').delete().is('id', null).not('id', 'is', null);
+    if (deleteError) {
+      console.error("Error deleting subcategories:", deleteError);
+      throw deleteError;
+    }
     
     // Insert new subcategories
     if (subcategoryArray.length > 0) {
@@ -186,9 +195,12 @@ export const dbHelpers = {
     const client = getSupabaseClient();
     if (!client) throw new Error('Database connection not configured');
     
-    // Delete all existing coupons
-    const { error: deleteError } = await client.from('coupons').delete().neq('id', 'placeholder');
-    if (deleteError) throw deleteError;
+    // Delete all existing coupons - FIXED: Remove the neq filter that was causing the UUID error
+    const { error: deleteError } = await client.from('coupons').delete().is('id', null).not('id', 'is', null);
+    if (deleteError) {
+      console.error("Error deleting coupons:", deleteError);
+      throw deleteError;
+    }
     
     // Insert new coupons
     if (coupons.length > 0) {

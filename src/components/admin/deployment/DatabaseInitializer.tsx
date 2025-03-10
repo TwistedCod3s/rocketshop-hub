@@ -33,10 +33,30 @@ const DatabaseInitializer = () => {
       }
     } catch (err) {
       console.error("Database initialization error:", err);
-      setError(err instanceof Error ? err.message : "Unknown error occurred");
+      
+      // Improved error handling for specific Supabase errors
+      let errorMessage = "Unknown error occurred";
+      
+      if (err && typeof err === 'object') {
+        // Handle Supabase specific error format
+        if ('code' in err && 'message' in err) {
+          const supabaseError = err as { code: string; message: string; hint?: string };
+          errorMessage = `Database error: ${supabaseError.message}`;
+          
+          if (supabaseError.code === '22P02' && supabaseError.message.includes('uuid: "placeholder"')) {
+            errorMessage = "Database schema error: The tables might not be properly set up. Please ensure your Supabase tables have the correct structure.";
+          } else if (supabaseError.hint) {
+            errorMessage += ` (Hint: ${supabaseError.hint})`;
+          }
+        } else if (err instanceof Error) {
+          errorMessage = err.message;
+        }
+      }
+      
+      setError(errorMessage);
       toast({
         title: "Database initialization failed",
-        description: err instanceof Error ? err.message : "Unknown error occurred",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -68,6 +88,17 @@ const DatabaseInitializer = () => {
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
               {error}
+              {error.includes("schema") && (
+                <div className="mt-2 text-sm">
+                  Make sure your Supabase project has tables named:
+                  <ul className="list-disc ml-5 mt-1">
+                    <li>products (with UUID primary key)</li>
+                    <li>category_images (with UUID primary key)</li>
+                    <li>subcategories (with UUID primary key)</li>
+                    <li>coupons (with UUID primary key)</li>
+                  </ul>
+                </div>
+              )}
             </AlertDescription>
           </Alert>
         ) : (
