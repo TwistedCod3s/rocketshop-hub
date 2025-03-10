@@ -2,6 +2,16 @@
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { writeDataToFile } from '@/utils/fileSystemUtils';
+import { Product, Coupon } from '@/types/shop';
+
+// Define a type for the admin data structure to fix the TypeScript error
+interface AdminData {
+  products?: Product[];
+  categoryImages?: Record<string, string>;
+  subcategories?: Record<string, string[]>;
+  coupons?: Coupon[];
+  [key: string]: any; // Allow for additional properties
+}
 
 export function useVercelDeployment() {
   const [isDeploying, setIsDeploying] = useState(false);
@@ -22,44 +32,50 @@ export function useVercelDeployment() {
     console.log("Writing admin data directly to codebase...");
     
     try {
-      // Create a snapshot of all localStorage data
-      const dataToSave = {};
+      // Create a snapshot of all localStorage data with proper typing
+      const dataToSave: AdminData = {};
       
       // Get products data
       const products = localStorage.getItem('ROCKETRY_SHOP_PRODUCTS_V7');
       if (products) {
-        dataToSave['products'] = JSON.parse(products);
-        await writeDataToFile('products.json', JSON.parse(products));
+        const parsedProducts = JSON.parse(products);
+        dataToSave.products = parsedProducts;
+        await writeDataToFile('products.json', parsedProducts);
       }
       
       // Get category images data
       const categoryImages = localStorage.getItem('ROCKETRY_SHOP_CATEGORY_IMAGES_V7');
       if (categoryImages) {
-        dataToSave['categoryImages'] = JSON.parse(categoryImages);
-        await writeDataToFile('categoryImages.json', JSON.parse(categoryImages));
+        const parsedImages = JSON.parse(categoryImages);
+        dataToSave.categoryImages = parsedImages;
+        await writeDataToFile('categoryImages.json', parsedImages);
       }
       
       // Get subcategories data
       const subcategories = localStorage.getItem('ROCKETRY_SHOP_SUBCATEGORIES_V7');
       if (subcategories) {
-        dataToSave['subcategories'] = JSON.parse(subcategories);
-        await writeDataToFile('subcategories.json', JSON.parse(subcategories));
+        const parsedSubcategories = JSON.parse(subcategories);
+        dataToSave.subcategories = parsedSubcategories;
+        await writeDataToFile('subcategories.json', parsedSubcategories);
       }
       
       // Get coupons data
       const coupons = localStorage.getItem('ROCKETRY_SHOP_COUPONS_V7');
       if (coupons) {
-        dataToSave['coupons'] = JSON.parse(coupons);
-        await writeDataToFile('coupons.json', JSON.parse(coupons));
+        const parsedCoupons = JSON.parse(coupons);
+        dataToSave.coupons = parsedCoupons;
+        await writeDataToFile('coupons.json', parsedCoupons);
       }
       
       // Write a combined data file for easy access
       await writeDataToFile('adminData.json', dataToSave);
       
       // Also write to the initialProducts data file to make it part of the codebase
-      await writeDataToFile('../data/initialProducts.ts', 
-        `export const initialProducts = ${JSON.stringify(dataToSave.products, null, 2)};`
-      );
+      if (dataToSave.products) {
+        await writeDataToFile('../data/initialProducts.ts', 
+          `export const initialProducts = ${JSON.stringify(dataToSave.products, null, 2)};`
+        );
+      }
       
       console.log("Successfully wrote admin data to codebase");
       return true;
