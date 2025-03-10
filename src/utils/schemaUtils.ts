@@ -1,9 +1,18 @@
 
 import { Product, Coupon } from '@/types/shop';
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Utility functions to handle schema differences between the app and database
  */
+
+/**
+ * Checks if a string is a valid UUID
+ */
+const isValidUUID = (id: string): boolean => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(id);
+};
 
 /**
  * Converts a product from the application schema to the database schema
@@ -16,8 +25,14 @@ export const convertProductToDbSchema = (product: Product): Record<string, any> 
   // Create a new object with only the fields that we know exist in the database
   const dbProduct: Record<string, any> = {};
   
-  // Always include the id
-  dbProduct.id = product.id;
+  // Handle ID - ensure it's a valid UUID
+  if (!isValidUUID(product.id)) {
+    // Generate a new UUID if the current ID is not a valid UUID
+    dbProduct.id = uuidv4();
+    console.log(`Converted invalid UUID "${product.id}" to valid UUID: ${dbProduct.id}`);
+  } else {
+    dbProduct.id = product.id;
+  }
   
   // Safe fields that we know exist in the database
   const safeFields = [
