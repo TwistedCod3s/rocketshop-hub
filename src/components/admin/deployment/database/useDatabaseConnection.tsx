@@ -12,21 +12,16 @@ export function useDatabaseConnection() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Load current values from environment
+  // Load current values from localStorage
   useEffect(() => {
-    // Try to get values from localStorage first (we store them there after initial setting)
     const storedUrl = localStorage.getItem('ROCKETRY_DB_URL');
     const storedKey = localStorage.getItem('ROCKETRY_DB_KEY');
     
-    // If not in localStorage, try environment variables (only available in dev mode)
-    const envUrl = import.meta.env.VITE_SUPABASE_URL;
-    const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-    
-    setSupabaseUrl(storedUrl || envUrl || "");
-    setSupabaseKey(storedKey || envKey || "");
+    setSupabaseUrl(storedUrl || "");
+    setSupabaseKey(storedKey || "");
     
     // If we have values, test the connection
-    if ((storedUrl || envUrl) && (storedKey || envKey)) {
+    if (storedUrl && storedKey) {
       testConnection();
     }
   }, []);
@@ -57,12 +52,6 @@ export function useDatabaseConnection() {
       
       // Reset any existing client instance
       resetSupabaseClient();
-      
-      // Make sure environment variables are available for the current session
-      if (import.meta.env) {
-        import.meta.env.VITE_SUPABASE_URL = supabaseUrl;
-        import.meta.env.VITE_SUPABASE_ANON_KEY = supabaseKey;
-      }
       
       console.log("Testing connection with URL:", supabaseUrl.substring(0, 15) + "...");
       
@@ -104,12 +93,6 @@ export function useDatabaseConnection() {
         title: "Database connected",
         description: "Successfully connected to Supabase database"
       });
-      
-      // Reload the page after a delay to apply changes
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
-      
     } catch (error) {
       console.error("Connection test error:", error);
       setConnectionStatus('error');

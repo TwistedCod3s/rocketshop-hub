@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 
 // Create a global variable to store the client instance
@@ -9,17 +10,18 @@ export const getSupabaseClient = () => {
     return supabaseClientInstance;
   }
 
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  // Get credentials from localStorage first (more reliable)
+  const supabaseUrl = localStorage.getItem('ROCKETRY_DB_URL') || import.meta.env.VITE_SUPABASE_URL;
+  const supabaseAnonKey = localStorage.getItem('ROCKETRY_DB_KEY') || import.meta.env.VITE_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    console.error("Supabase URL or Anon Key missing. Ensure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set in your environment.");
+    console.error("Supabase URL or Anon Key missing. Check localStorage or environment variables.");
     return null;
   }
 
   try {
+    console.log("Initializing Supabase client with URL:", supabaseUrl.substring(0, 15) + "...");
     supabaseClientInstance = createClient(supabaseUrl, supabaseAnonKey);
-    console.log("Supabase client initialized successfully");
     return supabaseClientInstance;
   } catch (e) {
     console.error("Error initializing Supabase client:", e);
@@ -27,12 +29,13 @@ export const getSupabaseClient = () => {
   }
 };
 
+// Reset client instance (useful when updating URL/key)
 export const resetSupabaseClient = () => {
   console.log("Resetting Supabase client instance");
   supabaseClientInstance = null;
 };
 
-// Define database helper functions
+// Database helper functions
 export const dbHelpers = {
   getProducts: async () => {
     try {

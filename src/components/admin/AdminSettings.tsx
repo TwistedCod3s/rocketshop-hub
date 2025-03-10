@@ -1,7 +1,7 @@
 
 import React from "react";
 import ExportImportButton from "./ExportImportButton";
-import DeploymentSettings from "./DeploymentSettings";
+import DatabaseSettings from "./deployment/DatabaseSettings";
 import DatabaseInitializer from "./deployment/DatabaseInitializer";
 
 const AdminSettings = () => {
@@ -23,7 +23,7 @@ const AdminSettings = () => {
         <DatabaseInitializer />
       </div>
       
-      <DeploymentSettings />
+      <DatabaseSettings />
     </div>
   );
 };

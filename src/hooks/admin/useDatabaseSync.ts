@@ -8,12 +8,7 @@ export function useDatabaseSync(
   categoryImagesReload: () => void,
   subcategoriesReload: () => void,
   couponsReload: () => void,
-  productsReload: () => void,
-  vercelDeployment: {
-    triggerDeployment: () => Promise<boolean>;
-    getDeploymentHookUrl: () => string | null;
-  },
-  autoDeployEnabled: boolean
+  productsReload: () => void
 ) {
   const { toast } = useToast();
 
@@ -76,7 +71,7 @@ export function useDatabaseSync(
   ]);
   
   // Function to force reload all admin data and propagate to all users
-  const reloadAllAdminData = useCallback(async (triggerDeploy = false) => {
+  const reloadAllAdminData = useCallback(async () => {
     console.log("Forcing reload of all admin data and propagating to all users");
     
     try {
@@ -105,18 +100,6 @@ export function useDatabaseSync(
       
       // Clear the pending changes flag
       localStorage.setItem('ROCKETRY_SHOP_CHANGES_PENDING', 'false');
-      
-      // Trigger Vercel deployment if requested or auto-deploy is enabled
-      if ((triggerDeploy || autoDeployEnabled) && vercelDeployment.getDeploymentHookUrl()) {
-        console.log("Triggering Vercel deployment");
-        const success = await vercelDeployment.triggerDeployment();
-        if (success) {
-          toast({
-            title: "Deployment successful",
-            description: "Your changes are being deployed and will be visible to all users shortly"
-          });
-        }
-      }
       
       return true;
     } catch (error) {
@@ -161,8 +144,6 @@ export function useDatabaseSync(
     subcategoriesReload,
     couponsReload,
     productsReload,
-    autoDeployEnabled,
-    vercelDeployment,
     toast
   ]);
 
