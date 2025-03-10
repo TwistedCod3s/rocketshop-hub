@@ -2,6 +2,7 @@
 import { Link } from "react-router-dom";
 import { CATEGORY_MAP } from "@/constants/categories";
 import { useAdmin } from "@/hooks/useAdmin";
+import { useEffect } from "react";
 
 // Define image paths for each category
 export const CATEGORY_IMAGES = {
@@ -16,10 +17,29 @@ export const CATEGORY_IMAGES = {
 const CategorySection = () => {
   const { categoryImages } = useAdmin();
   
+  // Debug logging for category images
+  useEffect(() => {
+    console.log("CategorySection - Custom images from useAdmin:", categoryImages);
+    console.log("CategorySection - Fallback images:", CATEGORY_IMAGES);
+  }, [categoryImages]);
+  
   // Function to get the correct image URL for a category
   const getCategoryImage = (slug: string) => {
-    return categoryImages[slug] || 
-           CATEGORY_IMAGES[slug as keyof typeof CATEGORY_IMAGES] || "";
+    // First try to get from custom images
+    if (categoryImages && categoryImages[slug]) {
+      console.log(`Found custom image for ${slug}: ${categoryImages[slug].substring(0, 50)}...`);
+      return categoryImages[slug];
+    }
+    
+    // Fallback to default images
+    const fallbackImage = CATEGORY_IMAGES[slug as keyof typeof CATEGORY_IMAGES];
+    if (fallbackImage) {
+      console.log(`Using fallback image for ${slug}: ${fallbackImage}`);
+      return fallbackImage;
+    }
+    
+    console.log(`No image found for ${slug}`);
+    return "";
   };
   
   // Add console logging to help debug
@@ -37,7 +57,7 @@ const CategorySection = () => {
           {Object.entries(CATEGORY_MAP).map(([slug, name]) => {
             const categoryPath = `/category/${slug}`;
             const imagePath = getCategoryImage(slug);
-            console.log(`Creating link for category: ${name} with path: ${categoryPath}, image: ${imagePath}`);
+            console.log(`Creating link for category: ${name} with path: ${categoryPath}, image: ${imagePath ? (imagePath.substring(0, 30) + "...") : "none"}`);
             
             return (
               <Link 
@@ -46,22 +66,27 @@ const CategorySection = () => {
                 className="bg-white rounded-lg p-4 text-center shadow-sm hover:shadow-md transition-shadow"
               >
                 <div className="aspect-square rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center mb-3 mx-auto">
-                  <img 
-                    src={imagePath} 
-                    alt={name}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      // Fallback to displaying first letter if image fails to load
-                      e.currentTarget.style.display = 'none';
-                      const parentElement = e.currentTarget.parentElement;
-                      if (parentElement) {
-                        const fallbackElement = document.createElement('span');
-                        fallbackElement.className = 'text-4xl text-rocketry-navy';
-                        fallbackElement.textContent = name.charAt(0);
-                        parentElement.appendChild(fallbackElement);
-                      }
-                    }}
-                  />
+                  {imagePath ? (
+                    <img 
+                      src={imagePath} 
+                      alt={name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        // Fallback to displaying first letter if image fails to load
+                        e.currentTarget.style.display = 'none';
+                        const parentElement = e.currentTarget.parentElement;
+                        if (parentElement) {
+                          const fallbackElement = document.createElement('span');
+                          fallbackElement.className = 'text-4xl text-rocketry-navy';
+                          fallbackElement.textContent = name.charAt(0);
+                          parentElement.appendChild(fallbackElement);
+                        }
+                      }}
+                    />
+                  ) : (
+                    // Display first letter if no image is available
+                    <span className="text-4xl text-rocketry-navy">{name.charAt(0)}</span>
+                  )}
                 </div>
                 <h3 className="font-medium text-rocketry-navy">{name}</h3>
               </Link>

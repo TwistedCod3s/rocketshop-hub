@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from "react";
 import { 
   loadFromStorage, 
@@ -5,6 +6,7 @@ import {
   CATEGORY_IMAGES_KEY, 
   CATEGORY_IMAGES_EVENT 
 } from "./adminUtils";
+import { dbHelpers } from "@/lib/supabase";
 
 // Define types
 type CategoryImagesMap = Record<string, string>;
@@ -24,6 +26,15 @@ export function useCategoryImages() {
           const parsedData = JSON.parse(storedData);
           setCategoryImages(parsedData);
           console.log("Manually reloaded category images from localStorage:", parsedData);
+          
+          // After loading from localStorage, sync to Supabase
+          dbHelpers.saveCategoryImages(parsedData)
+            .then(success => {
+              if (success) {
+                console.log("Auto-synced category images to Supabase after reload");
+              }
+            })
+            .catch(err => console.error("Failed to auto-sync category images:", err));
         } catch (parseError) {
           console.error("Error parsing category images:", parseError);
           
@@ -136,6 +147,9 @@ export function useCategoryImages() {
   // Function to update category image
   const updateCategoryImage = useCallback((categorySlug: string, imageUrl: string) => {
     try {
+      // For debug - check the size of the image
+      console.log(`Updating image for category slug ${categorySlug}, image size: ${imageUrl.length} chars`);
+      
       // Update local state using functional form to ensure we're working with the latest state
       setCategoryImages(prevImages => {
         const updatedImages = { ...prevImages, [categorySlug]: imageUrl };
@@ -144,6 +158,19 @@ export function useCategoryImages() {
         saveAndBroadcast(CATEGORY_IMAGES_KEY, CATEGORY_IMAGES_EVENT, updatedImages);
         
         console.log("Updated category image for:", categorySlug, "Data size:", imageUrl.length);
+        
+        // Direct sync to Supabase (in addition to the sync in saveAndBroadcast)
+        setTimeout(() => {
+          dbHelpers.saveCategoryImages(updatedImages)
+            .then(success => {
+              if (success) {
+                console.log("Direct sync of category images to Supabase succeeded");
+              } else {
+                console.warn("Direct sync of category images to Supabase returned false");
+              }
+            })
+            .catch(err => console.error("Error during direct sync to Supabase:", err));
+        }, 100);
         
         return updatedImages;
       });
@@ -175,6 +202,19 @@ export function useCategoryImages() {
         // Save to localStorage and broadcast
         saveAndBroadcast(CATEGORY_IMAGES_KEY, CATEGORY_IMAGES_EVENT, updatedImages);
         console.log("Deleted category image for:", categorySlug);
+        
+        // Direct sync to Supabase
+        setTimeout(() => {
+          dbHelpers.saveCategoryImages(updatedImages)
+            .then(success => {
+              if (success) {
+                console.log("Direct sync of category images to Supabase after deletion succeeded");
+              } else {
+                console.warn("Direct sync of category images to Supabase after deletion returned false");
+              }
+            })
+            .catch(err => console.error("Error during direct sync to Supabase after deletion:", err));
+        }, 100);
         
         // Set pending changes flag
         localStorage.setItem('ROCKETRY_SHOP_CHANGES_PENDING', 'true');

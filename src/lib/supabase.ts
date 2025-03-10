@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -148,15 +147,20 @@ export const dbHelpers = {
 
       // Convert the array of objects to a single object
       const categoryImages: Record<string, string> = {};
-      data.forEach((item: any) => {
-        // Use the correct column name based on your schema
-        const categorySlug = item.category_slug || '';
-        const imageUrl = item.image_url || '';
-        
-        if (categorySlug) {
-          categoryImages[categorySlug] = imageUrl;
-        }
-      });
+      if (data && Array.isArray(data)) {
+        data.forEach((item: any) => {
+          // Use the correct column name based on your schema
+          const categorySlug = item.category_slug || '';
+          const imageUrl = item.image_url || '';
+          
+          if (categorySlug) {
+            categoryImages[categorySlug] = imageUrl;
+          }
+        });
+        console.log("Successfully loaded category images from DB:", Object.keys(categoryImages).length);
+      } else {
+        console.log("No category images data returned from DB or invalid format");
+      }
 
       return categoryImages;
     } catch (e) {
@@ -170,15 +174,23 @@ export const dbHelpers = {
       const client = getSupabaseClient();
       if (!client) return false;
 
+      // Log the data we're about to save
+      console.log("Preparing to save category images:", Object.keys(categoryImages).length);
+      
       // Convert the single object to an array of objects with the correct column names
-      const categoryImagesArray = Object.entries(categoryImages).map(([category_slug, image_url]) => ({
-        id: uuidv4(), // Always generate a new UUID for consistency
-        category_slug,
-        image_url
-      }));
+      const categoryImagesArray = Object.entries(categoryImages).map(([category_slug, image_url]) => {
+        // Log each item we're preparing
+        console.log(`Preparing category image for slug: ${category_slug}, image length: ${image_url.length}`);
+        
+        return {
+          id: uuidv4(), // Always generate a new UUID for consistency
+          category_slug,
+          image_url
+        };
+      });
 
       // Use update if conflict since these might already exist
-      const { data, error } = await client
+      const { error } = await client
         .from('category_images')
         .upsert(categoryImagesArray, {
           onConflict: 'category_slug'
@@ -189,10 +201,14 @@ export const dbHelpers = {
         return false;
       }
 
-      console.log("Saved category images to database");
+      console.log("Successfully saved category images to database:", categoryImagesArray.length);
       return true;
     } catch (e) {
       console.error("Error in saveCategoryImages:", e);
+      if (e instanceof Error) {
+        console.error("Error details:", e.message);
+        console.error("Stack trace:", e.stack);
+      }
       return false;
     }
   },
@@ -308,6 +324,9 @@ export const dbHelpers = {
         active: coupon.active,
         description: coupon.description,
       }));
+
+      // Log the data we're about to save
+      console.log("Preparing to save coupons:", formattedCoupons);
 
       const { data, error } = await client
         .from('coupons')
