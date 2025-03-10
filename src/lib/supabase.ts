@@ -79,19 +79,48 @@ export const dbHelpers = {
     const client = getSupabaseClient();
     if (!client) throw new Error('Database connection not configured');
     
-    // First delete all products using delete() without conditions
-    const { error: deleteError } = await client.from('products').delete();
-    if (deleteError) {
-      console.error("Error deleting products:", deleteError);
-      throw deleteError;
-    }
+    console.log('Attempting to save products:', products);
     
-    // Then insert new products if there are any
-    if (products.length > 0) {
-      const { error } = await client.from('products').insert(products);
-      if (error) throw error;
+    try {
+      // First delete all existing products
+      const { error: deleteError } = await client
+        .from('products')
+        .delete()
+        .neq('id', 'dummy'); // Using neq with dummy to match all rows
+        
+      if (deleteError) {
+        console.error("Error deleting products:", deleteError);
+        throw deleteError;
+      }
+      
+      // Ensure all products have valid UUIDs
+      const productsWithUUIDs = products.map(product => {
+        if (!product.id || product.id === 'placeholder') {
+          return { ...product, id: crypto.randomUUID() };
+        }
+        return product;
+      });
+      
+      console.log('Prepared products for insertion:', productsWithUUIDs);
+      
+      // Insert new products if there are any
+      if (productsWithUUIDs.length > 0) {
+        const { error } = await client
+          .from('products')
+          .insert(productsWithUUIDs);
+          
+        if (error) {
+          console.error("Error inserting products:", error);
+          throw error;
+        }
+      }
+      
+      console.log('Successfully saved products to database');
+      return true;
+    } catch (error) {
+      console.error('Error in saveProducts:', error);
+      throw error;
     }
-    return true;
   },
   
   // Category Images
@@ -115,26 +144,35 @@ export const dbHelpers = {
     const client = getSupabaseClient();
     if (!client) throw new Error('Database connection not configured');
     
-    // Convert object to array format for database
-    const categoryImageArray = Object.entries(categoryImages).map(([category_slug, image_url]) => ({
-      category_slug,
-      image_url
-    }));
-    
-    // Delete all existing category images without conditions
-    const { error: deleteError } = await client.from('category_images').delete();
-    if (deleteError) {
-      console.error("Error deleting category images:", deleteError);
-      throw deleteError;
+    try {
+      // Convert object to array format for database with proper UUIDs
+      const categoryImageArray = Object.entries(categoryImages).map(([category_slug, image_url]) => ({
+        id: crypto.randomUUID(),
+        category_slug,
+        image_url
+      }));
+      
+      // Delete existing records
+      const { error: deleteError } = await client
+        .from('category_images')
+        .delete()
+        .neq('id', 'dummy');
+        
+      if (deleteError) throw deleteError;
+      
+      if (categoryImageArray.length > 0) {
+        const { error } = await client
+          .from('category_images')
+          .insert(categoryImageArray);
+          
+        if (error) throw error;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error saving category images:', error);
+      throw error;
     }
-    
-    // Insert new category images if there are any
-    if (categoryImageArray.length > 0) {
-      const { error } = await client.from('category_images').insert(categoryImageArray);
-      if (error) throw error;
-    }
-    
-    return true;
   },
   
   // Subcategories
@@ -158,26 +196,34 @@ export const dbHelpers = {
     const client = getSupabaseClient();
     if (!client) throw new Error('Database connection not configured');
     
-    // Convert object to array format for database
-    const subcategoryArray = Object.entries(subcategories).map(([category, subcategory_list]) => ({
-      category,
-      subcategory_list
-    }));
-    
-    // Delete all existing subcategories without conditions
-    const { error: deleteError } = await client.from('subcategories').delete();
-    if (deleteError) {
-      console.error("Error deleting subcategories:", deleteError);
-      throw deleteError;
+    try {
+      const subcategoryArray = Object.entries(subcategories).map(([category, subcategory_list]) => ({
+        id: crypto.randomUUID(),
+        category,
+        subcategory_list
+      }));
+      
+      // Delete existing records
+      const { error: deleteError } = await client
+        .from('subcategories')
+        .delete()
+        .neq('id', 'dummy');
+        
+      if (deleteError) throw deleteError;
+      
+      if (subcategoryArray.length > 0) {
+        const { error } = await client
+          .from('subcategories')
+          .insert(subcategoryArray);
+          
+        if (error) throw error;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error saving subcategories:', error);
+      throw error;
     }
-    
-    // Insert new subcategories if there are any
-    if (subcategoryArray.length > 0) {
-      const { error } = await client.from('subcategories').insert(subcategoryArray);
-      if (error) throw error;
-    }
-    
-    return true;
   },
   
   // Coupons
@@ -194,19 +240,35 @@ export const dbHelpers = {
     const client = getSupabaseClient();
     if (!client) throw new Error('Database connection not configured');
     
-    // Delete all existing coupons without conditions
-    const { error: deleteError } = await client.from('coupons').delete();
-    if (deleteError) {
-      console.error("Error deleting coupons:", deleteError);
-      throw deleteError;
+    try {
+      // Ensure all coupons have valid UUIDs
+      const couponsWithUUIDs = coupons.map(coupon => {
+        if (!coupon.id || coupon.id === 'placeholder') {
+          return { ...coupon, id: crypto.randomUUID() };
+        }
+        return coupon;
+      });
+      
+      // Delete existing records
+      const { error: deleteError } = await client
+        .from('coupons')
+        .delete()
+        .neq('id', 'dummy');
+        
+      if (deleteError) throw deleteError;
+      
+      if (couponsWithUUIDs.length > 0) {
+        const { error } = await client
+          .from('coupons')
+          .insert(couponsWithUUIDs);
+          
+        if (error) throw error;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error saving coupons:', error);
+      throw error;
     }
-    
-    // Insert new coupons if there are any
-    if (coupons.length > 0) {
-      const { error } = await client.from('coupons').insert(coupons);
-      if (error) throw error;
-    }
-    
-    return true;
   }
 };
