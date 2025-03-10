@@ -18,3 +18,6 @@ export const CATEGORY_MAP = {
   "ukroc": "UKROC",
   "accessories": "Accessories"
 };
+
+// Export Category type
+export type Category = typeof CATEGORY_MAP[keyof typeof CATEGORY_MAP];

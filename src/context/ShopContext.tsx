@@ -5,36 +5,23 @@ import { useProducts } from "@/hooks/useProducts";
 import { useCart } from "@/hooks/useCart";
 import { useFeaturedProducts } from "@/hooks/useFeaturedProducts";
 import { useAdmin } from "@/hooks/useAdmin";
+import { useVercelDeployment } from "@/hooks/admin/useVercelDeployment";
 
 // Create context with default values
 const ShopContext = createContext<ShopContextType>({
   products: [],
-  featuredProducts: [],
   cart: [],
   addProduct: () => {},
   updateProduct: () => {},
   removeProduct: () => {},
-  getProduct: () => undefined,
   fetchAllProducts: () => [],
-  fetchProductsByCategory: () => [],
-  fetchFeaturedProducts: () => [],
-  getRelatedProducts: () => [],
   updateFeaturedProducts: () => {},
   addToCart: () => {},
   removeFromCart: () => {},
   updateCartItemQuantity: () => {},
   clearCart: () => {},
-  getCartTotal: () => 0,
-  getCartCount: () => 0,
   tryAdminLogin: () => false,
-  subcategories: {},
-  updateSubcategories: () => {},
-  coupons: [],
-  addCoupon: () => {},
-  updateCoupon: () => {},
-  deleteCoupon: () => {},
-  validateCoupon: () => undefined,
-  reloadAllAdminData: () => {},
+  reloadAllAdminData: async () => false,
 });
 
 // Hook for using the shop context
@@ -48,6 +35,7 @@ export const ShopProvider = ({ children }) => {
   const cartHook = useCart();
   const featuredHook = useFeaturedProducts(productsHook.products);
   const adminHook = useAdmin();
+  const deploymentHook = useVercelDeployment();
   
   // Force re-render when localStorage changes in other tabs
   useEffect(() => {
@@ -68,10 +56,11 @@ export const ShopProvider = ({ children }) => {
     ...cartHook,
     ...featuredHook,
     ...adminHook,
+    ...deploymentHook,
     // Manual spread for proper typing
     products: productsHook.products,
-    featuredProducts: featuredHook.featuredProducts,
     cart: cartHook.cart,
+    featuredProducts: featuredHook.featuredProducts,
     isAdmin: adminHook.isAdmin,
     subcategories: adminHook.subcategories,
     updateSubcategories: adminHook.updateSubcategories,
@@ -80,7 +69,18 @@ export const ShopProvider = ({ children }) => {
     updateCoupon: adminHook.updateCoupon,
     deleteCoupon: adminHook.deleteCoupon,
     validateCoupon: adminHook.validateCoupon,
+    getProduct: productsHook.getProduct,
+    getRelatedProducts: productsHook.getRelatedProducts,
+    fetchProductsByCategory: productsHook.fetchProductsByCategory,
+    getCartTotal: cartHook.getCartTotal,
+    getCartCount: cartHook.getCartCount,
     reloadAllAdminData: adminHook.reloadAllAdminData,
+    isDeploying: deploymentHook.isDeploying,
+    triggerDeployment: deploymentHook.triggerDeployment,
+    getDeploymentHookUrl: deploymentHook.getDeploymentHookUrl,
+    setDeploymentHookUrl: deploymentHook.setDeploymentHookUrl,
+    autoDeployEnabled: adminHook.autoDeployEnabled,
+    toggleAutoDeploy: adminHook.toggleAutoDeploy,
   };
   
   return (

@@ -1,120 +1,119 @@
 
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { useVercelDeployment } from '@/hooks/admin/useVercelDeployment';
-import { Separator } from '@/components/ui/separator';
-import { AlertCircle, CheckCircle2 } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useState, useEffect } from "react";
+import { useShopContext } from "@/context/ShopContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { ReloadIcon } from "@radix-ui/react-icons";
+import { UploadCloud, Link } from "lucide-react";
 
 const DeploymentSettings = () => {
-  const { getDeploymentHookUrl, setDeploymentHookUrl, triggerDeployment, isDeploying } = useVercelDeployment();
-  const [hookUrl, setHookUrl] = useState('');
-  const [saved, setSaved] = useState(false);
-  const [error, setError] = useState('');
-
+  const { 
+    isDeploying, 
+    triggerDeployment, 
+    getDeploymentHookUrl, 
+    setDeploymentHookUrl,
+    autoDeployEnabled,
+    toggleAutoDeploy
+  } = useShopContext();
+  
+  const [deployUrl, setDeployUrl] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
+  const [autoDeploy, setAutoDeploy] = useState(false);
+  
   useEffect(() => {
-    setHookUrl(getDeploymentHookUrl());
+    if (getDeploymentHookUrl) {
+      setDeployUrl(getDeploymentHookUrl());
+    }
   }, [getDeploymentHookUrl]);
-
-  const handleSaveHook = () => {
-    // Simple validation to check if it's a valid URL
-    try {
-      if (hookUrl) {
-        new URL(hookUrl);
-        setDeploymentHookUrl(hookUrl);
-        setSaved(true);
-        setError('');
-        setTimeout(() => setSaved(false), 3000);
-      } else {
-        setDeploymentHookUrl('');
-        setSaved(true);
-        setError('');
-        setTimeout(() => setSaved(false), 3000);
-      }
-    } catch (err) {
-      setError('Please enter a valid URL');
+  
+  useEffect(() => {
+    if (autoDeployEnabled !== undefined) {
+      setAutoDeploy(autoDeployEnabled);
+    }
+  }, [autoDeployEnabled]);
+  
+  const handleSaveUrl = () => {
+    if (setDeploymentHookUrl) {
+      setDeploymentHookUrl(deployUrl);
+      setIsEditing(false);
     }
   };
-
-  const handleTestDeployment = async () => {
-    if (!hookUrl) {
-      setError('Please enter a deployment hook URL first');
-      return;
+  
+  const handleToggleAutoDeploy = (checked: boolean) => {
+    setAutoDeploy(checked);
+    if (toggleAutoDeploy) {
+      toggleAutoDeploy(checked);
     }
-    
-    setError('');
-    await triggerDeployment();
   };
-
+  
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Vercel Deployment Settings</CardTitle>
-        <CardDescription>
-          Configure automatic deployments to Vercel when admin changes are made.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {error && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-        
-        {saved && (
-          <Alert variant="success" className="bg-green-50 text-green-800 border-green-200">
-            <CheckCircle2 className="h-4 w-4 text-green-600" />
-            <AlertTitle>Success</AlertTitle>
-            <AlertDescription>Deployment hook URL has been saved</AlertDescription>
-          </Alert>
-        )}
-
-        <div className="space-y-2">
-          <label htmlFor="hookUrl" className="text-sm font-medium">
-            Vercel Deployment Hook URL
-          </label>
-          <Input
-            id="hookUrl"
-            value={hookUrl}
-            onChange={(e) => setHookUrl(e.target.value)}
-            placeholder="https://api.vercel.com/v1/integrations/deploy/..."
-            className="w-full"
-          />
-          <p className="text-sm text-muted-foreground">
-            Create a deployment hook in your Vercel project settings and paste the URL here.
+    <div className="bg-white rounded-lg shadow-sm p-6">
+      <h3 className="text-lg font-medium mb-6">Deployment Settings</h3>
+      
+      <div className="space-y-6">
+        <div className="grid gap-2">
+          <Label htmlFor="deployment-url">Vercel Deployment Webhook URL</Label>
+          <div className="flex gap-2">
+            <Input
+              id="deployment-url"
+              type="url"
+              value={deployUrl}
+              onChange={(e) => setDeployUrl(e.target.value)}
+              disabled={!isEditing}
+              placeholder="https://api.vercel.com/v1/integrations/deploy/..."
+            />
+            {isEditing ? (
+              <Button onClick={handleSaveUrl}>Save</Button>
+            ) : (
+              <Button variant="outline" onClick={() => setIsEditing(true)}>
+                Edit
+              </Button>
+            )}
+          </div>
+          <p className="text-sm text-muted-foreground mt-1">
+            <Link className="h-3 w-3 inline-block mr-1" />
+            <a 
+              href="https://vercel.com/docs/git/deploy-hooks" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline"
+            >
+              Learn how to create a Vercel deploy hook
+            </a>
           </p>
         </div>
-
-        <div className="flex gap-4">
-          <Button onClick={handleSaveHook} variant="outline">
-            Save Hook URL
-          </Button>
-          <Button 
-            onClick={handleTestDeployment} 
-            disabled={isDeploying || !hookUrl}
-          >
-            {isDeploying ? 'Deploying...' : 'Test Deployment'}
-          </Button>
+        
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="auto-deploy"
+            checked={autoDeploy}
+            onCheckedChange={handleToggleAutoDeploy}
+          />
+          <Label htmlFor="auto-deploy">Auto-deploy when content changes</Label>
         </div>
-
-        <Separator className="my-4" />
-
-        <div>
-          <h3 className="text-lg font-medium mb-2">How to set up a Vercel deployment hook:</h3>
-          <ol className="list-decimal ml-5 text-sm text-muted-foreground space-y-1">
-            <li>Go to your Vercel project dashboard</li>
-            <li>Navigate to Settings → Git → Deploy Hooks</li>
-            <li>Create a new hook with a name (e.g., "Admin Panel Updates")</li>
-            <li>Select the branch you want to deploy (usually "main")</li>
-            <li>Copy the generated URL and paste it above</li>
-          </ol>
-        </div>
-      </CardContent>
-    </Card>
+        
+        <Button 
+          onClick={triggerDeployment} 
+          disabled={isDeploying || !deployUrl}
+          variant="default"
+          className="w-full"
+        >
+          {isDeploying ? (
+            <>
+              <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
+              Deploying...
+            </>
+          ) : (
+            <>
+              <UploadCloud className="mr-2 h-4 w-4" />
+              Deploy Now
+            </>
+          )}
+        </Button>
+      </div>
+    </div>
   );
 };
 

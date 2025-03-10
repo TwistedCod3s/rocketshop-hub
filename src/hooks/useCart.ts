@@ -36,7 +36,7 @@ export function useCart() {
   }, [cart]);
   
   // Cart Management Functions
-  const addToCart = useCallback((product: Product, quantity: number) => {
+  const addToCart = useCallback((product: Product, quantity = 1) => {
     setCart(prev => {
       const existingItem = prev.find(item => item.id === product.id);
       
@@ -62,7 +62,14 @@ export function useCart() {
           description: `${product.name} has been added to your cart.`,
         });
         
-        return [...prev, { id: product.id, product, quantity }];
+        // Create a proper CartItem
+        const newItem: CartItem = {
+          id: product.id,
+          product,
+          quantity
+        };
+        
+        return [...prev, newItem];
       }
     });
   }, []);
