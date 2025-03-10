@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { getSupabaseClient } from "@/lib/supabase";
+import { getSupabaseClient, resetSupabaseClient } from "@/lib/supabase";
 
 export function useDatabaseConnection() {
   const [supabaseUrl, setSupabaseUrl] = useState("");
@@ -55,7 +55,7 @@ export function useDatabaseConnection() {
       localStorage.setItem('ROCKETRY_DB_KEY', supabaseKey);
       
       // Reset any existing client instance
-      window.supabaseClientInstance = null;
+      resetSupabaseClient();
       
       // Make sure environment variables are available for the current session
       if (import.meta.env) {

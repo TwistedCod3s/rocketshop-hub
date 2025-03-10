@@ -30,14 +30,15 @@ export const convertProductToDbSchema = (product: Product): Record<string, any> 
     // Generate a new UUID if id is missing
     dbProduct.id = uuidv4();
     console.log(`Generated UUID for product without ID: ${dbProduct.id}`);
-  } else if (!isValidUUID(product.id)) {
+  } else if (typeof product.id === 'number' || (typeof product.id === 'string' && /^\d+$/.test(product.id)) || !isValidUUID(product.id)) {
     // For numeric or invalid IDs, generate a UUID replacement
-    const isNumeric = /^\d+$/.test(product.id);
+    const isNumeric = typeof product.id === 'number' || /^\d+$/.test(product.id);
+    const originalId = product.id.toString();
     dbProduct.id = uuidv4();
-    console.log(`Converted ${isNumeric ? 'numeric' : 'invalid'} ID "${product.id}" to UUID: ${dbProduct.id}`);
+    console.log(`Converted ${isNumeric ? 'numeric' : 'invalid'} ID "${originalId}" to UUID: ${dbProduct.id}`);
     
     // Store the original ID to maintain a mapping if needed
-    dbProduct.original_id = product.id;
+    dbProduct.original_id = originalId;
   } else {
     dbProduct.id = product.id;
   }
@@ -48,12 +49,21 @@ export const convertProductToDbSchema = (product: Product): Record<string, any> 
     'inStock', 'featured', 'rating', 'reviews'
   ];
   
-  // Copy only safe fields
+  // Copy only safe fields and ensure they have the correct types
   safeFields.forEach(field => {
     if (productKeys.includes(field) && product[field as keyof Product] !== undefined) {
       dbProduct[field] = product[field as keyof Product];
     }
   });
+  
+  // Ensure boolean fields are actually booleans
+  if ('inStock' in dbProduct && typeof dbProduct.inStock !== 'boolean') {
+    dbProduct.inStock = Boolean(dbProduct.inStock);
+  }
+  
+  if ('featured' in dbProduct && typeof dbProduct.featured !== 'boolean') {
+    dbProduct.featured = Boolean(dbProduct.featured);
+  }
   
   // Handle special fields that might not exist in the database
   // For fullDescription, we'll store it in the description field if it doesn't exist in the DB

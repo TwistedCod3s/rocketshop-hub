@@ -3,11 +3,9 @@ import { Product, Coupon } from '@/types/shop';
 import { convertProductToDbSchema, convertDbToProductSchema } from '@/utils/schemaUtils';
 
 // Declare the global window property correctly
-// The existing declaration likely already defines supabaseClientInstance as 'any'
-// so we'll use 'any' here too to match
 declare global {
   interface Window {
-    supabaseClientInstance: any;
+    supabaseClientInstance: SupabaseClient | null;
   }
 }
 
@@ -28,7 +26,7 @@ export interface Database {
           rating: number | null
           reviews: number | null
           specifications: string[] | null
-          original_id: string | null  // Add original_id field
+          original_id: string | null
         }
         Insert: {
           id?: string
@@ -43,7 +41,7 @@ export interface Database {
           rating?: number | null
           reviews?: number | null
           specifications?: string[] | null
-          original_id?: string | null  // Add original_id field
+          original_id?: string | null
         }
         Update: {
           id?: string
@@ -51,14 +49,14 @@ export interface Database {
           description?: string | null
           featured?: string | null
           fullDescription?: string | null
-          images: string[] | null
+          images?: string[] | null
           inStock?: string | null
           name?: string | null
           price?: string | null
           rating?: string | null
           reviews?: string | null
           specifications?: string[] | null
-          original_id?: string | null  // Add original_id field
+          original_id?: string | null
         }
       }
       category_images: {
@@ -140,11 +138,19 @@ export interface Database {
   }
 }
 
-// Create and cache a Supabase client
+// Create and cache a Supabase client - modified to prevent multiple instances
+let globalSupabaseClient: SupabaseClient | null = null;
+
 export const getSupabaseClient = (): SupabaseClient<any, "public", any> | null => {
   try {
-    // If we already have a cached client, return it
+    // If we already have a cached client in global variable, return it
+    if (globalSupabaseClient) {
+      return globalSupabaseClient;
+    }
+    
+    // If we have a cached client in window, return it
     if (window.supabaseClientInstance) {
+      globalSupabaseClient = window.supabaseClientInstance;
       return window.supabaseClientInstance;
     }
     
@@ -169,17 +175,22 @@ export const getSupabaseClient = (): SupabaseClient<any, "public", any> | null =
       if (import.meta.env.DEV) {
         console.info('Creating mock Supabase client for development');
         // Create a fake client that returns empty data but doesn't error
-        return createMockClient();
+        const mockClient = createMockClient();
+        globalSupabaseClient = mockClient;
+        window.supabaseClientInstance = mockClient;
+        return mockClient;
       }
       
       return null;
     }
     
     // Create and cache the client
+    console.log('Creating new Supabase client with URL:', supabaseUrl.substring(0, 15) + '...');
     const client = createClient(supabaseUrl, supabaseKey, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
+        storageKey: 'supabase-auth-token', // Set a specific storage key
       },
       global: {
         fetch: (...args: Parameters<typeof fetch>) => {
@@ -188,12 +199,20 @@ export const getSupabaseClient = (): SupabaseClient<any, "public", any> | null =
       },
     });
     
+    globalSupabaseClient = client;
     window.supabaseClientInstance = client;
     return client;
   } catch (error) {
     console.error('Error creating Supabase client:', error);
     return null;
   }
+};
+
+// Reset the Supabase client - useful when changing credentials
+export const resetSupabaseClient = () => {
+  globalSupabaseClient = null;
+  window.supabaseClientInstance = null;
+  console.log('Supabase client reset');
 };
 
 // Create a mock client for development
