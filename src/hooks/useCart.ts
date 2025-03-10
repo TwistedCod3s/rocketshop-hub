@@ -65,8 +65,8 @@ export function useCart() {
         // Create a proper CartItem
         const newItem: CartItem = {
           id: product.id,
-          product,
-          quantity
+          quantity,
+          product
         };
         
         return [...prev, newItem];

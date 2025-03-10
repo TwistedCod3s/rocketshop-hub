@@ -1,6 +1,6 @@
 
 import React from "react";
-import { CouponCode } from "@/types/shop";
+import { Coupon } from "@/types/shop";
 import {
   Sheet,
   SheetContent,
@@ -29,7 +29,7 @@ interface CouponFormSheetProps {
     description: string;
   }>>;
   onSubmit: (e: React.FormEvent) => void;
-  editingCoupon: CouponCode | null;
+  editingCoupon: Coupon | null;
 }
 
 const CouponFormSheet: React.FC<CouponFormSheetProps> = ({

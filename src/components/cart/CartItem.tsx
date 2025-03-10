@@ -24,7 +24,7 @@ const CartItem: React.FC<CartItemProps> = ({ item, onRemove, onUpdateQuantity })
       <div className="flex items-center flex-grow">
         <div className="h-20 w-20 bg-muted rounded-md overflow-hidden flex-shrink-0">
           <img 
-            src={item.product.images[0]} 
+            src={item.product.images?.[0] || "/placeholder.svg"} 
             alt={item.product.name} 
             className="h-full w-full object-cover"
           />

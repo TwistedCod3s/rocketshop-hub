@@ -32,7 +32,7 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
           {[1, 2, 3, 4, 5].map(star => (
             <Star 
               key={star}
-              className={`h-5 w-5 ${star <= product.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
+              className={`h-5 w-5 ${star <= (product.rating || 0) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
             />
           ))}
         </div>

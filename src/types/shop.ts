@@ -1,20 +1,23 @@
 
-// Add the new loadProductsFromSupabase and getCartCount to the ShopContextType interface
+// Define all the types needed for the shop
 
 export interface CartItem {
   id: string;
-  name: string;
-  price: number;
+  name?: string;
+  price?: number;
   quantity: number;
   image?: string;
+  product: Product; // Add the product reference to CartItem
 }
 
 export interface Product {
   id: string;
   name: string;
   description: string;
+  fullDescription?: string; // Add fullDescription property
   features?: string[];
   specification?: { [key: string]: string };
+  specifications?: { name: string; value: string }[]; // Add specifications array
   price: number;
   compareAtPrice?: number;
   discount?: number;
@@ -28,8 +31,15 @@ export interface Product {
   new?: boolean;
   relatedProducts?: string[];
   rating?: number;
+  reviews?: {
+    user: string;
+    rating: number;
+    comment: string;
+    date: string;
+  }[]; // Add reviews array
 }
 
+// Rename CouponCode to Coupon for consistency
 export interface Coupon {
   id: string;
   code: string;
@@ -38,6 +48,13 @@ export interface Coupon {
   expiryDate: string;
   active: boolean;
   description: string;
+}
+
+// Add CartSummaryProps interface
+export interface CartSummaryProps {
+  cart: CartItem[];
+  subtotal?: number;
+  itemCount?: number;
 }
 
 export interface ShopContextType {
@@ -56,7 +73,7 @@ export interface ShopContextType {
   
   // Cart
   cart: CartItem[];
-  addToCart: (product: Product) => void;
+  addToCart: (product: Product, quantity?: number) => void; // Make quantity optional
   removeFromCart: (productId: string) => void;
   updateCartItemQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
@@ -72,7 +89,7 @@ export interface ShopContextType {
   subcategories?: { [category: string]: string[] };
   updateSubcategories?: (category: string, subcategories: string[]) => void;
   coupons?: Coupon[];
-  addCoupon?: (coupon: Coupon) => void;
+  addCoupon?: (coupon: Omit<Coupon, 'id'>) => void; // No ID required when adding
   updateCoupon?: (coupon: Coupon) => void;
   deleteCoupon?: (couponId: string) => void;
   validateCoupon?: (code: string) => Coupon | null;

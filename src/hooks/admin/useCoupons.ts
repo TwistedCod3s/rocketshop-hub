@@ -6,11 +6,11 @@ import {
   COUPONS_KEY, 
   COUPONS_EVENT 
 } from "./adminUtils";
-import { CouponCode } from "@/types/shop";
+import { Coupon } from "@/types/shop";
 import { v4 as uuidv4 } from "uuid";
 
 // Initialize default coupons
-const defaultCoupons: CouponCode[] = [
+const defaultCoupons: Coupon[] = [
   {
     id: "coupon-1",
     code: "SCHOOL10",
@@ -32,10 +32,10 @@ const defaultCoupons: CouponCode[] = [
 ];
 
 // Initialize global coupons state from localStorage or default values
-const initialGlobalCoupons = loadFromStorage<CouponCode[]>(COUPONS_KEY, defaultCoupons);
+const initialGlobalCoupons = loadFromStorage<Coupon[]>(COUPONS_KEY, defaultCoupons);
 
 export function useCoupons() {
-  const [coupons, setCoupons] = useState<CouponCode[]>(initialGlobalCoupons);
+  const [coupons, setCoupons] = useState<Coupon[]>(initialGlobalCoupons);
   
   // Function to forcibly reload from localStorage
   const reloadFromStorage = useCallback(() => {
@@ -73,7 +73,7 @@ export function useCoupons() {
     };
     
     // Custom event handlers
-    const handleCouponsEvent = (e: CustomEvent<CouponCode[]>) => {
+    const handleCouponsEvent = (e: CustomEvent<Coupon[]>) => {
       console.log("Custom event detected for coupons", e);
       if (e.detail) {
         setCoupons(e.detail);
@@ -96,7 +96,7 @@ export function useCoupons() {
   }, [reloadFromStorage]);
 
   // Coupon management functions with improved error handling
-  const addCoupon = useCallback((coupon: Omit<CouponCode, 'id'>) => {
+  const addCoupon = useCallback((coupon: Omit<Coupon, 'id'>) => {
     try {
       const newCoupon = {
         ...coupon,
@@ -118,7 +118,7 @@ export function useCoupons() {
     }
   }, []);
 
-  const updateCoupon = useCallback((coupon: CouponCode) => {
+  const updateCoupon = useCallback((coupon: Coupon) => {
     try {
       // Update local state using functional form to ensure we're working with the latest state
       setCoupons(prevCoupons => {

@@ -1,12 +1,12 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { CouponCode } from "@/types/shop";
+import { Coupon } from "@/types/shop";
 import { Trash2, Pencil } from "lucide-react";
 
 interface CouponListProps {
-  coupons: CouponCode[];
-  onEdit: (coupon: CouponCode) => void;
+  coupons: Coupon[];
+  onEdit: (coupon: Coupon) => void;
   onDelete: (couponId: string) => void;
 }
 

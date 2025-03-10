@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { useShopContext } from "@/context/ShopContext";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { CouponCode } from "@/types/shop";
+import { Coupon } from "@/types/shop";
 import { Plus } from "lucide-react";
 import CouponList from "./coupons/CouponList";
 import CouponFormSheet from "./coupons/CouponFormSheet";
@@ -12,7 +12,7 @@ const CouponManagement: React.FC = () => {
   const { coupons, addCoupon, updateCoupon, deleteCoupon } = useShopContext();
   const { toast } = useToast();
   const [showForm, setShowForm] = useState(false);
-  const [editingCoupon, setEditingCoupon] = useState<CouponCode | null>(null);
+  const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null);
   const [formData, setFormData] = useState({
     code: "",
     discountPercentage: 0,
@@ -33,7 +33,7 @@ const CouponManagement: React.FC = () => {
     });
   };
 
-  const handleEditCoupon = (coupon: CouponCode) => {
+  const handleEditCoupon = (coupon: Coupon) => {
     setEditingCoupon(coupon);
     setFormData({
       code: coupon.code,
