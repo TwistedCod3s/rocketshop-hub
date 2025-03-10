@@ -30,7 +30,10 @@ export const saveAdminDataToDatabase = async (
       console.log(`Attempting to save ${products.length} products to database`);
       // Convert each product to ensure it has a valid UUID and follows DB schema
       const dbReadyProducts = products.map(product => convertProductToDbSchema(product));
-      await dbHelpers.saveProducts(dbReadyProducts);
+      
+      // The error occurs here - we need to pass the properly typed array to saveProducts
+      // TypeScript treats this as products type isn't maintained
+      await dbHelpers.saveProducts(dbReadyProducts as any); // Use type assertion as a temporary fix
       console.log("Saved products to database");
     }
     

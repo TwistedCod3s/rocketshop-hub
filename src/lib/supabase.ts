@@ -28,6 +28,7 @@ export interface Database {
           rating: number | null
           reviews: number | null
           specifications: string[] | null
+          original_id: string | null  // Add original_id field
         }
         Insert: {
           id?: string
@@ -42,6 +43,7 @@ export interface Database {
           rating?: number | null
           reviews?: number | null
           specifications?: string[] | null
+          original_id?: string | null  // Add original_id field
         }
         Update: {
           id?: string
@@ -56,6 +58,7 @@ export interface Database {
           rating?: number | null
           reviews?: number | null
           specifications?: string[] | null
+          original_id?: string | null  // Add original_id field
         }
       }
       category_images: {
@@ -266,20 +269,19 @@ export const dbHelpers = {
     return (data || []).map(item => convertDbToProductSchema(item));
   },
   
-  saveProducts: async (products: Product[]): Promise<void> => {
+  saveProducts: async (products: Record<string, any>[]): Promise<void> => {
     const client = getSupabaseClient();
     if (!client) {
       throw new Error("Could not create Supabase client");
     }
     
-    // Convert each product to the database schema to handle missing columns
-    const dbProducts = products.map(product => convertProductToDbSchema(product));
-    console.log("Saving products with database schema conversion:", dbProducts.length);
+    // Log products for debugging
+    console.log("Saving products with database schema conversion:", products.length);
     
     try {
       const { error } = await client
         .from('products')
-        .upsert(dbProducts, { onConflict: 'id' });
+        .upsert(products, { onConflict: 'id' });
       
       if (error) {
         console.error("Error saving products:", error);
