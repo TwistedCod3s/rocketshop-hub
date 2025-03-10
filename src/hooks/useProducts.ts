@@ -1,17 +1,14 @@
-
 import { useState, useCallback, useEffect } from "react";
 import { Product } from "@/types/shop";
 import { initialProducts } from "@/data/initialProducts";
 
 // Define consistent storage key
-const PRODUCTS_STORAGE_KEY = "ROCKETRY_SHOP_PRODUCTS_V4"; // Bumped version
+const PRODUCTS_STORAGE_KEY = "ROCKETRY_SHOP_PRODUCTS_V7"; // Bumped version
+const PRODUCTS_EVENT = "rocketry-product-update-v7"; // Bumped version
 
 // Create a global variable for products that all users will share
 // Default to initialProducts but will be overwritten by localStorage if available
 let globalProducts: Product[] = [...initialProducts];
-
-// Use a enhanced pub/sub mechanism to sync changes across tabs/users
-const eventBusName = "rocketry-product-update-v2";
 
 // Try to load saved products from localStorage on initial module load
 try {
@@ -48,18 +45,19 @@ export function useProducts() {
     }
   }, []);
   
-  // Listen for storage events from other tabs/windows
+  // Listen for storage events from other tabs/windows and sync trigger events
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === PRODUCTS_STORAGE_KEY && e.newValue) {
+      // Handle both our specific key and the sync trigger key
+      if ((e.key === PRODUCTS_STORAGE_KEY || e.key === "ROCKETRY_SHOP_SYNC_TRIGGER_V7") && e.newValue) {
         try {
-          console.log("Storage event detected for products");
-          const updatedProducts = JSON.parse(e.newValue);
-          globalProducts = updatedProducts;
-          setProducts([...globalProducts]);
-          console.log("Products updated from storage event:", updatedProducts.length);
+          console.log(`Storage event detected: ${e.key}`);
+          
+          // Always reload from localStorage to ensure we have the latest data
+          reloadProductsFromStorage();
+          
         } catch (error) {
-          console.error("Error parsing products from storage event:", error);
+          console.error("Error handling storage event:", error);
           // Attempt recovery by directly reading from localStorage
           reloadProductsFromStorage();
         }
@@ -76,15 +74,23 @@ export function useProducts() {
       }
     };
 
+    // Listen for general sync events 
+    const handleSyncEvent = () => {
+      console.log("Global sync event detected, reloading products");
+      reloadProductsFromStorage();
+    };
+
     window.addEventListener('storage', handleStorageChange);
-    window.addEventListener(eventBusName, handleCustomEvent as EventListener);
+    window.addEventListener(PRODUCTS_EVENT, handleCustomEvent as EventListener);
+    window.addEventListener("rocketry-sync-trigger-v7", handleSyncEvent);
     
     // Initial forced reload
     reloadProductsFromStorage();
     
     return () => {
       window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener(eventBusName, handleCustomEvent as EventListener);
+      window.removeEventListener(PRODUCTS_EVENT, handleCustomEvent as EventListener);
+      window.removeEventListener("rocketry-sync-trigger-v7", handleSyncEvent);
     };
   }, [reloadProductsFromStorage]);
   
@@ -99,25 +105,45 @@ export function useProducts() {
       console.log("Saved products to localStorage:", productsCopy.length);
       
       // Dispatch custom event for same-window communication
-      const event = new CustomEvent(eventBusName, { detail: productsCopy });
+      const event = new CustomEvent(PRODUCTS_EVENT, { detail: productsCopy });
       window.dispatchEvent(event);
       console.log("Broadcast products via custom event");
       
-      // Manually trigger storage event for cross-window communication
-      // in browsers that don't automatically trigger it
-      if (typeof window !== 'undefined') {
+      // Update the sync trigger to notify other windows
+      const syncKey = "ROCKETRY_SHOP_SYNC_TRIGGER_V7";
+      const timestamp = new Date().toISOString();
+      localStorage.setItem(syncKey, timestamp);
+      
+      // Manually trigger storage events 
+      try {
         window.dispatchEvent(new StorageEvent('storage', {
           key: PRODUCTS_STORAGE_KEY,
           newValue: JSON.stringify(productsCopy),
           storageArea: localStorage
         }));
-        console.log("Manually triggered storage event");
+        
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: syncKey,
+          newValue: timestamp,
+          storageArea: localStorage
+        }));
+        
+        console.log("Manually triggered storage events");
+      } catch (e) {
+        console.error("Error triggering storage events:", e);
+        
+        // Real fallback - remove and re-add the item
+        localStorage.removeItem(PRODUCTS_STORAGE_KEY);
+        setTimeout(() => {
+          localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(productsCopy));
+          console.log("Used fallback storage sync mechanism");
+        }, 10);
       }
     } catch (error) {
       console.error("Error in syncAndBroadcast for products:", error);
     }
   }, []);
-  
+
   // Product Management Functions with improved error handling
   const addProduct = useCallback((product: Product) => {
     try {

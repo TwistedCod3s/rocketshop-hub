@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { useShopContext } from "@/context/ShopContext";
@@ -30,15 +29,20 @@ const ProductList = () => {
       loadProducts();
     };
     
-    window.addEventListener('rocketry-product-update', handleProductUpdate);
+    // Listen for all possible update events
+    window.addEventListener('rocketry-product-update-v7', handleProductUpdate);
+    window.addEventListener('rocketry-sync-trigger-v7', handleProductUpdate);
     window.addEventListener('storage', (e) => {
-      if (e.key === "ROCKETRY_SHOP_PRODUCTS_V3") {
+      if (e.key === "ROCKETRY_SHOP_PRODUCTS_V7" || 
+          e.key === "ROCKETRY_SHOP_SYNC_TRIGGER_V7") {
+        console.log(`Storage event detected for ${e.key}, refreshing products`);
         handleProductUpdate();
       }
     });
     
     return () => {
-      window.removeEventListener('rocketry-product-update', handleProductUpdate);
+      window.removeEventListener('rocketry-product-update-v7', handleProductUpdate);
+      window.removeEventListener('rocketry-sync-trigger-v7', handleProductUpdate);
       window.removeEventListener('storage', handleProductUpdate);
     };
   }, [fetchAllProducts]);
