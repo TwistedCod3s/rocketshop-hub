@@ -1,13 +1,14 @@
+
 import { useState, useEffect } from "react";
 import { useShopContext } from "@/context/ShopContext";
-import { useToast } from "@/hooks/use-toast";
 import DeploymentStatusAlert from "./deployment/DeploymentStatusAlert";
 import DeploymentUrlInput from "./deployment/DeploymentUrlInput";
 import AutoDeployToggle from "./deployment/AutoDeployToggle";
 import DeploymentActions from "./deployment/DeploymentActions";
 import DeploymentInfo from "./deployment/DeploymentInfo";
-import { Button } from "@/components/ui/button";
-import { Loader } from "lucide-react";
+import DataSyncButton from "./deployment/DataSyncButton";
+import { useDeploymentHandler } from "./deployment/useDeploymentHandler";
+import { useToast } from "@/hooks/use-toast";
 
 const DeploymentSettings = () => {
   const { 
@@ -22,12 +23,15 @@ const DeploymentSettings = () => {
   
   const [deployUrl, setDeployUrl] = useState("");
   const [autoDeploy, setAutoDeploy] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
   const [hasPendingChanges, setHasPendingChanges] = useState(false);
-  const [lastDeploymentTime, setLastDeploymentTime] = useState<string | null>(
-    localStorage.getItem('LAST_DEPLOYMENT_TIME')
-  );
   const { toast } = useToast();
+  
+  // Set up the deployment handler
+  const { handleDeploy } = useDeploymentHandler({
+    triggerDeployment,
+    reloadAllAdminData,
+    setHasPendingChanges
+  });
   
   useEffect(() => {
     if (getDeploymentHookUrl) {
@@ -90,89 +94,9 @@ const DeploymentSettings = () => {
     }
   };
   
-  const handleSyncData = async () => {
-    setIsSyncing(true);
-    try {
-      await reloadAllAdminData(false);
-      toast({
-        title: "Data synchronized",
-        description: "All changes have been synchronized across all users"
-      });
-      
-      // Check if there are still pending changes
-      setTimeout(() => {
-        const pendingChanges = localStorage.getItem('ROCKETRY_SHOP_CHANGES_PENDING');
-        setHasPendingChanges(pendingChanges === 'true');
-      }, 1000);
-    } catch (error) {
-      console.error("Error syncing data:", error);
-      toast({
-        title: "Sync failed",
-        description: "There was a problem synchronizing your data",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSyncing(false);
-    }
-  };
-  
-  const handleDeploy = async (): Promise<boolean> => {
-    // First, ensure all data is properly synchronized
-    try {
-      setIsSyncing(true);
-      await reloadAllAdminData(false); // Sync without auto-deploying
-      setIsSyncing(false);
-      
-      // Now deploy
-      if (triggerDeployment) {
-        const success = await triggerDeployment();
-        if (success) {
-          // Set last deployment time
-          const now = new Date().toISOString();
-          localStorage.setItem('LAST_DEPLOYMENT_TIME', now);
-          setLastDeploymentTime(now);
-          
-          toast({
-            title: "Deployment successful",
-            description: "Your changes are being deployed and will be visible to all users shortly"
-          });
-          
-          // Clear pending changes flag
-          localStorage.setItem('ROCKETRY_SHOP_CHANGES_PENDING', 'false');
-          setHasPendingChanges(false);
-          
-          return true;
-        } else {
-          toast({
-            title: "Deployment error",
-            description: "There was a problem starting the deployment",
-            variant: "destructive"
-          });
-          return false;
-        }
-      }
-      return false;
-    } catch (error) {
-      console.error("Error during deployment:", error);
-      toast({
-        title: "Deployment error",
-        description: "Failed to sync data before deployment",
-        variant: "destructive"
-      });
-      setIsSyncing(false);
-      return false;
-    }
-  };
-  
-  const formatLastDeploymentTime = () => {
-    if (!lastDeploymentTime) return "Never deployed";
-    
-    try {
-      const date = new Date(lastDeploymentTime);
-      return date.toLocaleString();
-    } catch (e) {
-      return "Unknown";
-    }
+  const handleSyncComplete = () => {
+    const pendingChanges = localStorage.getItem('ROCKETRY_SHOP_CHANGES_PENDING');
+    setHasPendingChanges(pendingChanges === 'true');
   };
   
   return (
@@ -194,21 +118,10 @@ const DeploymentSettings = () => {
         />
         
         <div className="flex flex-col sm:flex-row gap-4">
-          <Button
-            variant="outline"
-            onClick={handleSyncData}
-            disabled={isSyncing}
-            className="w-full sm:w-auto"
-          >
-            {isSyncing ? (
-              <>
-                <Loader className="mr-2 h-4 w-4 animate-spin" />
-                Syncing...
-              </>
-            ) : (
-              <>Sync Changes</>
-            )}
-          </Button>
+          <DataSyncButton 
+            reloadAllAdminData={reloadAllAdminData}
+            onSyncComplete={handleSyncComplete}
+          />
           
           <DeploymentActions 
             triggerDeployment={handleDeploy}
