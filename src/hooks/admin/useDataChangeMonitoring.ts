@@ -16,7 +16,7 @@ export function useDataChangeMonitoring(
       const pendingChanges = localStorage.getItem('ROCKETRY_SHOP_CHANGES_PENDING');
       if (pendingChanges === 'true') {
         console.log("Auto-deploy: Changes detected, scheduling deployment");
-        setTimeout(() => reloadAllAdminData(true), 2000);
+        setTimeout(() => reloadAllAdminData(false), 2000);
       }
     }
   }, [categoryImages, autoDeployEnabled, reloadAllAdminData]);

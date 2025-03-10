@@ -71,7 +71,7 @@ export function useDatabaseSync(
   ]);
   
   // Function to force reload all admin data and propagate to all users
-  const reloadAllAdminData = useCallback(async () => {
+  const reloadAllAdminData = useCallback(async (triggerDeploy?: boolean) => {
     console.log("Forcing reload of all admin data and propagating to all users");
     
     try {

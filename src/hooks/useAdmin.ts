@@ -5,9 +5,7 @@ import { useSubcategories } from "./admin/useSubcategories";
 import { useCoupons } from "./admin/useCoupons";
 import { useEffect } from "react";
 import { useProducts } from "./useProducts";
-import { useVercelDeployment } from "./admin/useVercelDeployment";
 import { useDatabaseSync } from "./admin/useDatabaseSync";
-import { useAutoDeployment } from "./admin/useAutoDeployment";
 import { useDataChangeMonitoring } from "./admin/useDataChangeMonitoring";
 
 export function useAdmin() {
@@ -16,7 +14,6 @@ export function useAdmin() {
   const subcategoriesHook = useSubcategories();
   const couponsHook = useCoupons();
   const productsHook = useProducts();
-  const vercelDeployment = useVercelDeployment();
   
   // Debug logging
   useEffect(() => {
@@ -32,20 +29,15 @@ export function useAdmin() {
     categoryImagesHook.reloadFromStorage,
     subcategoriesHook.reloadFromStorage,
     couponsHook.reloadFromStorage,
-    productsHook.reloadProductsFromStorage,
-    vercelDeployment,
-    false // Initially false, will be updated with autoDeployEnabled
+    productsHook.reloadProductsFromStorage
   );
-
-  // Use the auto-deployment hook with the reload function
-  const autoDeployHook = useAutoDeployment(dbSync.reloadAllAdminData);
 
   // Monitor data changes
   useDataChangeMonitoring(
     categoryImagesHook.categoryImages,
     subcategoriesHook.subcategories,
     couponsHook.coupons,
-    autoDeployHook.autoDeployEnabled,
+    false, // No auto-deployment, since we're using a database
     dbSync.reloadAllAdminData
   );
   
@@ -71,14 +63,6 @@ export function useAdmin() {
     updateCoupon: couponsHook.updateCoupon,
     deleteCoupon: couponsHook.deleteCoupon,
     validateCoupon: couponsHook.validateCoupon,
-    
-    // Deployment management
-    isDeploying: vercelDeployment.isDeploying,
-    triggerDeployment: vercelDeployment.triggerDeployment,
-    getDeploymentHookUrl: vercelDeployment.getDeploymentHookUrl,
-    setDeploymentHookUrl: vercelDeployment.setDeploymentHookUrl,
-    autoDeployEnabled: autoDeployHook.autoDeployEnabled,
-    toggleAutoDeploy: autoDeployHook.toggleAutoDeploy,
     
     // Global admin functions
     reloadAllAdminData: dbSync.reloadAllAdminData,

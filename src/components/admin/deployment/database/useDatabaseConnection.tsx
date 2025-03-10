@@ -50,10 +50,13 @@ export function useDatabaseConnection() {
       localStorage.setItem('ROCKETRY_DB_URL', supabaseUrl);
       localStorage.setItem('ROCKETRY_DB_KEY', supabaseKey);
       
-      // Reset any existing client instance
+      // Reset any existing client instance - CRUCIAL to prevent multiple instances
       resetSupabaseClient();
       
       console.log("Testing connection with URL:", supabaseUrl.substring(0, 15) + "...");
+      
+      // Add a small delay to ensure any previous connections are closed
+      await new Promise(resolve => setTimeout(resolve, 100));
       
       // Test connection directly with a simple query
       const client = getSupabaseClient();

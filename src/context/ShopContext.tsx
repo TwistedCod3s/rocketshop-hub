@@ -5,7 +5,6 @@ import { useProducts } from "@/hooks/useProducts";
 import { useCart } from "@/hooks/useCart";
 import { useFeaturedProducts } from "@/hooks/useFeaturedProducts";
 import { useAdmin } from "@/hooks/useAdmin";
-import { useVercelDeployment } from "@/hooks/admin/useVercelDeployment";
 import { useToast } from "@/hooks/use-toast";
 
 // Create context with default values
@@ -46,7 +45,6 @@ export const ShopProvider = ({ children }: ShopProviderProps) => {
   const cartHook = useCart();
   const featuredHook = useFeaturedProducts(productsHook.products);
   const adminHook = useAdmin();
-  const deploymentHook = useVercelDeployment();
   
   // Force re-render when localStorage changes in other tabs
   useEffect(() => {
@@ -60,24 +58,6 @@ export const ShopProvider = ({ children }: ShopProviderProps) => {
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
-  
-  // Wrap triggerDeployment to return Promise<boolean> instead of Promise<void>
-  const wrappedTriggerDeployment = async () => {
-    try {
-      if (deploymentHook.triggerDeployment) {
-        await deploymentHook.triggerDeployment();
-        return true;
-      }
-    } catch (error) {
-      console.error("Deployment error:", error);
-      toast({
-        title: "Deployment failed",
-        description: "There was an error during deployment",
-        variant: "destructive"
-      });
-    }
-    return false;
-  };
   
   // Combine all hooks into a single context value
   const value: ShopContextType = {
@@ -120,14 +100,6 @@ export const ShopProvider = ({ children }: ShopProviderProps) => {
     updateCategoryImage: adminHook.updateCategoryImage,
     reloadAllAdminData: adminHook.reloadAllAdminData,
     tryAdminLogin: adminHook.tryAdminLogin,
-    
-    // Deployment
-    isDeploying: deploymentHook.isDeploying,
-    triggerDeployment: wrappedTriggerDeployment,
-    getDeploymentHookUrl: deploymentHook.getDeploymentHookUrl,
-    setDeploymentHookUrl: deploymentHook.setDeploymentHookUrl,
-    autoDeployEnabled: adminHook.autoDeployEnabled,
-    toggleAutoDeploy: adminHook.toggleAutoDeploy,
   };
   
   return (
