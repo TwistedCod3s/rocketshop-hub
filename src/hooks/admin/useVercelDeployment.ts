@@ -1,10 +1,10 @@
 
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { writeDataToFile } from '@/utils/fileSystemUtils';
 import { Product, Coupon } from '@/types/shop';
+import { saveAdminDataToDatabase } from '@/utils/databaseUtils';
 
-// Define a type for the admin data structure to fix the TypeScript error
+// Define a type for the admin data structure
 interface AdminData {
   products?: Product[];
   categoryImages?: Record<string, string>;
@@ -27,9 +27,9 @@ export function useVercelDeployment() {
     console.log("Deployment hook URL saved:", url);
   }, []);
 
-  // Function to write admin data directly to the codebase
-  const writeAdminDataToCodebase = useCallback(async (): Promise<boolean> => {
-    console.log("Writing admin data directly to codebase...");
+  // Function to write admin data to the database
+  const writeAdminDataToDatabase = useCallback(async (): Promise<boolean> => {
+    console.log("Writing admin data to database...");
     
     try {
       // Create a snapshot of all localStorage data with proper typing
@@ -37,16 +37,15 @@ export function useVercelDeployment() {
       
       // Get products data
       const products = localStorage.getItem('ROCKETRY_SHOP_PRODUCTS_V7');
+      let parsedProducts: Product[] = [];
       if (products) {
         try {
-          const parsedProducts = JSON.parse(products);
+          parsedProducts = JSON.parse(products);
           dataToSave.products = parsedProducts;
-          const productsResult = await writeDataToFile('data/products.json', parsedProducts);
-          console.log("Wrote products data:", productsResult);
         } catch (e) {
           console.error("Error parsing products data:", e);
           toast({
-            title: "Error writing products data",
+            title: "Error processing products data",
             description: "Could not parse products data from localStorage",
             variant: "destructive"
           });
@@ -55,12 +54,11 @@ export function useVercelDeployment() {
       
       // Get category images data
       const categoryImages = localStorage.getItem('ROCKETRY_SHOP_CATEGORY_IMAGES_V7');
+      let parsedImages: Record<string, string> = {};
       if (categoryImages) {
         try {
-          const parsedImages = JSON.parse(categoryImages);
+          parsedImages = JSON.parse(categoryImages);
           dataToSave.categoryImages = parsedImages;
-          const imagesResult = await writeDataToFile('data/categoryImages.json', parsedImages);
-          console.log("Wrote category images data:", imagesResult);
         } catch (e) {
           console.error("Error parsing category images data:", e);
         }
@@ -68,12 +66,11 @@ export function useVercelDeployment() {
       
       // Get subcategories data
       const subcategories = localStorage.getItem('ROCKETRY_SHOP_SUBCATEGORIES_V7');
+      let parsedSubcategories: Record<string, string[]> = {};
       if (subcategories) {
         try {
-          const parsedSubcategories = JSON.parse(subcategories);
+          parsedSubcategories = JSON.parse(subcategories);
           dataToSave.subcategories = parsedSubcategories;
-          const subcategoriesResult = await writeDataToFile('data/subcategories.json', parsedSubcategories);
-          console.log("Wrote subcategories data:", subcategoriesResult);
         } catch (e) {
           console.error("Error parsing subcategories data:", e);
         }
@@ -81,36 +78,31 @@ export function useVercelDeployment() {
       
       // Get coupons data
       const coupons = localStorage.getItem('ROCKETRY_SHOP_COUPONS_V7');
+      let parsedCoupons: Coupon[] = [];
       if (coupons) {
         try {
-          const parsedCoupons = JSON.parse(coupons);
+          parsedCoupons = JSON.parse(coupons);
           dataToSave.coupons = parsedCoupons;
-          const couponsResult = await writeDataToFile('data/coupons.json', parsedCoupons);
-          console.log("Wrote coupons data:", couponsResult);
         } catch (e) {
           console.error("Error parsing coupons data:", e);
         }
       }
       
-      // Write a combined data file for easy access
-      const combinedResult = await writeDataToFile('data/adminData.json', dataToSave);
-      console.log("Wrote combined admin data:", combinedResult);
+      // Save all data to database
+      await saveAdminDataToDatabase(
+        parsedProducts, 
+        parsedImages, 
+        parsedSubcategories, 
+        parsedCoupons
+      );
       
-      // Also write to the initialProducts data file to make it part of the codebase
-      // This is the only file explicitly included in vercel.json
-      if (dataToSave.products) {
-        const tsContent = `export const initialProducts = ${JSON.stringify(dataToSave.products, null, 2)};`;
-        const initProductsResult = await writeDataToFile('src/data/initialProducts.ts', tsContent);
-        console.log("Updated initialProducts.ts:", initProductsResult);
-      }
-      
-      console.log("Successfully wrote all admin data to codebase");
+      console.log("Successfully wrote all admin data to database");
       return true;
     } catch (error) {
-      console.error("Error writing admin data to codebase:", error);
+      console.error("Error writing admin data to database:", error);
       toast({
         title: "Error writing data",
-        description: error instanceof Error ? error.message : "Failed to write data to codebase",
+        description: error instanceof Error ? error.message : "Failed to write data to database",
         variant: "destructive"
       });
       return false;
@@ -134,71 +126,41 @@ export function useVercelDeployment() {
     console.log("Starting Vercel deployment with hook URL:", deployHookUrl);
     
     try {
-      // First, write the admin data to the codebase
-      const writeSuccess = await writeAdminDataToCodebase();
+      // First, write the admin data to the database
+      const writeSuccess = await writeAdminDataToDatabase();
       
       if (!writeSuccess) {
         toast({
           title: "Deployment failed",
-          description: "Failed to write admin data to codebase.",
+          description: "Failed to write admin data to database.",
           variant: "destructive"
         });
         return false;
       }
       
-      // Add a timestamp parameter to bust any caching
-      const timestamp = Date.now();
-      const urlWithTimestamp = `${deployHookUrl}${deployHookUrl.includes('?') ? '&' : '?'}timestamp=${timestamp}`;
+      // No need to trigger a new deployment for content changes
+      // The website can now read directly from the database
       
-      // Call the Vercel deployment hook
-      const response = await fetch(urlWithTimestamp, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          force: true,             // Force a deployment even if no changes detected
-          timestamp: timestamp,    // Include timestamp to ensure uniqueness
-          trigger: 'admin-panel',  // Identify source of deployment
-        })
+      // Clear pending changes flag after successful database update
+      localStorage.setItem('ROCKETRY_SHOP_CHANGES_PENDING', 'false');
+      
+      // Set last deployment time
+      const now = new Date().toISOString();
+      localStorage.setItem('LAST_DEPLOYMENT_TIME', now);
+      
+      toast({
+        title: "Changes saved",
+        description: "Your changes have been saved to the database and are now live.",
       });
       
-      // Log the response for debugging
-      const responseText = await response.text();
-      console.log(`Deployment response: ${response.status} ${responseText}`);
+      // Wait 2 seconds for visual feedback
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
-      if (response.ok) {
-        console.log("Deployment successfully triggered with code updates");
-        toast({
-          title: "Deployment triggered",
-          description: "Your changes have been written to the codebase and are being deployed to Vercel.",
-        });
-        
-        // Clear pending changes flag after successful deployment
-        localStorage.setItem('ROCKETRY_SHOP_CHANGES_PENDING', 'false');
-        
-        // Set last deployment time
-        const now = new Date().toISOString();
-        localStorage.setItem('LAST_DEPLOYMENT_TIME', now);
-        
-        // Wait 2 seconds to allow the deployment to start
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        return true;
-      } else {
-        console.error("Deployment error response:", responseText);
-        
-        toast({
-          title: "Deployment failed",
-          description: `Error: ${response.status} ${response.statusText}`,
-          variant: "destructive"
-        });
-        return false;
-      }
+      return true;
     } catch (error) {
-      console.error("Deployment error:", error);
+      console.error("Database save error:", error);
       toast({
-        title: "Deployment failed",
+        title: "Failed to save changes",
         description: error instanceof Error ? error.message : "Unknown error occurred",
         variant: "destructive"
       });
@@ -206,13 +168,13 @@ export function useVercelDeployment() {
     } finally {
       setIsDeploying(false);
     }
-  }, [getDeploymentHookUrl, writeAdminDataToCodebase, toast]);
+  }, [getDeploymentHookUrl, writeAdminDataToDatabase, toast]);
 
   return {
     isDeploying,
     triggerDeployment,
     getDeploymentHookUrl,
     setDeploymentHookUrl,
-    writeAdminDataToCodebase
+    writeAdminDataToDatabase
   };
 }
