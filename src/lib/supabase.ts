@@ -4,9 +4,26 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
+// Make sure URL format is correct - must start with https://
+const isValidUrl = (url: string) => {
+  try {
+    return url.startsWith('https://') && new URL(url).hostname.length > 0;
+  } catch (e) {
+    return false;
+  }
+};
+
 // Improved debugging for environment variables
-console.log("Supabase URL:", supabaseUrl);
-console.log("Supabase Anon Key starts with:", supabaseAnonKey ? supabaseAnonKey.substring(0, 4) + "..." : "undefined");
+console.log("Supabase connection info:", {
+  url: supabaseUrl, 
+  isValidUrl: isValidUrl(supabaseUrl),
+  hasKey: !!supabaseAnonKey,
+  keyLength: supabaseAnonKey?.length
+});
+
+if (supabaseAnonKey) {
+  console.log("Anon key preview:", supabaseAnonKey.substring(0, 4) + "..." + supabaseAnonKey.substring(supabaseAnonKey.length - 4));
+}
 
 export const getSupabaseClient = () => {
   if (!supabaseUrl || !supabaseAnonKey) {
@@ -17,9 +34,25 @@ export const getSupabaseClient = () => {
     return null;
   }
   
+  if (!isValidUrl(supabaseUrl)) {
+    console.error('Invalid Supabase URL format:', supabaseUrl);
+    console.error('URL must start with https:// and be a valid URL');
+    return null;
+  }
+  
   try {
-    console.log("Creating Supabase client...");
-    const client = createClient(supabaseUrl, supabaseAnonKey);
+    console.log("Creating Supabase client with:", {
+      url: supabaseUrl,
+      keyLength: supabaseAnonKey.length
+    });
+    
+    const client = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: false, // Don't persist auth state in localStorage
+        autoRefreshToken: true
+      }
+    });
+    
     console.log("Supabase client created successfully");
     return client;
   } catch (error) {

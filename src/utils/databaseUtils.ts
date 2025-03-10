@@ -14,24 +14,28 @@ export const saveAdminDataToDatabase = async (
     
     // Save products
     if (products && products.length > 0) {
+      console.log(`Attempting to save ${products.length} products to database`);
       await dbHelpers.saveProducts(products);
       console.log("Saved products to database");
     }
     
     // Save category images
     if (categoryImages && Object.keys(categoryImages).length > 0) {
+      console.log(`Attempting to save ${Object.keys(categoryImages).length} category images to database`);
       await dbHelpers.saveCategoryImages(categoryImages);
       console.log("Saved category images to database");
     }
     
     // Save subcategories
     if (subcategories && Object.keys(subcategories).length > 0) {
+      console.log(`Attempting to save ${Object.keys(subcategories).length} subcategory entries to database`);
       await dbHelpers.saveSubcategories(subcategories);
       console.log("Saved subcategories to database");
     }
     
     // Save coupons
     if (coupons && coupons.length > 0) {
+      console.log(`Attempting to save ${coupons.length} coupons to database`);
       await dbHelpers.saveCoupons(coupons);
       console.log("Saved coupons to database");
     }
@@ -40,6 +44,13 @@ export const saveAdminDataToDatabase = async (
     return true;
   } catch (error) {
     console.error("Error saving admin data to database:", error);
+    // Ensure we capture and show any errors from the Supabase operations
+    if (error instanceof Error) {
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+    } else {
+      console.error("Non-error object thrown:", error);
+    }
     throw error;
   }
 };
@@ -60,11 +71,11 @@ export const loadAdminDataFromDatabase = async (): Promise<{
     
     // Load category images
     const categoryImages = await dbHelpers.getCategoryImages();
-    console.log("Loaded category images from database");
+    console.log("Loaded category images from database:", Object.keys(categoryImages).length);
     
     // Load subcategories
     const subcategories = await dbHelpers.getSubcategories();
-    console.log("Loaded subcategories from database");
+    console.log("Loaded subcategories from database:", Object.keys(subcategories).length);
     
     // Load coupons
     const coupons = await dbHelpers.getCoupons();
@@ -78,6 +89,13 @@ export const loadAdminDataFromDatabase = async (): Promise<{
     };
   } catch (error) {
     console.error("Error loading admin data from database:", error);
+    // Ensure we capture and show any errors from the Supabase operations
+    if (error instanceof Error) {
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+    } else {
+      console.error("Non-error object thrown:", error);
+    }
     throw error;
   }
 };
@@ -88,18 +106,73 @@ export const initializeDatabaseFromLocalStorage = async (): Promise<boolean> => 
     console.log("Initializing database from localStorage...");
     
     // Load data from localStorage
-    const products = JSON.parse(localStorage.getItem('ROCKETRY_SHOP_PRODUCTS_V7') || '[]');
-    const categoryImages = JSON.parse(localStorage.getItem('ROCKETRY_SHOP_CATEGORY_IMAGES_V7') || '{}');
-    const subcategories = JSON.parse(localStorage.getItem('ROCKETRY_SHOP_SUBCATEGORIES_V7') || '{}');
-    const coupons = JSON.parse(localStorage.getItem('ROCKETRY_SHOP_COUPONS_V7') || '[]');
+    const productsStr = localStorage.getItem('ROCKETRY_SHOP_PRODUCTS_V7');
+    const categoryImagesStr = localStorage.getItem('ROCKETRY_SHOP_CATEGORY_IMAGES_V7');
+    const subcategoriesStr = localStorage.getItem('ROCKETRY_SHOP_SUBCATEGORIES_V7');
+    const couponsStr = localStorage.getItem('ROCKETRY_SHOP_COUPONS_V7');
+    
+    console.log("Retrieved from localStorage:", {
+      hasProducts: !!productsStr,
+      hasCategoryImages: !!categoryImagesStr,
+      hasSubcategories: !!subcategoriesStr,
+      hasCoupons: !!couponsStr
+    });
+    
+    // Parse data with error handling
+    let products: Product[] = [];
+    let categoryImages: Record<string, string> = {};
+    let subcategories: Record<string, string[]> = {};
+    let coupons: Coupon[] = [];
+    
+    try {
+      products = productsStr ? JSON.parse(productsStr) : [];
+      console.log(`Parsed ${products.length} products from localStorage`);
+    } catch (e) {
+      console.error("Error parsing products:", e);
+      products = [];
+    }
+    
+    try {
+      categoryImages = categoryImagesStr ? JSON.parse(categoryImagesStr) : {};
+      console.log(`Parsed ${Object.keys(categoryImages).length} category images from localStorage`);
+    } catch (e) {
+      console.error("Error parsing category images:", e);
+      categoryImages = {};
+    }
+    
+    try {
+      subcategories = subcategoriesStr ? JSON.parse(subcategoriesStr) : {};
+      console.log(`Parsed ${Object.keys(subcategories).length} subcategory entries from localStorage`);
+    } catch (e) {
+      console.error("Error parsing subcategories:", e);
+      subcategories = {};
+    }
+    
+    try {
+      coupons = couponsStr ? JSON.parse(couponsStr) : [];
+      console.log(`Parsed ${coupons.length} coupons from localStorage`);
+    } catch (e) {
+      console.error("Error parsing coupons:", e);
+      coupons = [];
+    }
     
     // Save data to database
-    await saveAdminDataToDatabase(products, categoryImages, subcategories, coupons);
+    const result = await saveAdminDataToDatabase(products, categoryImages, subcategories, coupons);
     
-    console.log("Successfully initialized database from localStorage");
-    return true;
+    if (result) {
+      console.log("Successfully initialized database from localStorage");
+      return true;
+    } else {
+      throw new Error("Database initialization returned false");
+    }
   } catch (error) {
     console.error("Error initializing database from localStorage:", error);
-    return false;
+    if (error instanceof Error) {
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+    } else {
+      console.error("Non-error object thrown:", error);
+    }
+    throw error;
   }
 };
