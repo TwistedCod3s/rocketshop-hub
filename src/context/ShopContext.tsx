@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect } from "react";
 import { ShopContextType } from "@/types/shop";
 import { useProducts } from "@/hooks/useProducts";
@@ -22,6 +23,7 @@ const ShopContext = createContext<ShopContextType>({
   tryAdminLogin: () => false,
   reloadAllAdminData: async () => false,
   loadProductsFromSupabase: async () => false,
+  reloadProductsFromStorage: () => {},
 });
 
 // Hook for using the shop context

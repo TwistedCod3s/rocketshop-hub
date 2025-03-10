@@ -21,8 +21,8 @@ console.log("Supabase connection info:", {
   keyLength: supabaseAnonKey?.length
 });
 
-// Create a single supabase client instance that will be reused
-let supabaseClientInstance: any = null;
+// Singleton pattern: Create a single supabase client instance once
+let supabaseClientInstance = null;
 
 export const getSupabaseClient = () => {
   // Return the existing instance if already created
@@ -46,14 +46,15 @@ export const getSupabaseClient = () => {
   
   try {
     console.log("Creating Supabase client with:", {
-      url: supabaseUrl ? 'URL provided' : 'URL missing',
+      url: supabaseUrl.substring(0, 20) + '...',
       keyLength: supabaseAnonKey?.length
     });
     
+    // Create the client only once for the entire application
     supabaseClientInstance = createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
         persistSession: false, // Don't persist auth state in localStorage
-        autoRefreshToken: true
+        autoRefreshToken: false // Disable automatic token refresh
       }
     });
     

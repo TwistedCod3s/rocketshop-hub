@@ -21,19 +21,22 @@ const ProductList = () => {
       setIsLoading(true);
       
       try {
+        console.log("Starting to load products in ProductList...");
         // Try loading from Supabase first
-        console.log("Attempting to load products from Supabase...");
         let loadedFromSupabase = false;
         
         if (loadProductsFromSupabase) {
+          console.log("Attempting to use loadProductsFromSupabase hook function");
           loadedFromSupabase = await loadProductsFromSupabase();
+          console.log("Result from loadProductsFromSupabase:", loadedFromSupabase);
         } else {
+          console.log("loadProductsFromSupabase not available in context");
           // Fallback to direct loading from Supabase
           try {
             const supabaseProducts = await dbHelpers.getProducts();
             
             if (supabaseProducts && supabaseProducts.length > 0) {
-              console.log("Loaded products from Supabase:", supabaseProducts.length);
+              console.log("Loaded products from Supabase directly:", supabaseProducts.length);
               
               // Update localStorage with the latest from Supabase
               localStorage.setItem('ROCKETRY_SHOP_PRODUCTS_V7', JSON.stringify(supabaseProducts));
@@ -102,17 +105,10 @@ const ProductList = () => {
       }
     });
     
-    // Set up periodic refresh to ensure we're showing the latest data
-    const refreshInterval = setInterval(() => {
-      loadProducts();
-      console.log("Periodic refresh of products triggered");
-    }, 30000); // Refresh every 30 seconds
-    
     return () => {
       window.removeEventListener('rocketry-product-update-v7', handleProductUpdate);
       window.removeEventListener('rocketry-sync-trigger-v7', handleProductUpdate);
       window.removeEventListener('storage', handleProductUpdate);
-      clearInterval(refreshInterval);
     };
   }, [fetchAllProducts, reloadProductsFromStorage, loadProductsFromSupabase]);
   

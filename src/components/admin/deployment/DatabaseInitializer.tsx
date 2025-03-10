@@ -7,12 +7,14 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { initializeDatabaseFromLocalStorage } from "@/utils/databaseUtils";
 import { dbHelpers } from "@/lib/supabase";
+import { getSupabaseClient } from "@/lib/supabase";
 
 const DatabaseInitializer = () => {
   const [isInitializing, setIsInitializing] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'error'>('checking');
   const { toast } = useToast();
 
   // Check if the database has already been initialized
@@ -22,31 +24,81 @@ const DatabaseInitializer = () => {
         setIsChecking(true);
         console.log("Checking if database is already initialized...");
         
-        // Try to fetch products from the database
-        const products = await dbHelpers.getProducts();
-        const categoryImages = await dbHelpers.getCategoryImages();
-        const subcategories = await dbHelpers.getSubcategories();
-        const coupons = await dbHelpers.getCoupons();
+        // First check if we can connect to Supabase
+        const client = getSupabaseClient();
+        if (!client) {
+          setConnectionStatus('error');
+          setError("Could not create Supabase client. Check if your environment variables are correctly set.");
+          setIsChecking(false);
+          return;
+        }
         
-        // If we have data in any of these tables, consider the database initialized
-        const hasData = products.length > 0 || 
-                        Object.keys(categoryImages).length > 0 || 
-                        Object.keys(subcategories).length > 0 || 
-                        coupons.length > 0;
+        try {
+          // Test a simple query to verify connection
+          const { data: testData, error: testError } = await client.from('products').select('count', { count: 'exact', head: true });
+          
+          if (testError) {
+            console.error("Database connection test failed:", testError);
+            setConnectionStatus('error');
+            
+            if (testError.code === '42P01') {
+              setError("Table 'products' does not exist. Please create the required tables in your Supabase project.");
+            } else {
+              setError(`Database connection error: ${testError.message}`);
+            }
+            
+            setIsChecking(false);
+            return;
+          }
+          
+          setConnectionStatus('connected');
+          console.log("Database connection successful");
+        } catch (connectionErr) {
+          console.error("Error testing database connection:", connectionErr);
+          setConnectionStatus('error');
+          setError(`Failed to connect to database: ${connectionErr instanceof Error ? connectionErr.message : String(connectionErr)}`);
+          setIsChecking(false);
+          return;
+        }
         
-        console.log("Database initialization check:", {
-          productsCount: products.length,
-          categoryImagesCount: Object.keys(categoryImages).length,
-          subcategoriesCount: Object.keys(subcategories).length,
-          couponsCount: coupons.length,
-          hasData
-        });
-        
-        setIsInitialized(hasData);
-        setIsChecking(false);
+        // If connection was successful, check if we have data
+        try {
+          // Try to fetch products from the database
+          const products = await dbHelpers.getProducts();
+          const categoryImages = await dbHelpers.getCategoryImages();
+          const subcategories = await dbHelpers.getSubcategories();
+          const coupons = await dbHelpers.getCoupons();
+          
+          // If we have data in any of these tables, consider the database initialized
+          const hasData = products.length > 0 || 
+                          Object.keys(categoryImages).length > 0 || 
+                          Object.keys(subcategories).length > 0 || 
+                          coupons.length > 0;
+          
+          console.log("Database initialization check:", {
+            productsCount: products.length,
+            categoryImagesCount: Object.keys(categoryImages).length,
+            subcategoriesCount: Object.keys(subcategories).length,
+            couponsCount: coupons.length,
+            hasData
+          });
+          
+          setIsInitialized(hasData);
+          setIsChecking(false);
+        } catch (err) {
+          console.error("Error checking database content:", err);
+          // We still consider the database reachable, just not initialized
+          setIsInitialized(false);
+          setIsChecking(false);
+          
+          if (err instanceof Error && err.message.includes("does not exist")) {
+            setError("Required tables are missing in your Supabase project. Please create them before initializing.");
+          }
+        }
       } catch (err) {
-        console.error("Error checking database initialization:", err);
+        console.error("Error in checkDatabaseInitialized:", err);
         setIsChecking(false);
+        setConnectionStatus('error');
         setError("Could not connect to database to check initialization status");
       }
     };
@@ -78,6 +130,8 @@ const DatabaseInitializer = () => {
         });
         // Clear pending changes flag since we've just initialized
         localStorage.setItem('ROCKETRY_SHOP_CHANGES_PENDING', 'false');
+        // Set last deployment time
+        localStorage.setItem('LAST_DEPLOYMENT_TIME', new Date().toISOString());
       } else {
         throw new Error("Failed to initialize database");
       }
@@ -121,8 +175,30 @@ const DatabaseInitializer = () => {
   const handleCheckAgain = async () => {
     setIsChecking(true);
     setError(null);
+    setConnectionStatus('checking');
     
     try {
+      // First confirm database connection
+      const client = getSupabaseClient();
+      if (!client) {
+        setConnectionStatus('error');
+        setError("Could not create Supabase client. Check your environment variables.");
+        setIsChecking(false);
+        return;
+      }
+      
+      // Test connection
+      const { error: testError } = await client.from('products').select('count', { count: 'exact', head: true });
+      if (testError) {
+        setConnectionStatus('error');
+        setError(`Database connection error: ${testError.message}`);
+        setIsChecking(false);
+        return;
+      }
+      
+      setConnectionStatus('connected');
+      
+      // Check if database has data
       const products = await dbHelpers.getProducts();
       const hasData = products.length > 0;
       
@@ -170,6 +246,22 @@ const DatabaseInitializer = () => {
             <Loader className="h-8 w-8 animate-spin text-blue-500" />
             <span className="ml-3">Checking database status...</span>
           </div>
+        ) : connectionStatus === 'error' ? (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Database Connection Error</AlertTitle>
+            <AlertDescription>
+              {error || "Could not connect to Supabase database"}
+              <div className="mt-2 text-sm">
+                <p>Please check your Supabase environment variables:</p>
+                <ul className="list-disc ml-5 mt-1">
+                  <li>VITE_SUPABASE_URL: Should be your Supabase project URL (e.g., https://yourproject.supabase.co)</li>
+                  <li>VITE_SUPABASE_ANON_KEY: Should be your Supabase anon/public key</li>
+                </ul>
+                <p className="mt-2">You can find these values in your Supabase project settings under API.</p>
+              </div>
+            </AlertDescription>
+          </Alert>
         ) : isInitialized ? (
           <Alert className="bg-green-50 border-green-200">
             <CheckCircle className="h-4 w-4 text-green-500" />
@@ -184,7 +276,7 @@ const DatabaseInitializer = () => {
             <AlertDescription>
               {error}
               <div className="mt-2 text-sm">
-                Please ensure your Supabase project has the following tables properly set up:
+                <p>Please ensure your Supabase project has the following tables properly set up:</p>
                 <ul className="list-disc ml-5 mt-1">
                   <li>products (with id column as UUID primary key)</li>
                   <li>category_images (with id column as UUID primary key)</li>
@@ -192,11 +284,6 @@ const DatabaseInitializer = () => {
                   <li>coupons (with id column as UUID primary key)</li>
                 </ul>
                 <p className="mt-2">Each table must have an ID column of type UUID that is the primary key and set to auto-generate.</p>
-                <p className="mt-2 font-semibold">Make sure your Supabase environment variables are correctly set:</p>
-                <ul className="list-disc ml-5 mt-1">
-                  <li>VITE_SUPABASE_URL: Your Supabase project URL</li>
-                  <li>VITE_SUPABASE_ANON_KEY: Your Supabase anonymous key</li>
-                </ul>
               </div>
             </AlertDescription>
           </Alert>
@@ -232,7 +319,7 @@ const DatabaseInitializer = () => {
             <RefreshCw className="h-4 w-4" />
             Check Again
           </Button>
-        ) : (
+        ) : connectionStatus === 'connected' ? (
           <Button 
             onClick={handleInitializeDatabase} 
             disabled={isInitializing || isChecking}
@@ -249,6 +336,15 @@ const DatabaseInitializer = () => {
                 Initialize Database
               </>
             )}
+          </Button>
+        ) : (
+          <Button 
+            variant="outline"
+            onClick={handleCheckAgain}
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Retry Connection
           </Button>
         )}
       </CardFooter>

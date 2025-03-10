@@ -1,3 +1,4 @@
+
 import { useShopContext } from "@/context/ShopContext";
 import { Button } from "@/components/ui/button";
 import { Save, Loader } from "lucide-react";
@@ -35,6 +36,8 @@ const DeploymentActions = ({
     const handleStorage = (e: StorageEvent) => {
       if (e.key === 'ROCKETRY_SHOP_CHANGES_PENDING') {
         checkPendingChanges();
+      } else if (e.key === 'LAST_DEPLOYMENT_TIME') {
+        setLastDeployTime(localStorage.getItem('LAST_DEPLOYMENT_TIME'));
       }
     };
     
@@ -43,9 +46,20 @@ const DeploymentActions = ({
     
     window.addEventListener('storage', handleStorage);
     
+    // Listen for custom event indicating deployment success
+    const handleDeploymentSuccess = (e: CustomEvent) => {
+      if (e.detail && e.detail.timestamp) {
+        setLastDeployTime(e.detail.timestamp);
+        setPendingChanges(false);
+      }
+    };
+    
+    window.addEventListener('deployment-success', handleDeploymentSuccess as EventListener);
+    
     return () => {
       clearInterval(interval);
       window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('deployment-success', handleDeploymentSuccess as EventListener);
     };
   }, []);
   
@@ -66,7 +80,9 @@ const DeploymentActions = ({
   
   const handleDeploy = async () => {
     try {
+      console.log("Starting deployment process...");
       const success = await triggerDeployment();
+      
       if (success) {
         const newTime = new Date().toISOString();
         localStorage.setItem('LAST_DEPLOYMENT_TIME', newTime);
@@ -75,6 +91,11 @@ const DeploymentActions = ({
         // Clear the pending changes flag
         localStorage.setItem('ROCKETRY_SHOP_CHANGES_PENDING', 'false');
         setPendingChanges(false);
+        
+        // Dispatch a custom event to notify other components
+        window.dispatchEvent(new CustomEvent('deployment-success', {
+          detail: { timestamp: newTime }
+        }));
         
         toast({
           title: "Database sync successful",
