@@ -8,10 +8,10 @@ export interface Product {
   id: string;
   name: string;
   description: string;
-  fullDescription?: string; // Added to match usage in components
+  fullDescription?: string;
   price: number;
   imageUrl?: string; // For backward compatibility
-  images: string[]; // Added to match usage in components
+  images: string[];
   category: Category;
   subcategory?: string;
   isFeatured: boolean;

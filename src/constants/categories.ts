@@ -20,4 +20,4 @@ export const CATEGORY_MAP = {
 };
 
 // Export Category type
-export type Category = typeof CATEGORY_MAP[keyof typeof CATEGORY_MAP];
+export type Category = keyof typeof SUBCATEGORIES;

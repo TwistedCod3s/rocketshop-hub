@@ -5,8 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { ReloadIcon } from "@radix-ui/react-icons";
-import { UploadCloud, Link } from "lucide-react";
+import { UploadCloud, Link, RefreshCw } from "lucide-react";
 
 const DeploymentSettings = () => {
   const { 
@@ -102,7 +101,7 @@ const DeploymentSettings = () => {
         >
           {isDeploying ? (
             <>
-              <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
+              <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
               Deploying...
             </>
           ) : (
