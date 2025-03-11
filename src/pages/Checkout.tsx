@@ -8,17 +8,22 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { LockIcon } from "lucide-react";
+import { LockIcon, Loader2Icon } from "lucide-react";
 import CartSummary from "@/components/cart/CartSummary";
 import { CartSummaryProps } from "@/types/shop";
+import { useStripeCheckout } from "@/hooks/useStripeCheckout";
+import { Elements } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
+
+const stripePromise = loadStripe('pk_test_REPLACE_WITH_YOUR_PUBLISHABLE_KEY');
 
 const Checkout = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { cart, clearCart, getCartTotal, getCartCount } = useShopContext();
   const [step, setStep] = useState(1);
+  const { createCheckoutSession, isLoading } = useStripeCheckout();
   
-  // Form states
   const [personalInfo, setPersonalInfo] = useState({
     firstName: "",
     lastName: "",
@@ -71,19 +76,44 @@ const Checkout = () => {
     setPaymentInfo(prev => ({ ...prev, [name]: value }));
   };
   
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Simulate checkout completion
-    sessionStorage.setItem("orderCompleted", "true");
-    toast({
-      title: "Order Placed!",
-      description: "Your order has been successfully placed.",
-    });
-    
-    // Clear cart and redirect to confirmation
-    clearCart();
-    navigate("/order-confirmation");
+    if (paymentInfo.method === "credit_card") {
+      try {
+        await createCheckoutSession(
+          cart, 
+          personalInfo.email,
+          {
+            name: `${personalInfo.firstName} ${personalInfo.lastName}`,
+            address: {
+              line1: shippingInfo.address,
+              city: shippingInfo.city,
+              state: shippingInfo.state,
+              postal_code: shippingInfo.postalCode,
+              country: shippingInfo.country,
+            },
+            phone: personalInfo.phone,
+          }
+        );
+      } catch (error) {
+        console.error("Error in checkout:", error);
+        toast({
+          title: "Checkout Error",
+          description: "There was a problem processing your payment. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } else {
+      sessionStorage.setItem("orderCompleted", "true");
+      toast({
+        title: "Order Placed!",
+        description: "Your order has been successfully placed.",
+      });
+      
+      clearCart();
+      navigate("/order-confirmation");
+    }
   };
   
   const nextStep = () => {
@@ -96,7 +126,6 @@ const Checkout = () => {
     window.scrollTo(0, 0);
   };
   
-  // Calculate subtotal and item count for CartSummary
   const subtotal = getCartTotal ? getCartTotal() : cart.reduce((total, item) => total + (item.product.price * item.quantity), 0);
   const itemCount = getCartCount ? getCartCount() : cart.reduce((count, item) => count + item.quantity, 0);
   
@@ -110,7 +139,6 @@ const Checkout = () => {
       <div className="container py-12">
         <h1 className="text-display-small font-bold text-rocketry-navy mb-8">Checkout</h1>
         
-        {/* Checkout Progress */}
         <div className="mb-12">
           <div className="flex justify-between">
             <div className="flex flex-col items-center">
@@ -150,10 +178,8 @@ const Checkout = () => {
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Checkout Form */}
           <div className="lg:col-span-2">
             <form onSubmit={handleSubmit}>
-              {/* Step 1: Personal Information */}
               {step === 1 && (
                 <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
                   <h2 className="text-xl font-bold mb-6">Personal Information</h2>
@@ -213,7 +239,6 @@ const Checkout = () => {
                 </div>
               )}
               
-              {/* Step 2: Shipping Information */}
               {step === 2 && (
                 <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
                   <h2 className="text-xl font-bold mb-6">Shipping Information</h2>
@@ -313,7 +338,6 @@ const Checkout = () => {
                 </div>
               )}
               
-              {/* Step 3: Payment Information */}
               {step === 3 && (
                 <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
                   <h2 className="text-xl font-bold mb-6">Payment Method</h2>
@@ -406,7 +430,6 @@ const Checkout = () => {
                 </div>
               )}
               
-              {/* Step 4: Order Review */}
               {step === 4 && (
                 <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
                   <h2 className="text-xl font-bold mb-6">Review Your Order</h2>
@@ -459,8 +482,19 @@ const Checkout = () => {
                     <Button type="button" variant="outline" onClick={prevStep}>
                       Back
                     </Button>
-                    <Button type="submit">
-                      Place Order
+                    <Button 
+                      type="submit" 
+                      disabled={isLoading}
+                      className="bg-rocketry-navy hover:bg-rocketry-navy/90"
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        'Complete Payment'
+                      )}
                     </Button>
                   </div>
                 </div>
@@ -468,12 +502,10 @@ const Checkout = () => {
             </form>
           </div>
           
-          {/* Order Summary */}
           <div>
             <div className="bg-white rounded-lg shadow-sm p-6 sticky top-24">
               <h2 className="text-lg font-bold mb-4">Order Summary</h2>
               
-              {/* Cart Items Summary */}
               <div className="border-b pb-4 mb-4">
                 <div className="space-y-3">
                   {cart.map((item) => (

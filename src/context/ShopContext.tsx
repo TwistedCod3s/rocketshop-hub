@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, ReactNode } from "react";
 import { ShopContextType } from "@/types/shop";
 import { useProducts } from "@/hooks/useProducts";
@@ -6,6 +5,7 @@ import { useCart } from "@/hooks/useCart";
 import { useFeaturedProducts } from "@/hooks/useFeaturedProducts";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useToast } from "@/hooks/use-toast";
+import { useStripeCheckout } from "@/hooks/useStripeCheckout";
 
 // Create context with default values
 const ShopContext = createContext<ShopContextType>({
@@ -26,6 +26,8 @@ const ShopContext = createContext<ShopContextType>({
   reloadProductsFromStorage: () => {},
   getCartTotal: () => 0,
   getCartCount: () => 0,
+  createCheckoutSession: async () => {},
+  isCheckoutLoading: false,
 });
 
 // Hook for using the shop context
@@ -45,6 +47,7 @@ export const ShopProvider = ({ children }: ShopProviderProps) => {
   const cartHook = useCart();
   const featuredHook = useFeaturedProducts(productsHook.products);
   const adminHook = useAdmin();
+  const stripeHook = useStripeCheckout();
   
   // Force re-render when localStorage changes in other tabs
   useEffect(() => {
@@ -100,6 +103,10 @@ export const ShopProvider = ({ children }: ShopProviderProps) => {
     updateCategoryImage: adminHook.updateCategoryImage,
     reloadAllAdminData: adminHook.reloadAllAdminData,
     tryAdminLogin: adminHook.tryAdminLogin,
+    
+    // Stripe Checkout
+    createCheckoutSession: stripeHook.createCheckoutSession,
+    isCheckoutLoading: stripeHook.isLoading,
   };
   
   return (

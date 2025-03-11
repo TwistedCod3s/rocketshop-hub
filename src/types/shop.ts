@@ -1,4 +1,3 @@
-
 // Define all the types needed for the shop
 
 export interface CartItem {
@@ -105,4 +104,8 @@ export interface ShopContextType {
   setDeploymentHookUrl?: (url: string) => void;
   autoDeployEnabled?: boolean;
   toggleAutoDeploy?: (enabled: boolean) => void;
+  
+  // Stripe Checkout
+  createCheckoutSession?: (cart: CartItem[], customerEmail: string, shippingDetails: any) => Promise<void>;
+  isCheckoutLoading?: boolean;
 }
