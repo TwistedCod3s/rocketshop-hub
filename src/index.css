@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
@@ -126,5 +125,42 @@
   
   .nav-link:hover .nav-indicator {
     @apply scale-x-100;
+  }
+  
+  /* Add spacing for featured products to avoid overlap */
+  .featured-products-section {
+    margin-top: 2rem;
+    position: relative;
+    z-index: 10;
+  }
+}
+
+@layer keyframes {
+  @keyframes accordion-down {
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--radix-accordion-content-height);
+    }
+  }
+
+  @keyframes accordion-up {
+    from {
+      height: var(--radix-accordion-content-height);
+    }
+    to {
+      height: 0;
+    }
+  }
+}
+
+@layer animations {
+  .animate-accordion-down {
+    animation: accordion-down 0.2s ease-out;
+  }
+
+  .animate-accordion-up {
+    animation: accordion-up 0.2s ease-out;
   }
 }
