@@ -15,7 +15,7 @@ export function useSyncChecker(
   const [lastChecked, setLastChecked] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const { toast } = useToast();
-
+  
   // Function to check if there are updates in the database
   const checkForUpdates = useCallback(async (forceCheck = false) => {
     try {
@@ -92,25 +92,39 @@ export function useSyncChecker(
 
   // Set up periodic checking
   useEffect(() => {
-    // Initial check on mount
-    checkForUpdates(true); // Force an initial check
+    // Initial check on mount - but with a delay to prevent immediate requests on page load
+    const initialCheckTimeout = setTimeout(() => {
+      checkForUpdates(false); // Don't force an initial check to reduce load
+    }, 2000);
     
-    // Set up interval (check every 15 seconds instead of 30)
-    const intervalId = setInterval(() => checkForUpdates(), 15000);
+    // Set up interval with a much lower frequency (2 minutes instead of 15 seconds)
+    const intervalId = setInterval(() => checkForUpdates(), 120000);
     
-    // Also check when sync events are triggered
+    // Also check when sync events are triggered, but implement debouncing
+    let syncDebounceTimer: NodeJS.Timeout | null = null;
+    
+    const debouncedSyncCheck = () => {
+      if (syncDebounceTimer) {
+        clearTimeout(syncDebounceTimer);
+      }
+      
+      syncDebounceTimer = setTimeout(() => {
+        checkForUpdates(true);
+        syncDebounceTimer = null;
+      }, 1000); // Debounce to 1 second
+    };
+    
     const handleSyncEvent = (e: Event) => {
-      const customEvent = e as CustomEvent;
-      console.log("Sync event detected, checking for updates...", customEvent.detail);
-      checkForUpdates(true); // Force a check on sync event
+      console.log("Sync event detected, queueing check for updates...");
+      debouncedSyncCheck();
     };
     
     const handleStorageEvent = (e: StorageEvent) => {
       if (e.key === "ROCKETRY_SHOP_SYNC_TRIGGER_V7" || 
           e.key === "ROCKETRY_LAST_SYNC_TIMESTAMP" ||
           e.key === "EXTERNAL_SYNC_TRIGGER") {
-        console.log(`Storage event detected for ${e.key}, force checking for updates`);
-        checkForUpdates(true); // Force a check on storage event
+        console.log(`Storage event detected for ${e.key}, queueing check for updates`);
+        debouncedSyncCheck();
       }
     };
     
@@ -120,7 +134,11 @@ export function useSyncChecker(
     
     // Clean up
     return () => {
+      clearTimeout(initialCheckTimeout);
       clearInterval(intervalId);
+      if (syncDebounceTimer) {
+        clearTimeout(syncDebounceTimer);
+      }
       window.removeEventListener('rocketry-sync-trigger-v7', handleSyncEvent);
       window.removeEventListener('storage', handleStorageEvent);
     };

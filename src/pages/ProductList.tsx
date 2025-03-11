@@ -7,7 +7,6 @@ import ProductFilters from "@/components/products/ProductFilters";
 import SortOptions from "@/components/products/SortOptions";
 import ProductGrid from "@/components/products/ProductGrid";
 import { useProductFilter } from "@/hooks/useProductFilter";
-import { dbHelpers } from "@/lib/supabase";
 import { useSyncChecker } from "@/hooks/useSyncChecker";
 
 const ProductList = () => {
@@ -21,105 +20,115 @@ const ProductList = () => {
   const [filterOpen, setFilterOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Use our new sync checker hook to periodically check for updates
+  // Use our sync checker hook to periodically check for updates
+  // but only check for updates on mount, not continually
   useSyncChecker(reloadProductsFromStorage, loadProductsFromSupabase, reloadAllAdminData);
   
-  // Load products and refresh when products change
+  // Load products and refresh only when necessary
   useEffect(() => {
+    let isMounted = true;
+    
     const loadProducts = async () => {
+      if (!isMounted) return;
       setIsLoading(true);
       
       try {
         console.log("Starting to load products in ProductList...");
-        // Try loading from Supabase first
-        let loadedFromSupabase = false;
         
-        if (loadProductsFromSupabase) {
-          console.log("Attempting to use loadProductsFromSupabase hook function");
-          loadedFromSupabase = await loadProductsFromSupabase();
-          console.log("Result from loadProductsFromSupabase:", loadedFromSupabase);
-        } else {
-          console.log("loadProductsFromSupabase not available in context");
-          // Fallback to direct loading from Supabase
-          try {
-            const supabaseProducts = await dbHelpers.getProducts();
-            
-            if (supabaseProducts && supabaseProducts.length > 0) {
-              console.log("Loaded products from Supabase directly:", supabaseProducts.length);
-              
-              // Update localStorage with the latest from Supabase
-              localStorage.setItem('ROCKETRY_SHOP_PRODUCTS_V7', JSON.stringify(supabaseProducts));
-              
-              // If we have a reload function, use it to refresh the app state
-              if (reloadProductsFromStorage) {
-                reloadProductsFromStorage();
-              }
-              
-              // Set the display products
-              setDisplayProducts(supabaseProducts);
-              loadedFromSupabase = true;
-            }
-          } catch (err) {
-            console.error("Error directly loading from Supabase:", err);
+        // Use the products already loaded in context first
+        const contextProducts = fetchAllProducts();
+        if (contextProducts && contextProducts.length > 0) {
+          console.log("Using products from context:", contextProducts.length);
+          setDisplayProducts(contextProducts);
+          setIsLoading(false);
+          return;
+        }
+        
+        // If no products in context, try loading from localStorage
+        if (reloadProductsFromStorage) {
+          reloadProductsFromStorage();
+          const localProducts = fetchAllProducts();
+          if (localProducts && localProducts.length > 0) {
+            console.log("Using products from localStorage:", localProducts.length);
+            setDisplayProducts(localProducts);
+            setIsLoading(false);
+            return;
           }
         }
         
-        if (!loadedFromSupabase) {
-          console.log("Falling back to localStorage for products");
+        // Only if both context and localStorage fail, try loading from Supabase
+        if (loadProductsFromSupabase) {
+          console.log("Loading products from Supabase as a last resort");
+          await loadProductsFromSupabase();
           
-          // Ensure localStorage data is loaded into the state
-          if (reloadProductsFromStorage) {
-            reloadProductsFromStorage();
+          if (isMounted) {
+            const products = fetchAllProducts();
+            setDisplayProducts(products);
           }
-          
-          const allProducts = fetchAllProducts();
-          console.log("Products loaded from localStorage:", allProducts.length);
-          setDisplayProducts(allProducts);
         }
       } catch (error) {
         console.error("Error loading products:", error);
         
-        // Final fallback to localStorage
-        if (reloadProductsFromStorage) {
-          reloadProductsFromStorage();
+        // Final fallback
+        if (isMounted) {
+          const products = fetchAllProducts();
+          setDisplayProducts(products);
         }
-        
-        const allProducts = fetchAllProducts();
-        console.log("Products loaded from localStorage (after error):", allProducts.length);
-        setDisplayProducts(allProducts);
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
     
     // Initial load
     loadProducts();
     
-    // Set up event listeners for product updates
-    const handleProductUpdate = () => {
-      console.log("Products updated, refreshing list");
-      loadProducts();
+    // Set up event listeners for product updates, but with debouncing
+    let debounceTimer: NodeJS.Timeout | null = null;
+    
+    const debouncedProductRefresh = () => {
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
+      
+      debounceTimer = setTimeout(() => {
+        console.log("Debounced product refresh executing");
+        loadProducts();
+        debounceTimer = null;
+      }, 1000); // 1 second debounce
     };
     
-    // Listen for all possible update events
-    window.addEventListener('rocketry-product-update-v7', handleProductUpdate);
-    window.addEventListener('rocketry-sync-trigger-v7', handleProductUpdate);
-    window.addEventListener('storage', (e) => {
+    const handleProductUpdate = () => {
+      console.log("Product update detected, debouncing refresh");
+      debouncedProductRefresh();
+    };
+    
+    const handleStorageEvent = (e: StorageEvent) => {
       if (e.key === "ROCKETRY_SHOP_PRODUCTS_V7" || 
           e.key === "ROCKETRY_SHOP_SYNC_TRIGGER_V7" ||
           e.key === "ROCKETRY_SHOP_CHANGES_PENDING" ||
           e.key === "EXTERNAL_SYNC_TRIGGER" ||
           e.key === "ROCKETRY_LAST_SYNC_TIMESTAMP" ||
           e.key === "ROCKETRY_SYNC_NEEDED") {
-        console.log(`Storage event detected for ${e.key}, refreshing products`);
-        handleProductUpdate();
+        console.log(`Storage event detected for ${e.key}, debouncing products refresh`);
+        debouncedProductRefresh();
       }
-    });
+    };
+    
+    // Event listeners with reduced frequency
+    window.addEventListener('rocketry-product-update-v7', handleProductUpdate);
+    window.addEventListener('rocketry-sync-trigger-v7', handleProductUpdate);
+    window.addEventListener('storage', handleStorageEvent);
     
     return () => {
+      isMounted = false;
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
       window.removeEventListener('rocketry-product-update-v7', handleProductUpdate);
       window.removeEventListener('rocketry-sync-trigger-v7', handleProductUpdate);
-      window.removeEventListener('storage', handleProductUpdate);
+      window.removeEventListener('storage', handleStorageEvent);
     };
   }, [fetchAllProducts, reloadProductsFromStorage, loadProductsFromSupabase]);
   

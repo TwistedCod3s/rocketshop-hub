@@ -1,6 +1,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
+import { globalCache } from '@/utils/cacheUtils';
 
 // Create a global variable to store the client instance
 let supabaseClientInstance: any = null;
@@ -60,13 +61,32 @@ const ensureValidUUID = (id: string | number): string => {
   return uuidv4();
 };
 
+// Cache TTL constants (in milliseconds)
+const CACHE_TTL = {
+  PRODUCTS: 15 * 60 * 1000, // 15 minutes for products
+  CATEGORY_IMAGES: 30 * 60 * 1000, // 30 minutes for category images 
+  SUBCATEGORIES: 30 * 60 * 1000, // 30 minutes for subcategories
+  COUPONS: 30 * 60 * 1000, // 30 minutes for coupons
+  TIMESTAMPS: 2 * 60 * 1000 // 2 minutes for timestamps
+};
+
 // Database helper functions
 export const dbHelpers = {
   getProducts: async () => {
     try {
+      // Check cache first
+      const cacheKey = 'products';
+      const cachedProducts = globalCache.get(cacheKey);
+      
+      if (cachedProducts) {
+        console.log("Using cached products data");
+        return cachedProducts;
+      }
+      
       const client = getSupabaseClient();
       if (!client) return [];
 
+      console.log("Fetching products from Supabase (not cached)");
       const { data, error } = await client
         .from('products')
         .select('*');
@@ -76,6 +96,10 @@ export const dbHelpers = {
         return [];
       }
 
+      // Cache the result
+      globalCache.set(cacheKey, data || [], CACHE_TTL.PRODUCTS);
+      console.log(`Cached ${data?.length || 0} products for ${CACHE_TTL.PRODUCTS/1000/60} minutes`);
+      
       return data || [];
     } catch (e) {
       console.error("Error in getProducts:", e);
@@ -96,7 +120,7 @@ export const dbHelpers = {
           description: product.description || '',
           price: product.price || 0,
           category: product.category || null,
-          subcategory: product.subcategory || null, // Ensure subcategory is included
+          subcategory: product.subcategory || null,
           images: product.images || [],
           inStock: !!product.inStock,
           featured: !!product.featured,
@@ -111,18 +135,8 @@ export const dbHelpers = {
         if (product.specifications) cleanProduct.specifications = product.specifications;
         if (product.fullDescription) cleanProduct.fullDescription = product.fullDescription;
         
-        // Debug logging for subcategory
-        if (product.subcategory) {
-          console.log(`Product ${product.name} has subcategory: ${product.subcategory}`);
-        }
-        
         return cleanProduct;
       });
-
-      // Log the products we're about to save for debugging
-      console.log("Saving products to database with subcategories:", 
-        cleanedProducts.map(p => ({ id: p.id, name: p.name, subcategory: p.subcategory }))
-      );
 
       const { data, error } = await client
         .from('products')
@@ -135,7 +149,10 @@ export const dbHelpers = {
         return false;
       }
 
-      console.log("Saved products to database");
+      // Invalidate the products cache
+      globalCache.delete('products');
+      console.log("Saved products to database and invalidated cache");
+      
       return true;
     } catch (e) {
       console.error("Error in saveProducts:", e);
@@ -145,6 +162,15 @@ export const dbHelpers = {
 
   getCategoryImages: async () => {
     try {
+      // Check cache first
+      const cacheKey = 'category_images';
+      const cachedImages = globalCache.get(cacheKey);
+      
+      if (cachedImages) {
+        console.log("Using cached category images data");
+        return cachedImages;
+      }
+      
       const client = getSupabaseClient();
       if (!client) return {};
 
@@ -168,10 +194,12 @@ export const dbHelpers = {
           
           if (categorySlug) {
             categoryImages[categorySlug] = imageUrl;
-            console.log(`Loaded image for ${categorySlug}, length: ${imageUrl.length}`);
           }
         });
         console.log("Successfully loaded category images from DB:", Object.keys(categoryImages).length);
+        
+        // Cache the result
+        globalCache.set(cacheKey, categoryImages, CACHE_TTL.CATEGORY_IMAGES);
       } else {
         console.log("No category images data returned from DB or invalid format");
       }
@@ -187,9 +215,6 @@ export const dbHelpers = {
     try {
       const client = getSupabaseClient();
       if (!client) return false;
-
-      // Log the data we're about to save
-      console.log("Preparing to save category images:", Object.keys(categoryImages).length);
       
       // First, delete all existing records
       console.log("Clearing existing category_images table...");
@@ -200,8 +225,6 @@ export const dbHelpers = {
       
       if (deleteError) {
         console.error("Error clearing category images table:", deleteError);
-        
-        // Don't return false here, try to insert anyway
         console.log("Continuing with insert despite delete error");
       } else {
         console.log("Successfully cleared category_images table");
@@ -226,23 +249,32 @@ export const dbHelpers = {
         return false;
       }
 
-      console.log("Successfully saved category images to database:", categoryImagesArray.length);
+      // Invalidate the cache
+      globalCache.delete('category_images');
+      console.log("Successfully saved category images to database and invalidated cache");
+      
       return true;
     } catch (e) {
       console.error("Error in saveCategoryImages:", e);
-      if (e instanceof Error) {
-        console.error("Error details:", e.message);
-        console.error("Stack trace:", e.stack);
-      }
       return false;
     }
   },
 
   getSubcategories: async () => {
     try {
+      // Check cache first
+      const cacheKey = 'subcategories';
+      const cachedSubcategories = globalCache.get(cacheKey);
+      
+      if (cachedSubcategories) {
+        console.log("Using cached subcategories data");
+        return cachedSubcategories;
+      }
+      
       const client = getSupabaseClient();
       if (!client) return {};
 
+      console.log("Fetching subcategories from database...");
       const { data, error } = await client
         .from('subcategories')
         .select('*');
@@ -263,6 +295,10 @@ export const dbHelpers = {
           subcategories[categorySlug] = subcategoryList;
         }
       });
+      
+      // Cache the result
+      globalCache.set(cacheKey, subcategories, CACHE_TTL.SUBCATEGORIES);
+      console.log(`Cached subcategories for ${CACHE_TTL.SUBCATEGORIES/1000/60} minutes`);
 
       return subcategories;
     } catch (e) {
@@ -294,7 +330,10 @@ export const dbHelpers = {
         return false;
       }
 
-      console.log("Saved subcategories to database");
+      // Invalidate the cache
+      globalCache.delete('subcategories');
+      console.log("Saved subcategories to database and invalidated cache");
+      
       return true;
     } catch (e) {
       console.error("Error in saveSubcategories:", e);
@@ -304,9 +343,19 @@ export const dbHelpers = {
 
   getCoupons: async () => {
     try {
+      // Check cache first
+      const cacheKey = 'coupons';
+      const cachedCoupons = globalCache.get(cacheKey);
+      
+      if (cachedCoupons) {
+        console.log("Using cached coupons data");
+        return cachedCoupons;
+      }
+      
       const client = getSupabaseClient();
       if (!client) return [];
 
+      console.log("Fetching coupons from database...");
       const { data, error } = await client
         .from('coupons')
         .select('*');
@@ -326,6 +375,10 @@ export const dbHelpers = {
         active: coupon.active,
         description: coupon.description
       }));
+      
+      // Cache the result
+      globalCache.set(cacheKey, coupons || [], CACHE_TTL.COUPONS);
+      console.log(`Cached ${coupons.length} coupons for ${CACHE_TTL.COUPONS/1000/60} minutes`);
 
       return coupons || [];
     } catch (e) {
@@ -350,9 +403,6 @@ export const dbHelpers = {
         description: coupon.description,
       }));
 
-      // Log the data we're about to save
-      console.log("Preparing to save coupons:", formattedCoupons);
-
       const { data, error } = await client
         .from('coupons')
         .upsert(formattedCoupons, {
@@ -364,7 +414,10 @@ export const dbHelpers = {
         return false;
       }
 
-      console.log("Saved coupons to database");
+      // Invalidate the cache
+      globalCache.delete('coupons');
+      console.log("Saved coupons to database and invalidated cache");
+      
       return true;
     } catch (e) {
       console.error("Error in saveCoupons:", e);
@@ -374,8 +427,19 @@ export const dbHelpers = {
 
   getLatestUpdateTimestamp: async (): Promise<string | null> => {
     try {
+      // Check cache first
+      const cacheKey = 'latest_timestamp';
+      const cachedTimestamp = globalCache.get<string>(cacheKey);
+      
+      if (cachedTimestamp) {
+        console.log("Using cached timestamp:", cachedTimestamp);
+        return cachedTimestamp;
+      }
+      
       const client = getSupabaseClient();
       if (!client) return null;
+      
+      console.log("Fetching latest timestamp from database...");
       
       // Try to get the latest updated product using created_at or updated_at 
       try {
@@ -386,7 +450,15 @@ export const dbHelpers = {
           .limit(1);
         
         if (!error && data && data.length > 0) {
-          return data[0].created_at || null;
+          const timestamp = data[0].created_at || null;
+          
+          // Cache the timestamp
+          if (timestamp) {
+            globalCache.set(cacheKey, timestamp, CACHE_TTL.TIMESTAMPS);
+            console.log(`Cached timestamp for ${CACHE_TTL.TIMESTAMPS/1000/60} minutes:`, timestamp);
+          }
+          
+          return timestamp;
         }
       } catch (e) {
         console.log("Error getting timestamp from created_at:", e);

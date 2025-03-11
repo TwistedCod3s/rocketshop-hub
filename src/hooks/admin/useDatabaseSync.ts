@@ -3,6 +3,7 @@ import { useCallback } from "react";
 import { dbHelpers } from "@/lib/supabase";
 import { SYNC_KEY } from "./adminUtils";
 import { useToast } from "../use-toast";
+import { globalCache } from "@/utils/cacheUtils";
 
 export function useDatabaseSync(
   categoryImagesReload: () => void,
@@ -15,8 +16,23 @@ export function useDatabaseSync(
   // Function to sync data from Supabase to localStorage
   const syncFromSupabase = useCallback(async () => {
     console.log("Attempting to sync from Supabase to localStorage...");
+    
+    // Add a sync lock to prevent multiple sync operations
+    const syncLockKey = 'ROCKETRY_SYNC_IN_PROGRESS';
+    if (localStorage.getItem(syncLockKey) === 'true') {
+      console.log("Sync already in progress, skipping");
+      return false;
+    }
+    
+    // Set sync lock
+    localStorage.setItem(syncLockKey, 'true');
+    
     try {
-      // Get data from Supabase
+      // Clear all caches to ensure fresh data
+      globalCache.clear();
+      console.log("Cleared cache for fresh data fetch");
+      
+      // Get data from Supabase - fetch in parallel
       const [products, categoryImages, subcategories, coupons] = await Promise.all([
         dbHelpers.getProducts(),
         dbHelpers.getCategoryImages(),
@@ -52,13 +68,18 @@ export function useDatabaseSync(
         console.log(`Updated localStorage with ${coupons.length} coupons from Supabase`);
       }
       
-      // Now force reload all hooks to update their state from localStorage
-      categoryImagesReload();
-      subcategoriesReload();
-      couponsReload();
-      productsReload();
+      // Batch reload operations to reduce DOM updates
+      Promise.resolve().then(() => {
+        // Now force reload all hooks to update their state from localStorage
+        categoryImagesReload();
+        subcategoriesReload();
+        couponsReload();
+        productsReload();
+        
+        console.log("Reloaded all data from localStorage");
+      });
 
-      // Trigger a window refresh to ensure all components reload with the new data
+      // Trigger a synchronous event to immediately notify components
       const syncEvent = new CustomEvent("rocketry-sync-trigger-v7", { 
         detail: { action: "full-sync-complete", timestamp: new Date().toISOString() } 
       });
@@ -68,6 +89,9 @@ export function useDatabaseSync(
     } catch (error) {
       console.error("Error syncing from Supabase to localStorage:", error);
       throw error;
+    } finally {
+      // Release sync lock
+      localStorage.removeItem(syncLockKey);
     }
   }, [
     categoryImagesReload,
@@ -80,29 +104,39 @@ export function useDatabaseSync(
   const reloadAllAdminData = useCallback(async (triggerDeploy?: boolean) => {
     console.log("Forcing reload of all admin data and propagating to all users");
     
+    // Check if a reload is already in progress
+    const reloadLockKey = 'ROCKETRY_RELOAD_IN_PROGRESS';
+    if (localStorage.getItem(reloadLockKey) === 'true') {
+      console.log("Reload already in progress, skipping");
+      return false;
+    }
+    
+    // Set reload lock
+    localStorage.setItem(reloadLockKey, 'true');
+    
     try {
       // First try to load fresh data from Supabase
       await syncFromSupabase();
       console.log("Successfully synced from Supabase to localStorage");
         
       // Set global sync trigger that will notify ALL browser tabs/windows
-      const timestamp = new Date().toISOString();
-      localStorage.setItem(SYNC_KEY, timestamp);
-      console.log("Set global sync trigger:", timestamp);
+      // but use a throttled approach
+      const lastSyncTime = localStorage.getItem('LAST_GLOBAL_SYNC_TIME');
+      const now = Date.now();
       
-      // Dispatch a custom sync event
-      window.dispatchEvent(new CustomEvent("rocketry-sync-trigger-v7", { 
-        detail: { timestamp, action: "admin-reload" } 
-      }));
-      
-      // Also dispatch a storage event for cross-window communication
-      window.dispatchEvent(new StorageEvent('storage', {
-        key: SYNC_KEY,
-        newValue: timestamp,
-        storageArea: localStorage
-      }));
-      
-      console.log("Dispatched global sync events to notify all users");
+      if (!lastSyncTime || (now - parseInt(lastSyncTime)) > 5000) { // 5 second throttle
+        const timestamp = new Date().toISOString();
+        localStorage.setItem(SYNC_KEY, timestamp);
+        localStorage.setItem('LAST_GLOBAL_SYNC_TIME', now.toString());
+        console.log("Set global sync trigger:", timestamp);
+        
+        // Dispatch a custom sync event
+        window.dispatchEvent(new CustomEvent("rocketry-sync-trigger-v7", { 
+          detail: { timestamp, action: "admin-reload" } 
+        }));
+      } else {
+        console.log("Skipping global sync trigger due to throttling");
+      }
       
       // Clear the pending changes flag
       localStorage.setItem('ROCKETRY_SHOP_CHANGES_PENDING', 'false');
@@ -125,12 +159,19 @@ export function useDatabaseSync(
           console.log("Reloaded products from storage");
         }
         
-        // Still set the sync trigger
-        const timestamp = new Date().toISOString();
-        localStorage.setItem(SYNC_KEY, timestamp);
-        window.dispatchEvent(new CustomEvent("rocketry-sync-trigger-v7", { 
-          detail: { timestamp, action: "fallback-reload" } 
-        }));
+        // Still set the sync trigger but with throttling
+        const lastSyncTime = localStorage.getItem('LAST_GLOBAL_SYNC_TIME');
+        const now = Date.now();
+        
+        if (!lastSyncTime || (now - parseInt(lastSyncTime)) > 5000) { // 5 second throttle
+          const timestamp = new Date().toISOString();
+          localStorage.setItem(SYNC_KEY, timestamp);
+          localStorage.setItem('LAST_GLOBAL_SYNC_TIME', now.toString());
+          
+          window.dispatchEvent(new CustomEvent("rocketry-sync-trigger-v7", { 
+            detail: { timestamp, action: "fallback-reload" } 
+          }));
+        }
         
         toast({
           title: "Database sync failed",
@@ -143,6 +184,9 @@ export function useDatabaseSync(
         console.error("Error in fallback reloadAllAdminData:", fallbackError);
         throw fallbackError;
       }
+    } finally {
+      // Release reload lock
+      localStorage.removeItem(reloadLockKey);
     }
   }, [
     syncFromSupabase,
