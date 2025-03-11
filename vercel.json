@@ -1,14 +1,14 @@
 
 {
   "functions": {
-    "api/filesystem.js": {
+    "api/*.js": {
       "memory": 1024,
       "maxDuration": 10
     }
   },
   "build": {
     "env": {
-      "VERCEL_FILESYSTEM_API_ENABLED": "true"
+      "FILESYSTEM_API_ENABLED": "true"
     }
   },
   "outputDirectory": "dist",

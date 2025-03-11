@@ -4,8 +4,9 @@ import { loadStripe } from '@stripe/stripe-js';
 import { useToast } from '@/hooks/use-toast';
 import { CartItem } from '@/types/shop';
 
-// Your publishable key will need to be replaced with your actual Stripe publishable key
-const stripePromise = loadStripe('pk_test_REPLACE_WITH_YOUR_PUBLISHABLE_KEY');
+// Initialize Stripe with a publishable key
+// In production, you would want to store this in an environment variable
+const stripePromise = loadStripe(process.env.STRIPE_PUBLISHABLE_KEY || 'pk_test_YOUR_PUBLISHABLE_KEY');
 
 export function useStripeCheckout() {
   const [isLoading, setIsLoading] = useState(false);
@@ -26,16 +27,17 @@ export function useStripeCheckout() {
           product_data: {
             name: item.product.name,
             description: item.product.description.substring(0, 255), // Stripe has character limits
-            images: item.product.images ? [item.product.images[0]] : [],
+            images: item.product.images && item.product.images.length > 0 ? [item.product.images[0]] : [],
           },
           unit_amount: Math.round(item.product.price * 100), // Stripe uses cents
         },
         quantity: item.quantity,
       }));
       
-      // We'll need to set up a server endpoint to create a Stripe session
-      // In production, this would be a server-side API call
-      const response = await fetch('/api/create-checkout-session', {
+      // The API endpoint URL can be configured based on your hosting
+      // This makes it provider-agnostic
+      const apiBaseUrl = process.env.API_BASE_URL || '';
+      const response = await fetch(`${apiBaseUrl}/api/create-checkout-session`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -44,11 +46,15 @@ export function useStripeCheckout() {
           lineItems,
           customerEmail,
           shippingDetails,
+          success_url: `${window.location.origin}/order-confirmation?session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${window.location.origin}/cart?canceled=true`,
         }),
       });
       
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Checkout error details:', errorData);
+        throw new Error(`Network response was not ok: ${response.status}`);
       }
       
       const session = await response.json();
@@ -64,6 +70,7 @@ export function useStripeCheckout() {
       });
       
       if (error) {
+        console.error('Stripe redirect error:', error);
         throw error;
       }
       
