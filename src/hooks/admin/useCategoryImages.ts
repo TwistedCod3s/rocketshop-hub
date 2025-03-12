@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from "react";
 import { 
   loadFromStorage, 
@@ -93,8 +94,13 @@ export function useCategoryImages() {
           console.log("Storage event detected for category images", e);
           if (e.newValue) {
             const updatedImages = JSON.parse(e.newValue);
-            setCategoryImages(updatedImages);
-            console.log("Category images updated from storage event:", updatedImages);
+            if (isCategoryImagesMap(updatedImages)) {
+              setCategoryImages(updatedImages);
+              console.log("Category images updated from storage event:", updatedImages);
+            } else {
+              console.error("Invalid data structure in storage event");
+              reloadFromStorage();
+            }
           }
         } catch (error) {
           console.error("Error parsing category images from storage event:", error);
@@ -107,9 +113,11 @@ export function useCategoryImages() {
     // Custom event handlers
     const handleCategoryImagesEvent = (e: CustomEvent<CategoryImagesMap>) => {
       console.log("Custom event detected for category images", e);
-      if (e.detail) {
+      if (e.detail && isCategoryImagesMap(e.detail)) {
         setCategoryImages(e.detail);
         console.log("Category images updated from custom event:", e.detail);
+      } else {
+        console.error("Invalid data structure in custom event");
       }
     };
     
