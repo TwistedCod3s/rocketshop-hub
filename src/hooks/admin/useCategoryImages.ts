@@ -11,6 +11,16 @@ import { useToast } from "@/hooks/use-toast";
 // Define types
 type CategoryImagesMap = Record<string, string>;
 
+// Type guard to check if value is a CategoryImagesMap
+function isCategoryImagesMap(value: unknown): value is CategoryImagesMap {
+  if (!value || typeof value !== 'object') return false;
+  
+  // Check if all entries are string key-value pairs
+  return Object.entries(value).every(
+    ([key, val]) => typeof key === 'string' && typeof val === 'string'
+  );
+}
+
 // Initialize global category images state from localStorage or default values
 const initialGlobalCategoryImages = loadFromStorage<CategoryImagesMap>(CATEGORY_IMAGES_KEY, {});
 
@@ -26,8 +36,12 @@ export function useCategoryImages() {
       if (storedData) {
         try {
           const parsedData = JSON.parse(storedData);
-          setCategoryImages(parsedData);
-          console.log("Manually reloaded category images from localStorage:", parsedData);
+          if (isCategoryImagesMap(parsedData)) {
+            setCategoryImages(parsedData);
+            console.log("Manually reloaded category images from localStorage:", parsedData);
+          } else {
+            throw new Error("Invalid category images data structure");
+          }
         } catch (parseError) {
           console.error("Error parsing category images:", parseError);
           
@@ -40,13 +54,15 @@ export function useCategoryImages() {
                 const backupData = localStorage.getItem(key);
                 if (backupData) {
                   const parsedBackup = JSON.parse(backupData);
-                  setCategoryImages(parsedBackup);
-                  console.log("Recovered category images from backup:", key, parsedBackup);
-                  
-                  // Restore the main entry
-                  localStorage.setItem(CATEGORY_IMAGES_KEY, backupData);
-                  recovered = true;
-                  break;
+                  if (isCategoryImagesMap(parsedBackup)) {
+                    setCategoryImages(parsedBackup);
+                    console.log("Recovered category images from backup:", key, parsedBackup);
+                    
+                    // Restore the main entry
+                    localStorage.setItem(CATEGORY_IMAGES_KEY, backupData);
+                    recovered = true;
+                    break;
+                  }
                 }
               } catch (backupError) {
                 console.error(`Failed to recover from backup ${key}:`, backupError);
@@ -66,7 +82,7 @@ export function useCategoryImages() {
       console.error("Error during manual reload of category images:", e);
     }
   }, []);
-  
+
   // Listen for storage and custom events to keep state in sync
   useEffect(() => {
     console.log("Setting up category images event listeners");
@@ -125,14 +141,14 @@ export function useCategoryImages() {
       console.log("Loading category images from database...");
       const images = await dbHelpers.getCategoryImages();
       
-      if (images && Object.keys(images).length > 0) {
+      if (images && isCategoryImagesMap(images)) {
         console.log("Loaded category images from database:", images);
         setCategoryImages(images);
         
         // Also update localStorage to stay in sync
         localStorage.setItem(CATEGORY_IMAGES_KEY, JSON.stringify(images));
       } else {
-        // If no data in database, fall back to localStorage
+        // If no data in database or invalid data, fall back to localStorage
         reloadFromStorage();
       }
     } catch (err) {
